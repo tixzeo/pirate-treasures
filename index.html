@@ -24,6 +24,10 @@
   --fg: #f4ead6;
   --muted: #a9c2c9;
   --good: #2e7d4f;
+  --brass: #c9a24f;
+  --brass-hi: #f5d77a;
+  --plank: #7a4a28;
+  --plank-dark: #553219;
   --font-display: "Kelly Slab", Georgia, "Times New Roman", serif;
   --font-body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme: dark;
@@ -31,7 +35,10 @@
 html, body { height: 100%; }
 [hidden] { display: none !important; }
 body {
-  background: var(--sea) linear-gradient(180deg, var(--sea) 0%, var(--sea-deep) 100%) fixed;
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(60,130,160,.35), transparent 55%),
+    repeating-radial-gradient(ellipse 120px 26px at 50% 100%, transparent 0 18px, rgba(255,255,255,.025) 19px 21px, transparent 22px 40px),
+    linear-gradient(180deg, var(--sea) 0%, var(--sea-deep) 100%) var(--sea) fixed;
   color: var(--fg);
   font-family: var(--font-body);
   font-weight: 600;
@@ -47,21 +54,67 @@ body {
 }
 .game { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 14px; }
 header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.8rem; line-height: 1.1; margin: 0; color: var(--gold); text-wrap: balance; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.8rem; line-height: 1.1; margin: 0; color: var(--gold); text-wrap: balance; text-shadow: 0 2px 0 #3a2615, 0 0 14px rgba(242,193,78,.25); }
 .sub { margin: 0; color: var(--muted); }
+/* Ship fittings: brass buttons, wooden planks, rivets */
 button {
   font: inherit; font-weight: 800; border: 0; border-radius: 10px; padding: 10px 18px;
-  background: var(--gold); color: var(--ink); cursor: pointer;
-  box-shadow: 0 3px 0 #9a6a12;
+  background: linear-gradient(180deg, var(--brass-hi), var(--brass) 55%, #a8812e); color: var(--ink); cursor: pointer;
+  box-shadow: 0 3px 0 #6e4f14, inset 0 0 0 1.5px rgba(90,60,10,.6), inset 0 2px 0 rgba(255,255,255,.45);
 }
-button:active { transform: translateY(2px); box-shadow: 0 1px 0 #9a6a12; }
-button.ghost { background: var(--panel); color: var(--fg); box-shadow: none; }
+button:active { transform: translateY(2px); box-shadow: 0 1px 0 #6e4f14, inset 0 0 0 1.5px rgba(90,60,10,.6); }
+button:disabled { opacity: .45; cursor: default; transform: none; }
+button.ghost {
+  background: repeating-linear-gradient(90deg, rgba(0,0,0,.08) 0 1px, transparent 1px 34px), linear-gradient(180deg, #8f5e37, var(--plank-dark));
+  color: var(--parchment); text-shadow: 0 1px 0 #2a1408;
+  box-shadow: 0 3px 0 #2a1408, inset 0 0 0 1.5px #2a1408, inset 0 1px 0 rgba(255,255,255,.18);
+}
+button.ghost:active { box-shadow: 0 1px 0 #2a1408, inset 0 0 0 1.5px #2a1408; }
+.mapwrap, #playScreen .stage, .card {
+  --rivet: radial-gradient(circle, #fff2c0 0 1.5px, var(--brass) 2px 3.5px, #5a3a10 4px, transparent 4.5px);
+  background:
+    var(--rivet) 4px 4px / 10px 10px no-repeat, var(--rivet) calc(100% - 4px) 4px / 10px 10px no-repeat,
+    var(--rivet) 4px calc(100% - 4px) / 10px 10px no-repeat, var(--rivet) calc(100% - 4px) calc(100% - 4px) / 10px 10px no-repeat,
+    repeating-linear-gradient(90deg, rgba(0,0,0,.14) 0 1.5px, transparent 1.5px 110px),
+    repeating-linear-gradient(180deg, var(--plank) 0 11px, var(--plank-dark) 11px 12px);
+  box-shadow: inset 0 0 0 2px #2a1408, inset 0 0 0 4px rgba(242,193,78,.18), 0 12px 30px rgba(0,0,0,.45);
+}
+.plaque {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px;
+  background: linear-gradient(180deg, #3d2816, #24160b); color: var(--brass-hi); font-weight: 800; font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 2px var(--brass), 0 2px 0 rgba(0,0,0,.4);
+}
+.coin { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.coin svg { width: 1.15em; height: 1.15em; }
+.purse { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.purse #toPort { margin-left: auto; padding: 7px 14px; }
 button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 
+/* Open sea behind every screen: sunset sky, far islands, a passing ship, rolling swells */
+.ocean { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+  background: linear-gradient(180deg, #1b2f4f 0%, #4b4a6e 16%, #c96b4f 30%, #f3b86b 36%, #2c7393 36.2%, #0b2b3d 100%); }
+.ocean > * { position: absolute; }
+.ocean .sun { left: 84%; top: 36%; width: 150px; height: 150px; translate: -50% -50%; border-radius: 50%;
+  background: radial-gradient(circle, #fff1c4 0 30%, #ffc96b 44%, rgba(255,160,80,.35) 58%, transparent 70%); }
+.ocean .cloud { height: 26px; border-radius: 50%; background: rgba(255,214,190,.55); filter: blur(5px); animation: cloud linear infinite; }
+@keyframes cloud { from { translate: -30vw 0; } to { translate: 130vw 0; } }
+.ocean .far { left: 0; right: 0; top: calc(36% - 40px); height: 41px; width: 100%; }
+.ocean .sail { top: calc(36% - 30px); left: 0; width: 46px; height: 34px; animation: passby 140s linear infinite; }
+@keyframes passby { from { translate: -10vw 0; } to { translate: 110vw 0; } }
+.ocean .gull { width: 26px; height: 12px; animation: gull 38s linear infinite; }
+@keyframes gull { from { translate: 110vw 0; } 50% { transform: translateY(-14px); } to { translate: -10vw 0; } }
+.ocean .glitter { left: 84%; top: 36%; width: 170px; height: 34%; translate: -50% 0;
+  background: repeating-linear-gradient(180deg, rgba(255,226,160,.55) 0 2px, transparent 2px 10px);
+  -webkit-mask: radial-gradient(ellipse 50% 100% at 50% 0, #000 20%, transparent 75%); mask: radial-gradient(ellipse 50% 100% at 50% 0, #000 20%, transparent 75%);
+  animation: glitter 2.4s ease-in-out infinite alternate; }
+@keyframes glitter { to { opacity: .45; background-position-y: 6px; } }
+.ocean .swell { left: 0; right: 0; bottom: 0; animation: swell linear infinite; }
+@keyframes swell { to { background-position: var(--w) 0, 0 var(--crest); } }
 /* Treasure map: a scrolling parchment sea with islands on a dotted route */
-.mapwrap { position: relative; }
+.mapwrap { position: relative; padding: 11px; border-radius: 16px; }
 .map {
-  position: relative; height: max(360px, calc(100vh - 150px)); height: max(360px, calc(100dvh - 150px));
+  position: relative; height: max(340px, calc(100vh - 230px)); height: max(340px, calc(100dvh - 230px));
+  border: 4px solid; border-image: repeating-linear-gradient(45deg, var(--rope) 0 3px, #9c7a3c 3px 6px) 4;
   overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
   background: var(--parchment);
   background-image:
@@ -126,7 +179,7 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .wake { width: 14px; height: 6px; margin: -3px 0 0 -7px; border-radius: 50%; border: 2px solid rgba(58,38,21,.4); pointer-events: none; animation: wake 1.4s ease-out forwards; }
 @keyframes wake { to { transform: scale(2.6); opacity: 0; } }
 .story {
-  position: absolute; inset: 0; z-index: 5; border-radius: 12px; padding: 14px; box-sizing: border-box;
+  position: absolute; inset: 15px; z-index: 5; padding: 14px; box-sizing: border-box;
   background: rgba(8,20,28,.55); display: flex; align-items: flex-end; justify-content: center;
 }
 .story .scroll { max-width: 420px; align-items: stretch; text-align: left; animation: rise .35s cubic-bezier(.3, 1.3, .5, 1); }
@@ -142,14 +195,20 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 
 /* Deck */
 .hud { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.stat { background: var(--panel); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
-.stat span { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.stat {
+  border-radius: 10px; padding: 8px 14px; display: flex; flex-direction: column; gap: 2px;
+  background: radial-gradient(circle, var(--brass) 0 2px, transparent 2.5px) 5px 5px / 8px 8px no-repeat,
+    radial-gradient(circle, var(--brass) 0 2px, transparent 2.5px) calc(100% - 5px) 5px / 8px 8px no-repeat,
+    linear-gradient(180deg, #3d2816, #24160b);
+  box-shadow: inset 0 0 0 2px rgba(201,162,79,.7), 0 3px 0 rgba(0,0,0,.35);
+}
+.stat span { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--brass); }
 .stat b { font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
 .stat.low b { color: #ff7b6e; }
 .goals { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
   display: flex; align-items: center; gap: 6px; padding: 5px 12px 5px 6px;
-  border-radius: 99px; background: var(--panel); font-variant-numeric: tabular-nums; font-weight: 800;
+  border-radius: 99px; background: linear-gradient(180deg, #3d2816, #24160b); box-shadow: inset 0 0 0 1.5px rgba(201,162,79,.6); font-variant-numeric: tabular-nums; font-weight: 800;
 }
 .chip svg, .chip .netcell { width: 24px; height: 24px; flex: none; }
 .chip.done { box-shadow: inset 0 0 0 2px #4cd18a; color: #4cd18a; }
@@ -161,7 +220,7 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
   box-shadow: inset 0 0 0 2px var(--rope);
 }
 .netcell { display: inline-block; background-color: rgba(0,0,0,.25); }
-.stage { position: relative; width: min(100%, calc(100vh - 300px)); width: min(100%, calc(100dvh - 300px)); min-width: 240px; max-width: 100%; margin-inline: auto; }
+.stage { box-sizing: border-box; padding: 9px; border-radius: 14px; position: relative; width: min(100%, calc(100vh - 300px)); width: min(100%, calc(100dvh - 300px)); min-width: 240px; max-width: 100%; margin-inline: auto; }
 .toggles { display: flex; gap: 8px; justify-content: center; }
 .toggles button { padding: 6px 14px; font-size: .85rem; }
 .toggles button[aria-pressed="false"] { opacity: .5; }
@@ -176,7 +235,9 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
   #playScreen .stage { grid-column: 2; grid-row: 1 / span 4; width: min(calc(100vh - 48px), calc(100vw - 400px)); width: min(calc(100dvh - 48px), calc(100vw - 400px)); }
   .hint-text { display: block; }
   #mapScreen { max-width: 760px; width: 100%; margin-inline: auto; }
-  .map { height: max(360px, calc(100vh - 110px)); height: max(360px, calc(100dvh - 110px)); }
+  .map { height: max(340px, calc(100vh - 190px)); height: max(340px, calc(100dvh - 190px)); }
+  #portScreen { max-width: 760px; margin-inline: auto; }
+  .cards { grid-template-columns: 1fr 1fr; }
   .toggles { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: 16px; }
 }
 .board {
@@ -185,7 +246,7 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
   background:
     repeating-conic-gradient(rgba(0,0,0,.13) 0 25%, transparent 0 50%) 0 0 / 25% 25%,
     linear-gradient(180deg, var(--wood) calc(100% - 2px), var(--wood-dark) 0) 0 0 / 100% 12.5%;
-  box-shadow: 0 0 0 5px var(--wood-dark), 0 12px 30px rgba(0,0,0,.45);
+  box-shadow: 0 0 0 2px #2a1408, inset 0 0 0 1px rgba(0,0,0,.3);
 }
 .layer { position: absolute; inset: 0; }
 .net, .tile { position: absolute; left: 0; top: 0; width: 12.5%; height: 12.5%; }
@@ -289,26 +350,66 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .scroll button.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 2px rgba(58,38,21,.5); }
 .stars { font-size: 2.4rem; letter-spacing: .15em; color: rgba(58,38,21,.22); }
 .stars .on { color: #c8901f; }
-.hint-text { margin: 0; color: var(--muted); font-size: .85rem; }
+/* Port */
+.port { display: flex; flex-direction: column; gap: 10px; }
+.port h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; margin: 8px 0 0; color: var(--gold); text-shadow: 0 2px 0 #3a2615; }
+.port h2 small { font-family: var(--font-body); font-size: .85rem; color: var(--muted); margin-left: 6px; }
+.cards { display: grid; gap: 10px; }
+.card { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "art info" "art act"; gap: 6px 12px; align-items: center; padding: 12px 14px; border-radius: 12px; color: var(--parchment); }
+.card.mine { box-shadow: inset 0 0 0 2px #2a1408, inset 0 0 0 4px var(--gold), 0 12px 30px rgba(0,0,0,.45); }
+.card .art, .card .face { grid-area: art; width: 84px; height: 74px; border-radius: 10px; background: rgba(239,220,179,.92); box-shadow: inset 0 0 0 2px #2a1408; }
+.card .face { width: 64px; height: 64px; border-radius: 50%; }
+.card .art svg { width: 100%; height: 100%; }
+.card .info { grid-area: info; min-width: 0; }
+.card .info b { font-family: var(--font-display); font-weight: 400; font-size: 1.2rem; color: var(--brass-hi); }
+.card .info p { margin: 2px 0 0; font-size: .9rem; line-height: 1.3; }
+.card .info small { color: var(--rope); font-size: .8rem; }
+.card button, .card .tag { grid-area: act; justify-self: start; padding: 6px 14px; font-size: .9rem; }
+.card .tag { color: var(--rope); font-weight: 800; padding-left: 0; }
+.card button.ghost.on { background: linear-gradient(180deg, #3f8a5a, #22603a); }
+.scroll .haul { font-weight: 800; font-size: 1.1rem; }
+.scroll .coin { color: #8a5c0e; }
+.hint-text { margin: 0; color: #e3eef0; font-size: .85rem; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
 @media (prefers-reduced-motion: reduce) {
   .tile, .tile svg, .combo, .net { transition-duration: .01s; }
   .tile.spin svg, .tile.aim svg, .fx.ray, .fx.spot, .fx.hand.swipe, .fx.hand.tap,
-  .ship svg, .wake, .decor.fogpuff, .isle.current .seal, .isle.reveal .land, .story .scroll,
+  .ocean *, .ship svg, .wake, .decor.fogpuff, .isle.current .seal, .isle.reveal .land, .story .scroll,
   .tile.hint svg, .tile.rare svg, .tile.born svg, .tile.rinse svg, .fx.tide, .tile.shake svg, .tile .spark, .board.quake { animation: none; }
 }
 </style>
 </head>
 <body>
+<div class="ocean" aria-hidden="true"><div class="sun"></div><div class="cloud" style="top:8%;width:220px;animation-duration:160s;animation-delay:-40s"></div><div class="cloud" style="top:17%;width:140px;animation-duration:120s;animation-delay:-90s"></div><div class="cloud" style="top:24%;width:260px;animation-duration:200s;animation-delay:-10s;opacity:.7"></div><svg class="far" viewBox="0 0 1000 41" preserveAspectRatio="none"><path d="M40 41q30-30 70-26q20-18 50-4q30 2 50 30zM700 41q20-14 50-16q40-26 70-6q30 4 40 22zM880 41q10-8 30-8q20 0 30 8z" fill="#3a2f4a" opacity=".75"/><path d="M118 15q2-10 8-12m-8 12q-8-6-14-4" stroke="#3a2f4a" stroke-width="3" fill="none"/></svg><svg class="sail" viewBox="0 0 46 34"><path d="M4 26h38l-6 7H10z" fill="#2b2433"/><path d="M22 26V2M32 26V8" stroke="#2b2433" stroke-width="2"/><path d="M12 6q10 3 20 0v16q-10 3-20 0zM28 11q6 2 10 0v12q-5 2-10 0z" fill="#3d3446"/></svg><svg class="gull" style="top:12%;animation-delay:-5s" viewBox="0 0 26 12"><path d="M1 8q6-8 12 0q6-8 12 0" fill="none" stroke="#2b2433" stroke-width="2"/></svg><svg class="gull" style="top:19%;animation-delay:-22s;animation-duration:52s" viewBox="0 0 26 12"><path d="M1 8q6-8 12 0q6-8 12 0" fill="none" stroke="#2b2433" stroke-width="2"/></svg><div class="swell" style="top:36%;--w:120px;--crest:13px;background:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='14'%3E%3Cpath d='M0 7.0 Q15.0 0.7000000000000002 30.0 7.0 T60.0 7.0 T90.0 7.0 T120 7.0 V14 H0Z' fill='%232c7393' stroke='rgba(255,255,255,.28)' stroke-width='1.5'/%3E%3C/svg%3E&quot;) 0 0/120px 14px repeat-x,linear-gradient(#2c7393,#2c7393) 0 13px/100% 100% no-repeat;animation-duration:46s;animation-direction:normal"></div><div class="swell" style="top:45%;--w:180px;--crest:19px;background:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='20'%3E%3Cpath d='M0 10.0 Q22.5 1.0 45.0 10.0 T90.0 10.0 T135.0 10.0 T180 10.0 V20 H0Z' fill='%2321607d' stroke='rgba(255,255,255,.28)' stroke-width='1.5'/%3E%3C/svg%3E&quot;) 0 0/180px 20px repeat-x,linear-gradient(#21607d,#21607d) 0 19px/100% 100% no-repeat;animation-duration:34s;animation-direction:reverse"></div><div class="glitter"></div><div class="swell" style="top:58%;--w:240px;--crest:25px;background:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='26'%3E%3Cpath d='M0 13.0 Q30.0 1.299999999999999 60.0 13.0 T120.0 13.0 T180.0 13.0 T240 13.0 V26 H0Z' fill='%23184e68' stroke='rgba(255,255,255,.28)' stroke-width='1.5'/%3E%3C/svg%3E&quot;) 0 0/240px 26px repeat-x,linear-gradient(#184e68,#184e68) 0 25px/100% 100% no-repeat;animation-duration:24s;animation-direction:normal"></div><div class="swell" style="top:74%;--w:320px;--crest:33px;background:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='34'%3E%3Cpath d='M0 17.0 Q40.0 1.6999999999999993 80.0 17.0 T160.0 17.0 T240.0 17.0 T320 17.0 V34 H0Z' fill='%230f3b52' stroke='rgba(255,255,255,.28)' stroke-width='1.5'/%3E%3C/svg%3E&quot;) 0 0/320px 34px repeat-x,linear-gradient(#0f3b52,#0f3b52) 0 33px/100% 100% no-repeat;animation-duration:17s;animation-direction:reverse"></div></div>
 <div class="game">
   <section id="mapScreen" class="game">
     <header>
       <h1>Пиратские сокровища</h1>
       <button class="ghost" id="resetBtn" type="button" hidden>Сброс</button>
-      <span class="sub" id="totalStars"></span>
     </header>
+    <div class="purse">
+      <span class="plaque" id="mapGold"></span>
+      <span class="plaque" id="totalStars"></span>
+      <button type="button" id="toPort">Порт: корабль и команда</button>
+    </div>
     <div class="mapwrap">
       <div class="map" id="map" aria-label="Карта сокровищ"><div class="sea" id="sea"></div></div>
       <div class="story" id="story" hidden></div>
+    </div>
+  </section>
+
+  <section id="portScreen" class="game" hidden>
+    <header>
+      <button class="ghost" id="portBack" type="button">← Карта</button>
+      <h1>Порт</h1>
+      <span class="plaque" id="portGold"></span>
+    </header>
+    <div class="port">
+      <h2>Верфь</h2>
+      <p class="sub">Корабль побольше даёт лишние ходы на каждом острове и места для команды.</p>
+      <div class="cards" id="yard"></div>
+      <h2>Таверна <small id="crewRoom"></small></h2>
+      <p class="sub">Наймите моряков за золото. С вами плывут только те, кому хватило места на борту.</p>
+      <div class="cards" id="tavern"></div>
     </div>
   </section>
 
@@ -318,9 +419,9 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
       <h1 id="levelTitle">Остров 1</h1>
     </header>
     <div class="hud">
-      <div class="stat"><span>Добыча</span><b id="score">0</b></div>
+      <div class="stat"><span>Золото</span><b id="gold">0</b></div>
       <div class="stat" id="movesBox"><span>Ходы</span><b id="moves">0</b></div>
-      <div class="stat"><span>Видов</span><b id="kinds">5</b></div>
+      <div class="stat"><span>Очки</span><b id="score">0</b></div>
     </div>
     <div class="goals" id="goals" aria-label="Задания острова"></div>
     <div class="stage">
@@ -422,7 +523,12 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 const SAVE_KEY = 'pirates-progress-v2'; // a new key starts everyone from island 1
 let progress = { unlocked: 1, stars: {}, tips: {} };
 try { const p = JSON.parse(localStorage.getItem(SAVE_KEY)); if (p && p.unlocked) progress = p; } catch (e) {}
-progress.tips = progress.tips || {};
+function fixProgress() {
+  progress.tips = progress.tips || {}; progress.story = progress.story || {};
+  progress.gold = progress.gold || 0; progress.vessel = progress.vessel || 0;
+  progress.hired = progress.hired || {}; progress.aboard = progress.aboard || [];
+}
+fixProgress();
 function saveProgress() {
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(progress)); } catch (e) {}
   YSDK.save(progress);
@@ -555,9 +661,10 @@ function goalList() {
   return g;
 }
 const goalsMet = () => goalList().every(g => g.have >= g.need);
+const STAR_SVG = '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6l13 29 31 3-23 21 7 31-28-16-28 16 7-31L6 38l31-3z" fill="#f2c14e" stroke="#8a5c0e" stroke-width="5" stroke-linejoin="round"/></svg>';
 function chipHtml(g) {
   const done = g.have >= g.need ? ' done' : '';
-  if (g.kind === 'score') return `<span class="chip${done}">${gemSvg(0)} ${g.have} / ${g.need}</span>`;
+  if (g.kind === 'score') return `<span class="chip${done}">${STAR_SVG} ${g.have} / ${g.need}</span>`;
   if (g.kind === 'collect') return `<span class="chip${done}">${gemSvg(g.t)} ${done ? '✓' : g.need - g.have}</span>`;
   return `<span class="chip${done}"><i class="netcell"></i> ${done ? '✓' : g.need - g.have}</span>`;
 }
@@ -570,7 +677,7 @@ function goalText(g) {
 function updateHud() {
   $('score').textContent = score;
   $('moves').textContent = moves;
-  $('kinds').textContent = L.types;
+  $('gold').textContent = loot();
   $('movesBox').classList.toggle('low', moves <= 5);
   $('goals').innerHTML = goalList().map(chipHtml).join('');
 }
@@ -793,7 +900,7 @@ async function resolve(pending, swapped = []) {
     }
     const boom = chestNear || [...clear].some(t => t.t === CHEST);
     const beforeBoom = new Set(clear); // the chest's own blast clears pieces but leaves nets in place
-    if (boom) { grid.forEach(row => row.forEach(t => t && clear.add(t))); Rec.chestBroke++; }
+    if (boom) { grid.forEach(row => row.forEach(t => t && clear.add(t))); Rec.chestBroke++; L.chestGold = (L.chestGold || 0) + CHEST_GOLD; }
     score += clear.size * 10 * combo;
     if (boom) { flash('Золотой сундук!'); Sound.boom(); }
     else if (!fired.size && !makes.length) { Sound.match(combo); if (combo > 1) flash(COMBO_WORDS[combo] || `Комбо ×${combo}`); }
@@ -866,6 +973,10 @@ async function aimAt(compass, type) {
 async function afterMove() {
   busy = false;
   if (goalsMet()) return win();
+  if (moves <= 0 && aboard('cook') && !L.cookUsed) {
+    L.cookUsed = true; moves += 3; Rec.extraMoves += 3;
+    flash('Кок: +3 хода!'); updateHud();
+  }
   if (moves <= 0) return lose();
   if (!findMove(types())) {
     flash('Волна!'); Rec.shuffles++;
@@ -904,16 +1015,17 @@ function win() {
   const stars = ratio >= .3 ? 3 : ratio >= .15 ? 2 : 1;
   progress.stars[levelNo] = Math.max(progress.stars[levelNo] || 0, stars);
   progress.unlocked = Math.max(progress.unlocked, levelNo + 1);
-  saveProgress();
+  const gold = bank(loot());
   overlay(
-    `<h2>Остров ${levelNo} взят!</h2>${starsHtml(stars)}<p>Добыча: ${score}, из них ${bonus} за оставшиеся ходы.</p>`,
-    [['Плыть дальше', () => afterAd(() => voyage(levelNo + 1))], ['Повторить', () => afterAd(() => startLevel(levelNo)), true]]
+    `<h2>Остров ${levelNo} взят!</h2>${starsHtml(stars)}<p class="haul">В казну: ${coin('+' + gold)}</p><p>Очки: ${score}, из них ${bonus} за оставшиеся ходы.</p>`,
+    [['Плыть дальше', () => afterAd(() => voyage(levelNo + 1))], ['Повторить', () => afterAd(() => startLevel(levelNo)), true], ['В порт', () => afterAd(showPort), true]]
   );
 }
 function lose() {
   Tut.stop(); Rec.finish('поражение');
   over = true; clearHint(); Sound.lose(); YSDK.gameplay(false);
   const left = goalList().filter(g => g.have < g.need).map(chipHtml).join('');
+  const gold = bank(Math.floor(loot() / 2));
   const buttons = [['Ещё раз', () => afterAd(() => startLevel(levelNo))], ['На карту', showMap, true]];
   // One rewarded video per attempt buys extra moves.
   if (!L.bonusUsed && YSDK.canReward()) buttons.unshift([`+${EXTRA_MOVES} ходов за рекламу`, async () => {
@@ -924,7 +1036,8 @@ function lose() {
     $('overlay').hidden = true;
     YSDK.gameplay(true); armHint();
   }]);
-  overlay(`<h2>Ходы закончились</h2><p>До сокровищ было рукой подать:</p><div class="goals">${left}</div>`, buttons);
+  overlay(`<h2>Ходы закончились</h2><p>До сокровищ было рукой подать:</p><div class="goals">${left}</div>` +
+    (gold ? `<p class="haul">Спасли половину добычи: ${coin('+' + gold)}</p>` : ''), buttons);
 }
 
 function setSel(tile) {
@@ -1154,7 +1267,7 @@ const YSDK = {
       // Cloud progress wins when it is further along than this device.
       if (d.progress && d.progress.unlocked > progress.unlocked) {
         progress = d.progress;
-        progress.tips = progress.tips || {};
+        fixProgress();
         try { localStorage.setItem(SAVE_KEY, JSON.stringify(progress)); } catch (e) {}
         if (!levelNo) showMap();
       }
@@ -1200,7 +1313,7 @@ const Rec = {
     const doc = {
       island: c.level, result, testMode: TEST_MODE,
       movesUsed: c.log.length, movesGiven: L.moves + c.extraMoves, movesLeft: moves,
-      score, goals: goalList().map(g => ({ kind: g.kind, what: g.kind === 'collect' ? PIECES[g.t].name : g.kind, need: g.need, have: g.have })),
+      score, gold: loot(), ship: vessel().name, crew: progress.aboard, goals: goalList().map(g => ({ kind: g.kind, what: g.kind === 'collect' ? PIECES[g.t].name : g.kind, need: g.need, have: g.have })),
       specialsMade: c.made, specialsFired: c.fired, chestBroke: c.chestBroke, chestSank: c.chestSank,
       shuffles: c.shuffles, extraMoves: c.extraMoves, seconds: Math.round((Date.now() - c.started) / 1000),
       at: new Date().toISOString(), moves: c.log,
@@ -1301,6 +1414,143 @@ function tutorialNext() {
   return false;
 }
 
+// Economy: every treasure has a price in gold; gold buys bigger ships and hires crew.
+const VALUE = [1, 3, 2, 1, 2, 2, 4]; // gold per piece, by PIECES index
+const CHEST_GOLD = 150;
+const SHIPS = [
+  { name: 'Шлюпка', price: 0, moves: 0, crew: 1, masts: 1, len: .62, about: 'Маленькая, зато своя.' },
+  { name: 'Шлюп', price: 600, moves: 1, crew: 2, masts: 1, len: .8, about: 'Быстрый одномачтовый парусник.' },
+  { name: 'Бригантина', price: 1800, moves: 2, crew: 3, masts: 2, len: .9, about: 'Любимый корабль контрабандистов.' },
+  { name: 'Фрегат', price: 4000, moves: 3, crew: 4, masts: 3, len: 1, about: 'Гроза торговых путей.' },
+  { name: 'Галеон', price: 8000, moves: 4, crew: 5, masts: 3, len: 1.1, castle: true, about: 'Плавучая крепость с полным трюмом.' },
+];
+const face = (skin, hat, extra = '') => `<circle cx="32" cy="36" r="18" fill="${skin}"/><circle cx="26" cy="35" r="2.3" fill="#1b1b1b"/><circle cx="38" cy="35" r="2.3" fill="#1b1b1b"/>${extra}${hat}`;
+const CREW = [
+  { id: 'bosun', name: 'Боцман', price: 300, perk: '+1 ход на каждом острове',
+    face: face('#d9a77c', '<path d="M14 30q18-22 36 0" fill="none"/>', '<path d="M20 44q12-8 24 0q-6 4-12 0q-6 4-12 0z" fill="#6b4423"/><path d="M44 48l8 4" stroke="#c8c8c8" stroke-width="3" stroke-linecap="round"/>') },
+  { id: 'quarter', name: 'Квартирмейстер', price: 500, perk: '+25% золота с каждого острова',
+    face: face('#e8bf98', '<path d="M10 26q22-18 44 0q-22-6-44 0z" fill="#2b2b3a"/><circle cx="32" cy="16" r="3" fill="#f2c14e"/>', '<g fill="none" stroke="#3a2615" stroke-width="1.6"><circle cx="26" cy="35" r="5"/><circle cx="38" cy="35" r="5"/><path d="M31 35h2"/></g><path d="M27 45q5 3 10 0" stroke="#3a2615" stroke-width="2" fill="none"/>') },
+  { id: 'gunner', name: 'Канонир', price: 700, perk: 'Остров начинается с пушечного ядра на палубе',
+    face: face('#c98f63', '<path d="M13 30q2-14 19-14t19 14z" fill="#b3322b"/><path d="M50 24l8 6-8 2z" fill="#b3322b"/>', '<ellipse cx="40" cy="44" rx="5" ry="2.5" fill="#3a3a3a" opacity=".45"/><path d="M26 46q6 3 12 0" stroke="#3a2615" stroke-width="2" fill="none"/>') },
+  { id: 'cook', name: 'Кок', price: 900, perk: 'Когда ходы кончаются, один раз даёт +3 хода',
+    face: face('#f0c4a0', '<path d="M18 24q-8-12 6-14q4-8 16-2q12-4 12 8q4 6-4 8z" fill="#fff" stroke="#c8c0b0" stroke-width="1.5"/><rect x="18" y="20" width="28" height="6" fill="#f4f0e6" stroke="#c8c0b0"/>', '<path d="M24 44q8 6 16 0" stroke="#3a2615" stroke-width="2" fill="none"/><circle cx="21" cy="41" r="3" fill="#e88" opacity=".5"/><circle cx="43" cy="41" r="3" fill="#e88" opacity=".5"/>') },
+  { id: 'powder', name: 'Пороховщик', price: 1500, perk: 'Остров начинается с бочки пороха на палубе',
+    face: face('#b98560', '<path d="M14 28q18-18 36 0z" fill="#3f6b3a"/>', '<rect x="19" y="30" width="26" height="9" rx="4" fill="#4a3a2a"/><circle cx="26" cy="34.5" r="3.5" fill="#9fd3e6"/><circle cx="38" cy="34.5" r="3.5" fill="#9fd3e6"/><path d="M26 46h12" stroke="#3a2615" stroke-width="2"/>') },
+  { id: 'navigator', name: 'Штурман', price: 2500, perk: 'Остров начинается с компас-бомбы на палубе',
+    face: face('#e3b48c', '<path d="M8 28q24-26 48 0q-24-8-48 0z" fill="#1d3d55"/><path d="M8 28q24-8 48 0" stroke="#f2c14e" stroke-width="2" fill="none"/>', '<path d="M24 46q8 4 16 0" stroke="#3a2615" stroke-width="2" fill="none"/><path d="M18 40q14 18 28 0q-2 12-14 12t-14-12z" fill="#9a8a7a"/>') },
+];
+progress.gold = progress.gold || 0;
+progress.vessel = progress.vessel || 0;
+progress.hired = progress.hired || {};
+progress.aboard = progress.aboard || [];
+const aboard = id => progress.aboard.includes(id);
+const vessel = () => SHIPS[progress.vessel];
+// Gold for this attempt so far: treasures by price, chests on top, quartermaster's share.
+const loot = () => {
+  let g = (L.chestGold || 0);
+  for (const t in collected) g += (VALUE[t] || 0) * collected[t];
+  return Math.round(g * (aboard('quarter') ? 1.25 : 1));
+};
+// Pays out the part of `amount` not yet paid this attempt (a lost island pays half, a later win tops it up).
+function bank(amount) {
+  const add = Math.max(0, amount - (L.paid || 0));
+  L.paid = Math.max(L.paid || 0, amount);
+  progress.gold += add;
+  saveProgress();
+  return add;
+}
+const coin = n => `<span class="coin">${gemSvg(0)}${n}</span>`;
+// Crew who bring a special piece put it on a random regular treasure at the start of an island.
+function crewSpecials() {
+  const want = [];
+  if (aboard('gunner')) want.push(Math.random() < .5 ? CANNON_ROW : CANNON_COL);
+  if (aboard('powder')) want.push(BARREL);
+  if (aboard('navigator')) want.push(COMPASS);
+  const free = grid.flat().filter(t => t.t < CHEST).sort(() => Math.random() - .5);
+  want.forEach((type, i) => {
+    const t = free[i];
+    t.t = type; t.el.className = 'tile rare born'; t.el.innerHTML = gemSvg(type);
+  });
+}
+
+// Ship art for every tier, facing right. 80×70 box, waterline at the bottom.
+function shipSvg(tier) {
+  const s = SHIPS[tier], half = 34 * s.len, x0 = 40 - half, x1 = 40 + half, deck = tier ? 42 : 47, slope = 7 * s.len;
+  let g = '<path d="M2 60q10-5 20 0t20 0 20 0 16 0" fill="none" stroke="#3d7f99" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>';
+  g += `<path d="M${x0} ${deck}H${x1}l-${slope} ${tier ? 14 : 10}H${x0 + slope}z" fill="#6b3f1f" stroke="#3a2615" stroke-width="2" stroke-linejoin="round"/>`;
+  if (tier) g += `<path d="M${x0 + 3} ${deck + 4}H${x1 - 3}" stroke="#f2c14e" stroke-width="2"/>`;
+  if (tier >= 3) g += [0, 1, 2].map(i => `<rect x="${x0 + 14 + i * 12}" y="${deck + 6}" width="4" height="3" fill="#2a1408"/>`).join('');
+  if (s.castle) g += `<path d="M${x0 - 2} ${deck}v-10h18v10" fill="#7a4a28" stroke="#3a2615" stroke-width="2"/><path d="M${x0 + 1} ${deck - 6}h12" stroke="#f2c14e" stroke-width="1.5"/>`;
+  if (!tier) {
+    g += `<path d="M40 ${deck}V16" stroke="#3a2615" stroke-width="2.5"/><path d="M42 18l16 26H42z" fill="#f4ead6" stroke="#8a6a3a" stroke-width="1.5"/>`;
+    g += `<path d="M28 ${deck + 3}l-8 9M52 ${deck + 3}l8 9" stroke="#8a5a34" stroke-width="2.5" stroke-linecap="round"/>`;
+    g += `<path d="M40 12l9 2.5-9 3z" fill="#b3322b"/>`;
+    return `<svg viewBox="0 0 80 70" aria-hidden="true">${g}</svg>`;
+  }
+  const spread = s.masts > 1 ? 34 * s.len / (s.masts - 1) : 0;
+  let tallest = null;
+  for (let i = 0; i < s.masts; i++) {
+    const mx = 40 + (i - (s.masts - 1) / 2) * spread + (s.castle ? 3 : 0);
+    const main = s.masts === 1 || i === Math.floor(s.masts / 2) || (s.masts === 2 && i === 0);
+    const top = main ? 4 : 10, w = (main ? 12 : 9) * s.len;
+    g += `<path d="M${mx} ${deck}V${top}" stroke="#3a2615" stroke-width="2.5"/>`;
+    g += `<path d="M${mx - w} ${top + 5}q${w} 4 ${2 * w} 0v${(deck - top - 12) * .5}q-${w} 4-${2 * w} 0z" fill="#f4ead6" stroke="#8a6a3a" stroke-width="1.5"/>`;
+    g += `<path d="M${mx - w * .9} ${top + 7 + (deck - top - 12) * .5}q${w * .9} 4 ${1.8 * w} 0v${(deck - top - 12) * .42}q-${w * .9} 4-${1.8 * w} 0z" fill="#efe2c4" stroke="#8a6a3a" stroke-width="1.5"/>`;
+    if (main && !tallest) tallest = { mx, top, mid: top + 7 + (deck - top - 12) * .5 };
+  }
+  if (tier >= 2) g += `<circle cx="${tallest.mx}" cy="${tallest.mid + 6}" r="4" fill="#3a2615"/>`;
+  g += `<path d="M${tallest.mx} ${tallest.top - 2}l12 3-12 4z" fill="#b3322b"/>`;
+  g += `<path d="M${x1} ${deck}l${8 * s.len} -8" stroke="#3a2615" stroke-width="2"/>`;
+  if (s.masts > 1) g += `<path d="M${x1 + 8 * s.len} ${deck - 8}L${tallest.mx} ${tallest.top + 2}" stroke="#3a2615" stroke-width="1" opacity=".6"/>`;
+  return `<svg viewBox="0 0 80 70" aria-hidden="true">${g}</svg>`;
+}
+
+// Port: the shipyard sells the next ship, the tavern hires crew; crew sail only while there is room aboard.
+function showPort() {
+  $('mapScreen').hidden = true;
+  $('playScreen').hidden = true;
+  $('portScreen').hidden = false;
+  renderPort();
+}
+function renderPort() {
+  $('portGold').innerHTML = coin(progress.gold);
+  const cur = progress.vessel, room = vessel().crew;
+  $('yard').innerHTML = SHIPS.map((s, i) => {
+    const state = i < cur ? 'Был вашим' : i === cur ? 'Ваш корабль' : i === cur + 1 ? null : 'Сначала предыдущий';
+    return `<div class="card${i === cur ? ' mine' : ''}"><div class="art">${shipSvg(i)}</div><div class="info"><b>${s.name}</b><p>${s.about}</p>` +
+      `<small>${s.moves ? `+${s.moves} ${s.moves === 1 ? 'ход' : 'хода'} на острове · ` : ''}мест в команде: ${s.crew}</small></div>` +
+      (state ? `<span class="tag">${state}</span>` : `<button type="button" data-ship="${i}"${progress.gold < s.price ? ' disabled' : ''}>Купить ${coin(s.price)}</button>`) + '</div>';
+  }).join('');
+  $('crewRoom').textContent = `На борту ${progress.aboard.length} из ${room}`;
+  $('tavern').innerHTML = CREW.map(m => {
+    const hired = progress.hired[m.id], on = aboard(m.id);
+    const btn = !hired
+      ? `<button type="button" data-hire="${m.id}"${progress.gold < m.price ? ' disabled' : ''}>Нанять ${coin(m.price)}</button>`
+      : `<button type="button" class="ghost${on ? ' on' : ''}" data-board="${m.id}" aria-pressed="${on}"${!on && progress.aboard.length >= room ? ' disabled' : ''}>${on ? 'На борту' : 'На берегу'}</button>`;
+    return `<div class="card${on ? ' mine' : ''}"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${m.face}</svg><div class="info"><b>${m.name}</b><p>${m.perk}</p></div>${btn}</div>`;
+  }).join('');
+}
+$('portScreen').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b || b.disabled) return;
+  if (b.dataset.ship) {
+    const i = +b.dataset.ship;
+    progress.gold -= SHIPS[i].price; progress.vessel = i;
+    Sound.forge(); saveProgress(); renderPort();
+  } else if (b.dataset.hire) {
+    const m = CREW.find(x => x.id === b.dataset.hire);
+    progress.gold -= m.price; progress.hired[m.id] = 1;
+    if (progress.aboard.length < vessel().crew) progress.aboard.push(m.id);
+    Sound.compass(); saveProgress(); renderPort();
+  } else if (b.dataset.board) {
+    const id = b.dataset.board;
+    progress.aboard = aboard(id) ? progress.aboard.filter(x => x !== id) : [...progress.aboard, id];
+    Sound.swap(); saveProgress(); renderPort();
+  }
+});
+$('portBack').addEventListener('click', () => { $('portScreen').hidden = true; showMap(); });
+$('toPort').addEventListener('click', showPort);
+
 // Story: chapters of six islands; a speaker's line greets the ship at each island, shown once.
 const CHAPTER = 6;
 const CHAPTERS = [
@@ -1383,7 +1633,6 @@ const DECOR = {
 };
 const THEME_DECOR = { bay: ['waves', 'gull', 'whale'], fog: ['fog', 'waves', 'gull'], kraken: ['tentacle', 'fin', 'waves'], skull: ['rocks', 'wreck', 'fin'] };
 const ROSE = '<svg class="rose" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="34" fill="none" stroke="#3a2615" stroke-width="1.5"/><path d="M50 4l7 39 39 7-39 7-7 39-7-39-39-7 39-7z" fill="#3a2615" opacity=".75"/><path d="M50 4l7 39-7 7zM96 50l-39 7-7-7zM50 96l-7-39 7-7zM4 50l39-7 7 7z" fill="#b3322b"/><text x="50" y="0" text-anchor="middle" font-family="Kelly Slab, serif" font-size="14" fill="#3a2615">N</text></svg>';
-const SHIP = '<svg viewBox="0 0 80 70" aria-hidden="true"><path d="M2 58q10-5 20 0t20 0 20 0 16 0" fill="none" stroke="#3d7f99" stroke-width="2.5" stroke-linecap="round" opacity=".7"/><path d="M6 42h66l-9 14H17z" fill="#6b3f1f" stroke="#3a2615" stroke-width="2" stroke-linejoin="round"/><path d="M10 46h58" stroke="#f2c14e" stroke-width="2"/><path d="M38 6v37M58 16v27" stroke="#3a2615" stroke-width="2.5"/><path d="M24 10q14 4 28 0v26q-14 4-28 0z" fill="#f4ead6" stroke="#8a6a3a" stroke-width="1.5"/><path d="M50 19q9 3 16 0v18q-8 3-16 0z" fill="#f4ead6" stroke="#8a6a3a" stroke-width="1.5"/><circle cx="38" cy="22" r="5" fill="#3a2615"/><path d="M34 30l8-3M34 27l8 3" stroke="#3a2615" stroke-width="1.5"/><path d="M38 2l12 3-12 4z" fill="#b3322b"/><path d="M72 42l6-8" stroke="#3a2615" stroke-width="2"/></svg>';
 
 // Living treasure map: islands sit on a winding route; the ship sails between them.
 const Voyage = { at: progress.ship || progress.unlocked, lay: null, busy: false };
@@ -1449,7 +1698,7 @@ function renderMap(fresh = 0) {
       `${!TEST_MODE && locked ? ' disabled' : ''} aria-label="Остров ${n}${locked ? ', ещё не открыт' : `, звёзд: ${s}`}">` +
       `${isleSvg(n, current)}<b class="seal">${n}</b><small>${[0, 1, 2].map(i => `<span class="${i < s ? 'on' : ''}">★</span>`).join('')}</small></button>`;
   }
-  html += `<div class="ship" id="ship">${SHIP}</div>`;
+  html += `<div class="ship" id="ship">${shipSvg(progress.vessel)}</div>`;
   const sea = $('sea');
   sea.style.height = H + 'px';
   sea.innerHTML = html;
@@ -1551,6 +1800,8 @@ function showMap(fresh) {
   $('story').hidden = true;
   const total = Object.values(progress.stars).reduce((a, b) => a + b, 0);
   $('totalStars').textContent = `★ ${total}`;
+  $('mapGold').innerHTML = coin(progress.gold);
+  $('portScreen').hidden = true;
   levelNo = 0;
   renderMap(fresh);
   followShip(shipSpot(Voyage.at).y, false);
@@ -1560,8 +1811,11 @@ function startLevel(n) {
   levelNo = n;
   Voyage.at = progress.ship = n;
   L = { ...levelDef(n) };
+  L.base = L.moves;
+  L.moves += vessel().moves + (aboard('bosun') ? 1 : 0);
   score = 0; moves = L.moves; collected = {}; busy = false; over = false; sel = null;
   $('mapScreen').hidden = true;
+  $('portScreen').hidden = true;
   $('playScreen').hidden = false;
   $('levelTitle').textContent = 'Остров ' + n;
   $('overlay').hidden = true;
@@ -1571,7 +1825,7 @@ function startLevel(n) {
   Rec.finish('начал заново');
   Rec.start();
   const guided = n === 1 && !progress.tips.intro && tutorialBoard();
-  if (!guided && !(n === 1 && !progress.tips.intro)) buildBoard(freshTypes());
+  if (!guided && !(n === 1 && !progress.tips.intro)) { buildBoard(freshTypes()); crewSpecials(); }
   updateHud();
   const goals = goalList();
   const newKind = L.types > (n > 1 ? levelDef(n - 1).types : 5)
@@ -1579,7 +1833,7 @@ function startLevel(n) {
   overlay(
     `<h2>Остров ${n}</h2><div class="goals">${goals.map(chipHtml).join('')}</div>` +
     goals.map(g => `<p>${goalText(g)}</p>`).join('') +
-    `<p>Ходов: ${L.moves}</p>${newKind}` +
+    `<p>Ходов: ${L.moves}${L.moves > L.base ? ` (${L.moves - L.base} от корабля и команды)` : ''}</p>${newKind}` +
     (n === CHEST_FROM ? `<p>Здесь может выпасть золотой сундук. Соберите ряд рядом с ним, пока он не опустился на дно, и он взорвёт всю палубу.</p><div class="goals"><span class="chip">${gemSvg(CHEST)}</span></div>` : ''),
     [['На абордаж!', () => { $('overlay').hidden = true; YSDK.gameplay(true); guided ? tutorialStart() : armHint(); }]]
   );
@@ -1587,7 +1841,7 @@ function startLevel(n) {
 
 $('toMap').addEventListener('click', showMap);
 $('resetBtn').hidden = !TEST_MODE;
-$('resetBtn').addEventListener('click', () => { progress = { unlocked: 1, stars: {}, tips: {}, story: {} }; Voyage.at = 1; saveProgress(); showMap(); });
+$('resetBtn').addEventListener('click', () => { progress = { unlocked: 1, stars: {}, tips: {}, story: {}, gold: 0, vessel: 0, hired: {}, aboard: [] }; Voyage.at = 1; saveProgress(); showMap(); });
 
 // When the page is updated while open, the current attempt carries on exactly where it was.
 window.claude?.hot?.snapshot?.(() => levelNo && grid && !over && !busy ? {
