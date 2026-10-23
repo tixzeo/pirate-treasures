@@ -2961,12 +2961,12 @@ function screen(id) {
 function grantUnlocks() {
   // Islands passed before battles existed still count: their companions join right away.
   ALLIES.forEach(x => { if (x.from < progress.unlocked) progress.allies[x.id] = 1; });
-  // Test mode: every companion and fruit at once, and enough gold to try every ship and sailor.
+  // Test mode: every companion and fruit at once, and enough gold for every ship, sailor and training.
   if (TEST_MODE) {
     ALLIES.forEach(x => { progress.allies[x.id] = 1; });
     FRUITS.forEach(f => { progress.fruits[f.id] = 1; });
     progress.fruit = progress.fruit || 'storm';
-    progress.gold = Math.max(progress.gold, 100000);
+    progress.gold = Math.max(progress.gold, 1000000);
   }
 }
 function showMap(fresh) {
