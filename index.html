@@ -236,7 +236,7 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
   .hint-text { display: block; }
   #mapScreen { max-width: 760px; width: 100%; margin-inline: auto; }
   .map { height: max(340px, calc(100vh - 190px)); height: max(340px, calc(100dvh - 190px)); }
-  #portScreen, #deckScreen { max-width: 760px; margin-inline: auto; }
+  #portScreen, #deckScreen, #cabinScreen { max-width: 760px; margin-inline: auto; }
   .cards { grid-template-columns: 1fr 1fr; }
   .toggles { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: 16px; }
 }
@@ -451,6 +451,13 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .fame em { font-style: normal; font-weight: 800; color: #8a5c0e; }
 .fame span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .scroll .double { align-self: center; }
+.shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; padding: 10px; border-radius: 12px;
+  background: repeating-linear-gradient(180deg, transparent 0 100px, #3a2615 100px 108px), linear-gradient(180deg, #4a2c14, #2e1a0b); box-shadow: inset 0 0 0 2px #2a1408; }
+.trophy { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; padding: 6px 4px; border-radius: 10px; background: rgba(239,220,179,.1); }
+.trophy svg { width: 84px; height: 56px; }
+.trophy b { font-family: var(--font-display); font-weight: 400; font-size: .85rem; color: var(--brass-hi); line-height: 1.1; }
+.trophy small { font-size: .7rem; color: var(--rope); }
+.trophy.unknown svg { filter: brightness(0) opacity(.4); }
 /* Ship deck: a side view the captain walks along, sails above, crew standing on the planks */
 .deckview { border-radius: 16px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin;
   box-shadow: inset 0 0 0 2px #2a1408, 0 12px 30px rgba(0,0,0,.45); background: linear-gradient(180deg, rgba(27,47,79,.25), rgba(243,184,107,.12) 60%, transparent); }
@@ -558,6 +565,22 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
     </div>
     <div class="merchant" id="deckTalk" hidden></div>
     <p class="sub">Нажмите на моряка, чтобы подойти и поговорить. Сходни ведут в порт, штурвал к островам. Стрелки ← → тоже ходят.</p>
+  </section>
+
+  <section id="cabinScreen" class="game" hidden>
+    <header>
+      <button class="ghost" id="cabinBack" type="button">← Палуба</button>
+      <h1>Каюта</h1>
+      <span class="plaque" id="cabinGold"></span>
+    </header>
+    <div class="port">
+      <h2>Трофеи <small id="shelfCount"></small></h2>
+      <p class="sub">С каждого побеждённого босса на полку встаёт трофей.</p>
+      <div class="shelf" id="shelf"></div>
+      <h2>Подвиги</h2>
+      <p class="sub">За каждый подвиг один раз положено золото.</p>
+      <div class="cards" id="achList"></div>
+    </div>
   </section>
 
   <section id="playScreen" class="game" hidden>
@@ -685,6 +708,8 @@ function fixProgress() {
   progress.gold = progress.gold || 0; progress.vessel = progress.vessel || 0;
   progress.hired = progress.hired || {}; progress.aboard = progress.aboard || [];
   progress.allies = progress.allies || {}; progress.fruits = progress.fruits || {};
+  progress.allyLv = progress.allyLv || {}; progress.achDone = progress.achDone || {};
+  progress.stats = progress.stats || { bombs: 0, gold: 0 };
 }
 fixProgress();
 function saveProgress() {
@@ -1053,7 +1078,7 @@ async function resolve(pending, swapped = []) {
       if (fired.has(sp)) continue;
       fired.add(sp); clear.add(sp);
       Rec.fired[PIECES[sp.t].name] = (Rec.fired[PIECES[sp.t].name] || 0) + 1;
-      if (isSpecial(sp)) Daily.bump('bombs');
+      if (isSpecial(sp)) { Daily.bump('bombs'); progress.stats.bombs++; }
       for (const t of await fire(sp)) {
         clear.add(t);
         if (isSpecial(t) && !fired.has(t)) queue.push(t);
@@ -1089,7 +1114,7 @@ async function resolve(pending, swapped = []) {
     const gems = [...clear].filter(t => t.t < CHEST).length;
     const broke = [...clear].filter(t => t.t === DEBRIS).length;
     if (L.boss && broke && ally('bjorn')) allyCameo('bjorn');
-    if (L.boss) hitFoe(gems + fired.size * 4 + (ally('bjorn') ? 3 * broke : 0));
+    if (L.boss) hitFoe(gems + fired.size * 4 + (alv('bjorn') ? (2 + alv('bjorn')) * broke : 0));
     if (progress.fruit) L.charge = Math.min(FRUIT_CHARGE, (L.charge || 0) + gems);
     updateHud();
     await wait(makes.length ? 450 : 200);
@@ -1196,7 +1221,7 @@ function win() {
   const stars = ratio >= .3 ? 3 : ratio >= .15 ? 2 : 1;
   progress.stars[levelNo] = Math.max(progress.stars[levelNo] || 0, stars);
   progress.unlocked = Math.max(progress.unlocked, levelNo + 1);
-  const gold = bank(Math.round(loot() * (L.boss && ally('mira') ? 1.5 : 1)));
+  const gold = bank(Math.round(loot() * (L.boss ? [1, 1.5, 1.65, 1.8][alv('mira')] : 1)));
   Daily.attempt(true, stars);
   YSDK.setScore(totalStars());
   // Beating a boss brings a new companion aboard.
@@ -1737,7 +1762,7 @@ function bank(amount) {
   const add = Math.max(0, amount - (L.paid || 0));
   L.paid = Math.max(L.paid || 0, amount);
   progress.gold += add;
-  if (add) Daily.bump('gold', add);
+  if (add) { Daily.bump('gold', add); progress.stats.gold += add; }
   saveProgress();
   return add;
 }
@@ -2132,7 +2157,7 @@ function foeWindup(now) {
 }
 function hitFoe(d) {
   if (!d) return;
-  d = Math.round(d * (ally('bella') ? 1.25 : 1));
+  d = Math.round(d * [1, 1.25, 1.35, 1.5][alv('bella')]);
   L.dmg = (L.dmg || 0) + d;
   const el = document.querySelector('.chip.foe');
   if (!el) return;
@@ -2147,7 +2172,7 @@ function hitFoe(d) {
 async function enemyVolley() {
   const f = L.boss;
   const room = WRECK_MAX - grid.flat().filter(t => t && t.t === DEBRIS).length;
-  const targets = grid.flat().filter(t => t && t.t < CHEST).sort(() => Math.random() - .5).slice(0, Math.max(0, Math.min(f.volley - (ally('squid') ? 1 : 0), room)));
+  const targets = grid.flat().filter(t => t && t.t < CHEST).sort(() => Math.random() - .5).slice(0, Math.max(0, Math.min(f.volley - [0, 1, 1, 2][alv('squid')], room)));
   if (!targets.length) return;
   foeWindup(true);
   await wait(450);
@@ -2246,7 +2271,21 @@ const ALLIES = [
     joins: 'Компания обманывала меня годами. Раз вы потопили «Золотого дракона», я торгую только с вами. И со скидкой!' },
 ];
 const ally = id => !!(progress.allies && progress.allies[id]);
-const fruitPrice = () => FRUIT_PRICE - (ally('mira') ? 100 : 0);
+// A companion's training level: 0 if not aboard, then 1 to 3. Training costs gold and strengthens their style.
+const alv = id => ally(id) ? progress.allyLv?.[id] || 1 : 0;
+const TRAIN_COST = [0, 0, 1500, 4000];
+const ALLY_PERK = {
+  tim: l => `В бою первый залп врага приходит на ${[0, 2, 3, 4][l]} хода позже`,
+  squid: l => `Каждый вражеский залп на ${l >= 3 ? 'два ядра' : 'одно ядро'} слабее`,
+  scar: l => `В бою каждые ${6 - l} ${6 - l === 5 ? 'ходов' : 'хода'} на палубе появляется пушечное ядро`,
+  bella: l => `Урон по врагу больше на ${[0, 25, 35, 50][l]}%`,
+  ig: l => `Бой начинается с ${['', 'двух', 'трёх', 'четырёх'][l]} бочек пороха на палубе`,
+  lo: l => `В бою каждые ${l >= 3 ? 3 : 4} хода молния бьёт по ${['', 'пяти', 'шести', 'семи'][l]} сокровищам`,
+  bjorn: l => `В бою каждый разбитый обломок наносит врагу ${2 + l} урона`,
+  mira: l => `За победу над боссом +${[0, 50, 65, 80][l]}% золота, сундук плодов дешевле на ${50 + 50 * l}`,
+};
+const allyPerk = (a, l = Math.max(1, alv(a.id))) => ALLY_PERK[a.id](l);
+const fruitPrice = () => FRUIT_PRICE - (alv('mira') ? 50 + 50 * alv('mira') : 0);
 function randomRegular(n) { return grid.flat().filter(t => t && t.t < CHEST).sort(() => Math.random() - .5).slice(0, n); }
 function placeSpecial(type) {
   const [t] = randomRegular(1);
@@ -2274,8 +2313,8 @@ async function strike(tiles) {
 // What happens after each of the player's moves in a sea battle.
 async function battleTurn() {
   L.turns = (L.turns || 0) + 1;
-  if (ally('lo') && L.turns % 4 === 0) { allyCameo('lo'); await wait(350); await strike(randomRegular(5)); if (goalsMet()) return; }
-  if (ally('scar') && L.turns % 5 === 0) { allyCameo('scar'); placeSpecial(Math.random() < .5 ? CANNON_ROW : CANNON_COL); }
+  if (alv('lo') && L.turns % (alv('lo') >= 3 ? 3 : 4) === 0) { allyCameo('lo'); await wait(350); await strike(randomRegular(4 + alv('lo'))); if (goalsMet()) return; }
+  if (alv('scar') && L.turns % (6 - alv('scar')) === 0) { allyCameo('scar'); placeSpecial(Math.random() < .5 ? CANNON_ROW : CANNON_COL); }
   if (L.timer === 2) foeWindup(false);
   if (--L.timer <= 0) { await enemyVolley(); L.timer = L.boss.every; }
   updateHud();
@@ -2588,6 +2627,7 @@ const HELM_ART = `<path d="M28 42h8v20h-8z" fill="#5e3a1f"/>${HELM_WHEEL}`;
 const GANGWAY_ART = '<path d="M6 58L50 34l6 6-44 24z" fill="#8a5a34" stroke="#3a2615" stroke-width="1.5"/><path d="M12 54l40-22M18 51l3 5M30 45l3 5M42 38l3 5" stroke="#3a2615" stroke-width="1.5"/><path d="M10 50V36M52 30V16" stroke="#5e3a1f" stroke-width="3"/><path d="M10 38q20-2 42-20" stroke="#e2c58a" stroke-width="2" fill="none"/>';
 const DAILY_ART = '<path d="M10 34q0-18 22-18t22 18z" fill="#a8652f" stroke="#3a2615" stroke-width="2"/><rect x="10" y="34" width="44" height="24" rx="2" fill="#8a5a34" stroke="#3a2615" stroke-width="2"/><path d="M10 40h44M22 17v41M42 17v41" stroke="#c9a24f" stroke-width="3"/><rect x="28" y="36" width="8" height="9" rx="1.5" fill="#f2c14e" stroke="#3a2615" stroke-width="1.5"/>';
 const FAME_ART = '<path d="M14 62V30M50 62V30" stroke="#5e3a1f" stroke-width="4"/><rect x="8" y="8" width="48" height="34" rx="3" fill="#8a5a34" stroke="#3a2615" stroke-width="2"/><rect x="12" y="12" width="40" height="26" fill="#efdcb3"/><path d="M17 19h20M17 25h26M17 31h16" stroke="#3a2615" stroke-width="2.5"/><path d="M45 14l2 4 4 .5-3 3 1 4-4-2-4 2 1-4-3-3 4-.5z" fill="#f2c14e"/>';
+const CABIN_ART = '<rect x="14" y="6" width="36" height="56" rx="16" fill="#6e4423" stroke="#2a1408" stroke-width="2"/><path d="M14 22q18-20 36 0" fill="none" stroke="#c9a24f" stroke-width="2"/><path d="M25 14v48M39 14v48" stroke="#2a1408" stroke-width="1.5" opacity=".5"/><circle cx="32" cy="24" r="6" fill="#9fd3e6" stroke="#c9a24f" stroke-width="2.5"/><circle cx="42" cy="40" r="2.5" fill="#f2c14e"/>';
 const esc = t => String(t).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
 const DECK_HELLO = {
   bosun: 'Палуба в порядке, капитан! Все по местам.', quarter: 'Казна в порядке, до последнего дублона.', gunner: 'Пушки заряжены, капитан!',
@@ -2617,7 +2657,7 @@ function deckSpots() {
   const s = [{ id: 'port', name: 'Сходни', art: GANGWAY_ART }, { id: 'parrot', name: 'Жако', face: FACES.parrot[1] }, { id: 'daily', name: 'Сундук дня', art: DAILY_ART }];
   progress.aboard.forEach(id => { const m = CREW.find(x => x.id === id); if (m) s.push({ id, name: m.name, face: m.face, crew: m }); });
   ALLIES.filter(a => ally(a.id)).forEach(a => s.push({ id: a.id, name: a.name, face: a.face, ally: a }));
-  s.push({ id: 'fame', name: 'Доска славы', art: FAME_ART }, { id: 'helm', name: 'Штурвал', art: HELM_ART });
+  s.push({ id: 'fame', name: 'Доска славы', art: FAME_ART }, { id: 'cabin', name: 'Каюта', art: CABIN_ART }, { id: 'helm', name: 'Штурвал', art: HELM_ART });
   return s;
 }
 const MASTS = { 1: [.55], 2: [.36, .68], 3: [.24, .5, .76] };
@@ -2630,7 +2670,7 @@ const standX = i => spotX(i) + (i === 0 ? 60 : -60);
 function showDeck(from) {
   grantUnlocks();
   screen('deckScreen');
-  renderDeck(from === 'port' ? 0 : -1);
+  renderDeck(from === 'port' ? 0 : from === 'cabin' ? deckSpots().length - 2 : -1);
 }
 function renderDeck(at) {
   const spots = Deck.spots = deckSpots(), v = vessel();
@@ -2647,7 +2687,7 @@ function renderDeck(at) {
       (s.art ? `<svg class="prop" viewBox="0 0 64 64" aria-hidden="true">${s.art}</svg>`
         : s.id === 'parrot' ? `<span class="fig"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${s.face}</svg>${PERCH}</span>`
         : figure(s.face, COATS[s.id] || '#5e3a1f')) +
-      `<small${s.id === 'daily' && Daily.ready() ? ' class="ping"' : ''}>${s.name}</small></button>`).join('') +
+      `<small${(s.id === 'daily' && Daily.ready()) || (s.id === 'cabin' && achReady()) ? ' class="ping"' : ''}>${s.name}</small></button>`).join('') +
     `<div class="captain" id="captain">${figure(CAPTAIN, COATS.captain)}</div>`;
   Deck.at = at < 0 ? spots.length - 1 : Math.min(at, spots.length - 1);
   const cap = $('captain');
@@ -2694,6 +2734,10 @@ function arrive() {
     dailyTalk(el);
   } else if (s.id === 'fame') {
     fameTalk(el);
+  } else if (s.id === 'cabin') {
+    talk(el, 'Каюта капитана', CABIN_ART, 'Здесь трофеи с побеждённых боссов и награды за подвиги. За каждый подвиг положено золото!', [
+      { q: 'Войти в каюту', go: () => { Sound.swap(); showCabin(); } },
+    ]);
   } else if (s.id === 'port') {
     talk(el, 'Сходни', GANGWAY_ART, 'Внизу шумит порт: верфь, таверна и лавка плодов. Там подскажут, на что лучше тратить золото.', [
       { q: 'Сойти в порт', go: () => { Sound.swap(); showPort(); } },
@@ -2706,12 +2750,7 @@ function arrive() {
       { q: 'Расскажи что-нибудь', a: () => PARROT_LINES[Math.floor(Math.random() * PARROT_LINES.length)] },
     ]);
   } else if (s.ally) {
-    const a = s.ally;
-    talk(el, a.name, a.face, DECK_HELLO[a.id], [
-      { q: 'Как ты сражаешься?', a: `Мой стиль боя «${a.style}». ${a.perk}.` },
-      { q: 'Как ты к нам попал?', a: a.joins },
-      { q: 'Дай совет', a: DECK_TIPS[a.id] },
-    ]);
+    allyTalk(el, s.ally);
   } else {
     const m = s.crew;
     talk(el, m.name, m.face, DECK_HELLO[m.id], [
@@ -2772,10 +2811,75 @@ function fameTalk(el) {
     say(me ? `Вы на ${me} месте! Звёзд у вас: ${mine} ★.` : `Ваши звёзды: ${mine} ★. Войдите в аккаунт Яндекса, чтобы попасть на доску.`);
   });
 }
+// A companion on deck: their story, their style at the current level, a tip, and training for gold.
+function allyTalk(el, a, line) {
+  const l = alv(a.id), cost = TRAIN_COST[l + 1];
+  talk(el, `${a.name} ${'★'.repeat(l)}`, a.face, line || DECK_HELLO[a.id], [
+    { q: 'Как ты сражаешься?', a: () => `Мой стиль боя «${a.style}», уровень ${alv(a.id)}. ${allyPerk(a)}.` },
+    { q: 'Как ты к нам попал?', a: a.joins },
+    { q: 'Дай совет', a: DECK_TIPS[a.id] },
+    ...(cost ? [{ q: `Обучить до ${l + 1} уровня ${coin(cost)}`, go: () => {
+      if (progress.gold < cost) { Sound.wrong(); allyTalk(el, a, `Обучение стоит ${cost} золота, а в казне ${progress.gold}. Возьмите ещё пару островов, капитан!`); return; }
+      progress.gold -= cost; progress.allyLv[a.id] = l + 1; saveProgress();
+      Sound.forge(); $('deckGold').innerHTML = coin(progress.gold); markPing();
+      allyTalk(el, a, `Уровень ${l + 1}! Теперь так: ${allyPerk(a, l + 1).toLowerCase()}.`);
+    } }] : []),
+  ]);
+}
+// Captain's cabin: a shelf of trophies from beaten bosses and deeds that pay gold once.
+const ACH = [
+  { id: 'first', name: 'Первая добыча', about: 'Взять первый остров', need: 1, have: () => progress.unlocked - 1, gold: 100 },
+  { id: 'isl10', name: 'Морской волк', about: 'Взять 10 островов', need: 10, have: () => progress.unlocked - 1, gold: 300 },
+  { id: 'isl50', name: 'Полпути', about: 'Взять 50 островов', need: 50, have: () => progress.unlocked - 1, gold: 1500 },
+  { id: 'isl100', name: 'Король морей', about: 'Взять все 100 островов', need: 100, have: () => progress.unlocked - 1, gold: 5000 },
+  { id: 'star50', name: 'Звездочёт', about: 'Собрать 50 звёзд', need: 50, have: totalStars, gold: 500 },
+  { id: 'star200', name: 'Созвездие', about: 'Собрать 200 звёзд', need: 200, have: totalStars, gold: 2000 },
+  { id: 'boss1', name: 'Первый бой', about: 'Победить босса', need: 1, have: () => bossesBeaten().length, gold: 300 },
+  { id: 'boss8', name: 'Гроза морей', about: 'Победить 8 боссов', need: 8, have: () => bossesBeaten().length, gold: 2000 },
+  { id: 'allies', name: 'Вся команда в сборе', about: 'Собрать всех 8 соратников', need: 8, have: () => ALLIES.filter(a => ally(a.id)).length, gold: 2000 },
+  { id: 'master', name: 'Наставник', about: 'Обучить соратника до 3 уровня', need: 1, have: () => ALLIES.filter(a => alv(a.id) >= 3).length, gold: 500 },
+  { id: 'crew', name: 'Полная таверна', about: 'Нанять всех 6 моряков', need: 6, have: () => Object.keys(progress.hired).length, gold: 800 },
+  { id: 'flag', name: 'Адмирал', about: 'Купить Флагман', need: 1, have: () => +(progress.vessel === SHIPS.length - 1), gold: 3000 },
+  { id: 'fruits', name: 'Сад чудес', about: 'Найти все 6 плодов', need: 6, have: () => Object.keys(progress.fruits).length, gold: 1500 },
+  { id: 'bombs', name: 'Подрывник', about: 'Взорвать 200 бомб', need: 200, have: () => progress.stats.bombs, gold: 800 },
+  { id: 'rich', name: 'Сундук полон', about: 'Добыть 20 000 золота', need: 20000, have: () => progress.stats.gold, gold: 1500 },
+  { id: 'streak', name: 'Верный капитан', about: 'Открывать сундук дня 7 дней подряд', need: 7, have: () => progress.daily?.streak || 0, gold: 1000 },
+];
+const bossesBeaten = () => Object.keys(FOES).map(Number).filter(n => n <= LAST_ISLAND && progress.stars[n]);
+const achReady = () => ACH.some(a => !progress.achDone[a.id] && a.have() >= a.need);
+const MEDAL = (on) => `<svg viewBox="0 0 84 74" aria-hidden="true"><path d="M30 4l12 24 12-24" fill="none" stroke="${on ? '#b3322b' : '#6a5a4a'}" stroke-width="8"/><circle cx="42" cy="44" r="22" fill="${on ? '#f2c14e' : '#9a8a7a'}" stroke="#5e3a1f" stroke-width="3"/><path d="M42 30l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1z" fill="${on ? '#fff3b0' : '#c8bca8'}"/></svg>`;
+function showCabin() {
+  screen('cabinScreen');
+  renderCabin();
+}
+function renderCabin() {
+  $('cabinGold').innerHTML = coin(progress.gold);
+  const won = bossesBeaten();
+  $('shelfCount').textContent = `${won.length} из ${Object.keys(FOES).filter(n => n <= LAST_ISLAND).length}`;
+  $('shelf').innerHTML = Object.keys(FOES).map(Number).filter(n => n <= LAST_ISLAND).map(n => {
+    const f = FOES[n], on = won.includes(n);
+    return `<div class="trophy${on ? '' : ' unknown'}">${foeSvg(f)}<b>${on ? f.name : '???'}</b><small>Остров ${n}</small></div>`;
+  }).join('');
+  $('achList').innerHTML = ACH.map(a => {
+    const have = Math.min(a.need, a.have()), done = have >= a.need, got = progress.achDone[a.id];
+    return `<div class="card${got ? ' mine' : ''}${done ? '' : ' unknown'}"><div class="art">${MEDAL(done)}</div><div class="info"><b>${a.name}</b><p>${a.about}</p>` +
+      `<small>${a.need > 1 ? `${have} / ${a.need}` : done ? 'Выполнено' : 'Ещё нет'}</small></div>` +
+      (got ? '<span class="tag">Награда получена</span>' : `<button type="button" data-ach="${a.id}"${done ? '' : ' disabled'}>Забрать ${coin(a.gold)}</button>`) + '</div>';
+  }).join('');
+}
+$('cabinScreen').addEventListener('click', e => {
+  const b = e.target.closest('[data-ach]');
+  if (!b || b.disabled) return;
+  const a = ACH.find(x => x.id === b.dataset.ach);
+  if (progress.achDone[a.id] || a.have() < a.need) return;
+  progress.achDone[a.id] = 1; progress.gold += a.gold; saveProgress();
+  Sound.compass(); renderCabin();
+});
+$('cabinBack').addEventListener('click', () => showDeck('cabin'));
 // A red dot on the deck button when the daily chest or a finished task is waiting.
 function markPing() {
   const on = Daily.ready();
-  $('toDeck').classList.toggle('ping', on);
+  $('toDeck').classList.toggle('ping', on || achReady());
   document.querySelector('.spot[data-spot="2"] small')?.classList.toggle('ping', on);
 }
 $('deck').addEventListener('click', e => {
@@ -2791,7 +2895,7 @@ addEventListener('keydown', e => {
 // Screens
 // Shows one screen and hides the others.
 function screen(id) {
-  ['mapScreen', 'portScreen', 'deckScreen', 'playScreen'].forEach(x => { $(x).hidden = x !== id; });
+  ['mapScreen', 'portScreen', 'deckScreen', 'cabinScreen', 'playScreen'].forEach(x => { $(x).hidden = x !== id; });
 }
 // Companions for bosses already passed, and in test mode everything at once.
 function grantUnlocks() {
@@ -2841,8 +2945,8 @@ function startLevel(n) {
   if (L.wreck) scatterWreck(L.wreck);
   if (L.boss) {
     L.dmg = 0; L.turns = 0;
-    L.timer = L.boss.every + (ally('tim') ? 2 : 0);
-    if (ally('ig')) { placeSpecial(BARREL); placeSpecial(BARREL); }
+    L.timer = L.boss.every + [0, 2, 3, 4][alv('tim')];
+    for (let i = alv('ig') ? alv('ig') + 1 : 0; i > 0; i--) placeSpecial(BARREL);
   }
   L.charge = 0;
   updateHud();
@@ -2861,7 +2965,7 @@ function startLevel(n) {
 $('toMap').addEventListener('click', showMap);
 $('goals').addEventListener('click', e => { if (e.target.closest('#fruitBtn')) useFruit(); });
 $('resetBtn').hidden = !TEST_MODE;
-$('resetBtn').addEventListener('click', () => { progress = { unlocked: 1, stars: {}, tips: {}, story: {}, gold: 0, vessel: 0, hired: {}, aboard: [], allies: {}, fruits: {} }; Voyage.at = 1; saveProgress(); showMap(); });
+$('resetBtn').addEventListener('click', () => { progress = { unlocked: 1, stars: {}, tips: {}, story: {}, gold: 0, vessel: 0, hired: {}, aboard: [], allies: {}, fruits: {} }; fixProgress(); Voyage.at = 1; saveProgress(); showMap(); });
 
 // When the page is updated while open, the current attempt carries on exactly where it was.
 window.claude?.hot?.snapshot?.(() => levelNo && grid && !over && !busy ? {
