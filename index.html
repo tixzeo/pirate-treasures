@@ -150,6 +150,13 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 @keyframes spark { from { transform: scale(.6); fill: #ff7a2a; } to { transform: scale(1.25); fill: #fff0a0; } }
 .tile.born svg { animation: born .55s cubic-bezier(.3, 1.6, .5, 1); }
 @keyframes born { 0% { transform: scale(0) rotate(-180deg); filter: drop-shadow(0 0 0 #ffd96b); } 60% { transform: scale(1.35) rotate(10deg); filter: drop-shadow(0 0 16px #ffd96b); } 100% { transform: scale(1) rotate(0); } }
+.tile.spin svg { animation: spin .5s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg) scale(1.15); } }
+.tile.aim { background: rgba(242,193,78,.3); border-radius: 50%; }
+.tile.aim svg { animation: spin 2.4s linear infinite; }
+.board.aiming { cursor: crosshair; }
+.fx.ray { width: auto; height: 6px; margin-top: -3px; transform-origin: 0 50%; border-radius: 3px; background: linear-gradient(90deg, #fff3c4, #f2c14e 60%, rgba(242,193,78,0)); box-shadow: 0 0 10px #ffd96b; animation: ray .4s ease-out forwards; }
+@keyframes ray { from { opacity: 1; } to { opacity: 0; } }
 .tile.shake svg { animation: rattle .08s linear infinite; }
 @keyframes rattle { 0% { transform: translate(-4%, 0) rotate(-6deg); } 50% { transform: translate(4%, -2%) rotate(6deg); } 100% { transform: translate(-4%, 0) rotate(-6deg); } }
 .fx { position: absolute; left: 0; top: 0; width: 12.5%; height: 12.5%; pointer-events: none; }
@@ -200,6 +207,7 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .hint-text { margin: 0; color: var(--muted); font-size: .85rem; }
 @media (prefers-reduced-motion: reduce) {
   .tile, .tile svg, .combo, .net { transition-duration: .01s; }
+  .tile.spin svg, .tile.aim svg, .fx.ray,
   .tile.hint svg, .tile.rare svg, .tile.born svg, .tile.shake svg, .tile .spark, .board.quake { animation: none; }
 }
 </style>
@@ -262,8 +270,9 @@ const PIECES = [
   { name: 'ядро', svg: '<g fill="#f2c14e" stroke="#8a5c0e" stroke-width="3" stroke-linejoin="round"><polygon points="2,50 14,40 14,60"/><polygon points="98,50 86,40 86,60"/></g><circle cx="50" cy="52" r="32" fill="#2b2d33" stroke="#0c0d10" stroke-width="4"/><ellipse cx="40" cy="40" rx="10" ry="6" fill="#8a93a3" opacity=".7"/><path d="M62 24Q70 12 78 14" fill="none" stroke="#c9a46a" stroke-width="4" stroke-linecap="round"/><circle class="spark" cx="79" cy="13" r="6" fill="#ffcf4a"/>' },
   { name: 'ядро', svg: '<g fill="#f2c14e" stroke="#8a5c0e" stroke-width="3" stroke-linejoin="round"><polygon points="50,2 40,14 60,14"/><polygon points="50,98 40,86 60,86"/></g><circle cx="50" cy="50" r="32" fill="#2b2d33" stroke="#0c0d10" stroke-width="4"/><ellipse cx="40" cy="38" rx="10" ry="6" fill="#8a93a3" opacity=".7"/><path d="M74 30Q86 26 88 34" fill="none" stroke="#c9a46a" stroke-width="4" stroke-linecap="round"/><circle class="spark" cx="88" cy="36" r="6" fill="#ffcf4a"/>' },
   { name: 'бочка пороха', svg: '<path d="M24 14H76Q88 50 76 88H24Q12 50 24 14Z" fill="#9a5a2c" stroke="#2a1408" stroke-width="4" stroke-linejoin="round"/><path d="M19 32H81M17 70H83" stroke="#3a3f47" stroke-width="7"/><path d="M38 14Q34 50 38 88M62 14Q66 50 62 88" stroke="#6e3c1a" stroke-width="3" fill="none"/><rect x="34" y="42" width="32" height="18" rx="3" fill="#efdcb3" stroke="#2a1408" stroke-width="2"/><text x="50" y="56" font-size="13" font-weight="900" text-anchor="middle" fill="#b3322b" font-family="Arial,sans-serif">XXX</text><path d="M50 14Q52 4 60 4" fill="none" stroke="#c9a46a" stroke-width="4" stroke-linecap="round"/><circle class="spark" cx="61" cy="4" r="6" fill="#ffcf4a"/>' },
+  { name: 'компас-бомба', svg: '<circle cx="50" cy="50" r="44" fill="#173a4d" stroke="#f2c14e" stroke-width="5"/><polygon points="50,6 57,43 94,50 57,57 50,94 43,57 6,50 43,43" fill="#f2c14e" stroke="#8a5c0e" stroke-width="2" stroke-linejoin="round"/><polygon points="50,24 54,46 76,50 54,54 50,76 46,54 24,50 46,46" fill="#fff3c4" transform="rotate(45 50 50)"/><circle cx="50" cy="50" r="7" fill="#e3394f" stroke="#6d0f1d" stroke-width="2"/>' },
 ];
-const CANNON_ROW = 8, CANNON_COL = 9, BARREL = 10;
+const CANNON_ROW = 8, CANNON_COL = 9, BARREL = 10, COMPASS = 11;
 const isSpecial = tile => tile && tile.t >= CANNON_ROW;
 const CHEST = 7;          // index of the golden chest in PIECES
 const CHEST_FROM = 8;     // chests start dropping from this island
@@ -513,19 +522,17 @@ function findGroups() {
   }
   return groups;
 }
-// Five in a line makes a cannonball, a corner of five makes a powder barrel.
+// Five in a line makes a compass bomb, a corner of five a powder barrel, four in a line a cannonball.
 function specialFor(g, swapped) {
   const longest = Math.max(...g.runs.map(r => r.cells.length));
-  let type = null, at = null;
-  if (longest >= 5) {
-    const run = g.runs.find(r => r.cells.length === longest);
-    type = run.dir === 'h' ? CANNON_ROW : CANNON_COL;
-    at = run.cells[Math.floor(run.cells.length / 2)];
-  } else if (g.runs.some(r => r.dir === 'h') && g.runs.some(r => r.dir === 'v') && g.keys.size >= 5) {
+  const run = g.runs.find(r => r.cells.length === longest);
+  let type = null, at = run.cells[Math.floor(run.cells.length / 2)];
+  if (longest >= 5) type = COMPASS;
+  else if (g.runs.some(r => r.dir === 'h') && g.runs.some(r => r.dir === 'v') && g.keys.size >= 5) {
     type = BARREL;
     const h = g.runs.find(r => r.dir === 'h'), v = g.runs.find(r => r.dir === 'v');
     at = h.cells.find(([r, c]) => v.cells.some(([r2, c2]) => r === r2 && c === c2)) || h.cells[1];
-  }
+  } else if (longest === 4) type = run.dir === 'h' ? CANNON_ROW : CANNON_COL;
   if (type === null) return null;
   const mine = swapped.find(([r, c]) => g.keys.has(r * N + c));
   if (mine) at = mine;
@@ -544,11 +551,39 @@ function blastCell(r, c) {
   setTimeout(() => p.remove(), 500);
   if (tile && !isSpecial(tile)) tile.el.classList.add('pop');
 }
+function mostCommon() {
+  const count = {};
+  grid.flat().forEach(t => { if (t && t.t < CHEST) count[t.t] = (count[t.t] || 0) + 1; });
+  return +Object.keys(count).sort((a, b) => count[b] - count[a])[0];
+}
 function quake() { boardEl.classList.remove('quake'); void boardEl.offsetWidth; boardEl.classList.add('quake'); }
 
 // Fires one special piece and returns the tiles it destroys.
 async function fire(tile) {
   const out = [];
+  if (tile.t === COMPASS) {
+    // The needle spins, then golden rays strike every treasure of the chosen kind.
+    const type = tile.aim ?? mostCommon();
+    tile.el.classList.remove('aim');
+    tile.el.classList.add('spin');
+    Sound.compass();
+    await wait(420);
+    const targets = grid.flat().filter(t => t && t.t === type);
+    const cell = boardEl.clientWidth / N, step = 45;
+    targets.forEach((t, i) => setTimeout(() => {
+      const ray = fx('ray', tile.r, tile.c);
+      const dx = (t.c - tile.c) * cell, dy = (t.r - tile.r) * cell;
+      Object.assign(ray.style, { left: (tile.c + .5) * cell + 'px', top: (tile.r + .5) * cell + 'px', width: Math.hypot(dx, dy) + 'px', transform: `rotate(${Math.atan2(dy, dx)}rad)` });
+      setTimeout(() => ray.remove(), 420);
+      blastCell(t.r, t.c);
+      if (i % 2 === 0) Sound.pop();
+    }, i * step));
+    await wait(targets.length * step + 250);
+    tile.el.classList.remove('spin');
+    tile.el.classList.add('pop');
+    quake();
+    return targets;
+  }
   if (tile.t === BARREL) {
     tile.el.classList.add('shake');
     Sound.fuse();
@@ -604,7 +639,7 @@ async function resolve(pending, swapped = []) {
     // Fire specials one after another; a blast that reaches another special sets it off too.
     const fired = new Set(), queue = [...pending];
     pending = [];
-    if (queue.length) flash(queue[0].t === BARREL ? 'Бабах!' : 'Пли!');
+    if (queue.length) flash({ [BARREL]: 'Бабах!', [COMPASS]: 'Курс на сокровища!' }[queue[0].t] || 'Пли!');
     while (queue.length) {
       const sp = queue.shift();
       if (fired.has(sp)) continue;
@@ -623,7 +658,7 @@ async function resolve(pending, swapped = []) {
       t.el.className = 'tile rare born';
       t.el.innerHTML = gemSvg(m.type);
       Sound.forge();
-      flash(m.type === BARREL ? 'Бочка пороха!' : 'Пушечное ядро!');
+      flash({ [BARREL]: 'Бочка пороха!', [COMPASS]: 'Компас-бомба!' }[m.type] || 'Пушечное ядро!');
     }
     const boom = chestNear || [...clear].some(t => t.t === CHEST);
     if (boom) grid.forEach(row => row.forEach(t => t && clear.add(t)));
@@ -665,6 +700,9 @@ async function trySwap(a, b) {
   Sound.swap();
   await wait(220);
   const specials = [grid[a.r][a.c], grid[b.r][b.c]].filter(isSpecial);
+  const ta = grid[a.r][a.c], tb = grid[b.r][b.c];
+  if (ta.t === COMPASS && tb.t < CHEST) ta.aim = tb.t;
+  if (tb.t === COMPASS && ta.t < CHEST) tb.aim = ta.t;
   if (!findGroups().length && !specials.length) {
     Sound.wrong();
     swapCells(a, b);
@@ -675,6 +713,20 @@ async function trySwap(a, b) {
   moves--;
   updateHud();
   await resolve(specials, [[a.r, a.c], [b.r, b.c]]);
+  await afterMove();
+}
+// Compass bomb aimed by tapping any treasure on the deck.
+async function aimAt(compass, type) {
+  if (busy || over) return;
+  busy = true;
+  clearHint(); setSel(null);
+  compass.aim = type;
+  moves--;
+  updateHud();
+  await resolve([compass]);
+  await afterMove();
+}
+async function afterMove() {
   busy = false;
   if (goalsMet()) return win();
   if (moves <= 0) return lose();
@@ -736,9 +788,12 @@ function lose() {
 }
 
 function setSel(tile) {
-  if (sel) sel.el.classList.remove('sel');
+  if (sel) sel.el.classList.remove('sel', 'aim');
   sel = tile;
-  if (sel) sel.el.classList.add('sel');
+  const aiming = !!sel && sel.t === COMPASS;
+  boardEl.classList.toggle('aiming', aiming);
+  if (sel) sel.el.classList.add(aiming ? 'aim' : 'sel');
+  if (aiming) flash('Выберите сокровище');
 }
 function clearHint() {
   clearTimeout(hintTimer);
@@ -781,6 +836,8 @@ boardEl.addEventListener('pointerup', () => {
   start = null;
   if (!sel) return setSel(grid[cell.r][cell.c]);
   const near = Math.abs(sel.r - cell.r) + Math.abs(sel.c - cell.c);
+  const target = grid[cell.r][cell.c];
+  if (sel.t === COMPASS && near > 1 && target.t < CHEST) return aimAt(sel, target.t);
   if (near === 1) trySwap({ r: sel.r, c: sel.c }, cell);
   else setSel(near === 0 ? null : grid[cell.r][cell.c]);
 });
@@ -835,6 +892,7 @@ const Sound = {
   cut()   { this.noise(.08, .25); },
   boom()  { this.noise(.7, .6); this.tone(120, .8, { type: 'sine', vol: .6, to: 40 }); [523, 659, 784, 1047].forEach((f, i) => this.tone(f, .3, { at: .25 + i * .08, vol: .25 })); },
   cannon() { this.tone(90, .5, { type: 'sine', vol: .7, to: 40 }); this.noise(.35, .5); this.tone(900, .5, { type: 'sawtooth', vol: .05, to: 300 }); },
+  compass() { [523, 659, 784, 1047, 1319].forEach((f, i) => this.tone(f, .3, { at: i * .07, vol: .16, type: 'sine' })); },
   pop()   { this.noise(.12, .3); },
   fuse()  { this.noise(.35, .12); this.tone(1400, .35, { type: 'square', vol: .03, to: 2200 }); },
   barrel() { this.noise(.8, .7); this.tone(70, .9, { type: 'sine', vol: .8, to: 30 }); },
@@ -970,7 +1028,7 @@ function startLevel(n) {
     `<h2>Остров ${n}</h2><div class="goals">${goals.map(chipHtml).join('')}</div>` +
     goals.map(g => `<p>${goalText(g)}</p>`).join('') +
     `<p>Ходов: ${L.moves}</p>${newKind}` +
-    (n <= 3 ? `<p>Пять в ряд дают пушечное ядро, уголок из пяти даёт бочку пороха. Чтобы взорвать, сдвиньте их.</p><div class="goals"><span class="chip">${gemSvg(CANNON_ROW)}</span><span class="chip">${gemSvg(BARREL)}</span></div>` : '') +
+    (n <= 3 ? `<p>Четыре в ряд дают пушечное ядро, уголок из пяти даёт бочку пороха. Чтобы взорвать, сдвиньте их.</p><p>Пять в ряд дают компас-бомбу. Нажмите на неё, а потом на любое сокровище, и все такие сокровища взорвутся.</p><div class="goals"><span class="chip">${gemSvg(CANNON_ROW)}</span><span class="chip">${gemSvg(BARREL)}</span><span class="chip">${gemSvg(COMPASS)}</span></div>` : '') +
     (n === CHEST_FROM ? `<p>Здесь может выпасть золотой сундук. Соберите ряд рядом с ним, пока он не опустился на дно, и он взорвёт всю палубу.</p><div class="goals"><span class="chip">${gemSvg(CHEST)}</span></div>` : ''),
     [['На абордаж!', () => { $('overlay').hidden = true; YSDK.gameplay(true); armHint(); }]]
   );
