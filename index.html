@@ -107,7 +107,8 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .stage { position: relative; width: min(100%, calc(100vh - 300px)); width: min(100%, calc(100dvh - 300px)); min-width: 240px; max-width: 100%; margin-inline: auto; }
 .toggles { display: flex; gap: 8px; justify-content: center; }
 .toggles button { padding: 6px 14px; font-size: .85rem; }
-.toggles button[aria-pressed="false"] { opacity: .5; text-decoration: line-through; }
+.toggles button[aria-pressed="false"] { opacity: .5; }
+#sfxBtn[aria-pressed="false"] { text-decoration: line-through; }
 @media (max-height: 700px) { .hint-text { display: none; } .game { gap: 10px; } }
 /* Landscape screens (desktop, 16:9): sidebar with HUD on the left, board sized by height on the right */
 @media (min-aspect-ratio: 5/4) and (min-height: 420px) {
@@ -296,6 +297,7 @@ const CHEST_FROM = 8;     // chests start dropping from this island
 const TEST_MODE = true;   // всё открыто и сундук выпадает часто; выключить перед публикацией
 const CHEST_CHANCE = TEST_MODE ? 1 / 20 : 1 / 150; // per new piece, so roughly once every 30 moves
 const NETS = {
+  midrow: (r, c) => r === 4,
   rows:   (r, c) => r === 3 || r === 4,
   center: (r, c) => r >= 2 && r <= 5 && c >= 2 && c <= 5,
   bottom: (r, c) => r >= 5,
@@ -310,14 +312,14 @@ const LEVELS = [
   { moves: 20, types: 5, collect: { 0: 12 } },
   { moves: 22, types: 5, score: 1500 },
   { moves: 22, types: 6, collect: { 2: 12, 4: 12 } },
-  { moves: 22, types: 6, net: 'rows' },
-  { moves: 22, types: 6, score: 1600 },
-  { moves: 25, types: 6, net: 'center', collect: { 1: 15 } },
-  { moves: 25, types: 6, collect: { 0: 12, 3: 12, 5: 12 } },
+  { moves: 24, types: 6, net: 'midrow' },
+  { moves: 24, types: 6, score: 1400 },
+  { moves: 25, types: 6, net: 'center', collect: { 1: 12 } },
+  { moves: 24, types: 6, collect: { 0: 14, 3: 14, 5: 14 } },
   { moves: 25, types: 7, score: 1200 },
-  { moves: 26, types: 7, net: 'bottom' },
+  { moves: 30, types: 7, net: 'rows' },
   { moves: 24, types: 7, collect: { 6: 12, 2: 12 } },
-  { moves: 26, types: 7, net: 'cross', score: 1400 },
+  { moves: 28, types: 7, net: 'center', score: 1400 },
 ];
 // After the hand-made ones, islands are generated: fewer moves, bigger goals.
 function levelDef(n) {
@@ -325,18 +327,20 @@ function levelDef(n) {
   const k = n - LEVELS.length;
   let seed = n * 9301 + 49297;
   const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
-  const def = { moves: Math.max(18, 25 - Math.floor(k / 3)), types: 7 };
+  // Checked with the balance bot: past island 20 a casual player still wins about half the time.
+  const def = { moves: Math.max(22, 25 - Math.floor(k / 4)), types: 7 };
   const kind = k % 3;
-  if (kind === 0) def.score = Math.min(2000, 1200 + k * 40);
+  if (kind === 0) def.score = Math.min(1700, 1150 + k * 25);
   if (kind === 1) {
     const a = Math.floor(rnd() * 7), b = (a + 1 + Math.floor(rnd() * 6)) % 7;
-    const cnt = Math.min(16, 12 + Math.floor(k / 3));
+    const cnt = Math.min(14, 12 + Math.floor(k / 5));
     def.collect = { [a]: cnt, [b]: cnt };
   }
   if (kind === 2) {
-    const names = Object.keys(NETS);
+    const names = ['rows', 'center'];
+    def.moves += 4; // nets need room to reach the edges
     def.net = names[Math.floor(k / 3) % names.length];
-    if (k >= 6) def.score = Math.min(1600, 800 + k * 30);
+    if (k >= 6) def.score = Math.min(1300, 700 + k * 25);
   }
   return def;
 }
@@ -417,6 +421,16 @@ function freshTypes() {
   } while (!findMove(T));
   return T;
 }
+// No moves left: the same treasures slide to new places (specials and the chest stay put).
+function shuffleBoard() {
+  const free = grid.flat().filter(t => t.t < CHEST);
+  for (let i = 0; i < 100; i++) {
+    const order = free.map(t => [t.r, t.c]).sort(() => Math.random() - .5);
+    free.forEach((t, k) => { [t.r, t.c] = order[k]; grid[t.r][t.c] = t; });
+    if (!findGroups().length && findMove(types())) break;
+  }
+  free.forEach(place);
+}
 function buildBoard(T) {
   tileLayer.innerHTML = '';
   grid = T.map((row, r) => row.map((t, c) => makeTile(t, r, c)));
@@ -489,7 +503,7 @@ async function sinkChests() {
   const lost = grid[N - 1].filter(t => t && t.t === CHEST);
   if (!lost.length) return;
   lost.forEach(t => { t.el.classList.add('pop'); grid[t.r][t.c] = null; });
-  flash('Сундук утонул!'); Sound.sink();
+  flash('Сундук утонул!'); Sound.sink(); Rec.chestSank++;
   await wait(400);
   lost.forEach(t => t.el.remove());
   gravity();
@@ -663,6 +677,7 @@ async function resolve(pending, swapped = []) {
       const sp = queue.shift();
       if (fired.has(sp)) continue;
       fired.add(sp); clear.add(sp);
+      Rec.fired[PIECES[sp.t].name] = (Rec.fired[PIECES[sp.t].name] || 0) + 1;
       for (const t of await fire(sp)) {
         clear.add(t);
         if (isSpecial(t) && !fired.has(t)) queue.push(t);
@@ -674,13 +689,15 @@ async function resolve(pending, swapped = []) {
       clear.delete(t);
       collected[t.t] = (collected[t.t] || 0) + 1;
       t.t = m.type;
+      Rec.made[PIECES[m.type].name] = (Rec.made[PIECES[m.type].name] || 0) + 1;
       t.el.className = 'tile rare born';
       t.el.innerHTML = gemSvg(m.type);
       Sound.forge();
       flash({ [BARREL]: 'Бочка пороха!', [COMPASS]: 'Компас-бомба!' }[m.type] || 'Пушечное ядро!');
     }
     const boom = chestNear || [...clear].some(t => t.t === CHEST);
-    if (boom) grid.forEach(row => row.forEach(t => t && clear.add(t)));
+    const beforeBoom = new Set(clear); // the chest's own blast clears pieces but leaves nets in place
+    if (boom) { grid.forEach(row => row.forEach(t => t && clear.add(t))); Rec.chestBroke++; }
     score += clear.size * 10 * combo;
     if (boom) { flash('Золотой сундук!'); Sound.boom(); }
     else if (!fired.size && !makes.length) { Sound.match(combo); if (combo > 1) flash(COMBO_WORDS[combo] || `Комбо ×${combo}`); }
@@ -689,7 +706,7 @@ async function resolve(pending, swapped = []) {
       t.el.classList.add('pop');
       grid[t.r][t.c] = null;
       if (t.t < CHEST) collected[t.t] = (collected[t.t] || 0) + 1;
-      const net = nets[t.r][t.c];
+      const net = boom && !beforeBoom.has(t) ? null : nets[t.r][t.c];
       if (net) { Sound.cut(); net.classList.add('cut'); setTimeout(() => net.remove(), 300); nets[t.r][t.c] = null; netsLeft--; }
     });
     updateHud();
@@ -733,6 +750,7 @@ async function trySwap(a, b) {
   }
   moves--;
   updateHud();
+  Rec.move(`${a.r},${a.c}>${b.r},${b.c}`);
   await resolve(specials, [[a.r, a.c], [b.r, b.c]]);
   await afterMove();
 }
@@ -745,6 +763,7 @@ async function aimAt(compass, type) {
   compass.aim = type;
   moves--;
   updateHud();
+  Rec.move(`компас ${compass.r},${compass.c}>${PIECES[type].name}`);
   await resolve([compass]);
   await afterMove();
 }
@@ -753,9 +772,10 @@ async function afterMove() {
   if (goalsMet()) return win();
   if (moves <= 0) return lose();
   if (!findMove(types())) {
-    flash('Свистать всех!');
-    await wait(500);
-    buildBoard(freshTypes());
+    flash('Свистать всех!'); Rec.shuffles++;
+    await wait(400);
+    shuffleBoard();
+    await wait(450);
   }
   if (!tutorialNext()) armHint();
 }
@@ -779,7 +799,7 @@ function overlay(html, buttons) {
 const starsHtml = n => `<div class="stars">${[0, 1, 2].map(i => `<span class="${i < n ? 'on' : ''}">★</span>`).join('')}</div>`;
 
 function win() {
-  Tut.stop();
+  Tut.stop(); Rec.finish('победа');
   over = true; clearHint(); Sound.win(); YSDK.gameplay(false);
   const bonus = moves * 20;
   score += bonus;
@@ -795,7 +815,7 @@ function win() {
   );
 }
 function lose() {
-  Tut.stop();
+  Tut.stop(); Rec.finish('поражение');
   over = true; clearHint(); Sound.lose(); YSDK.gameplay(false);
   const left = goalList().filter(g => g.have < g.need).map(chipHtml).join('');
   const buttons = [['Ещё раз', () => afterAd(() => startLevel(levelNo))], ['На карту', showMap, true]];
@@ -803,7 +823,7 @@ function lose() {
   if (!L.bonusUsed && YSDK.canReward()) buttons.unshift([`+${EXTRA_MOVES} ходов за рекламу`, async () => {
     L.bonusUsed = true;
     if (!(await YSDK.rewarded())) return lose();
-    moves += EXTRA_MOVES; over = false;
+    moves += EXTRA_MOVES; over = false; Rec.extraMoves += EXTRA_MOVES;
     updateHud();
     $('overlay').hidden = true;
     YSDK.gameplay(true); armHint();
@@ -868,16 +888,67 @@ boardEl.addEventListener('pointerup', () => {
 });
 boardEl.addEventListener('pointercancel', () => { start = null; });
 
+// Music tracks, written as MIDI note numbers (60 = middle C, 0 = rest).
+const TRACKS = [
+  { name: 'Тихая гавань', step: .3, // slow arpeggios over Am F C G
+    chords: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]],
+    melody: [76, 0, 0, 0, 74, 0, 72, 0, 72, 0, 0, 0, 69, 0, 0, 0, 67, 0, 0, 0, 72, 0, 74, 0, 74, 0, 0, 0, 0, 0, 0, 0,
+             76, 0, 0, 0, 79, 0, 76, 0, 77, 0, 0, 0, 76, 0, 74, 0, 72, 0, 0, 0, 71, 0, 72, 0, 74, 0, 0, 0, 0, 0, 0, 0],
+    play(i, at, S) {
+      const ch = this.chords[Math.floor(i / 8) % 4], arp = [0, 1, 2, 1, 2, 1, 0, 1][i % 8];
+      S.note(ch[arp] + (i % 8 === 3 ? 12 : 0), this.step * 1.6, at, 'triangle', .16);
+      if (i % 8 === 0) S.note(ch[0] - 12, this.step * 7, at, 'sine', .3);
+      S.note(this.melody[i % this.melody.length], this.step * 2.5, at, 'sine', .14);
+    } },
+  { name: 'Морская джига', step: .14, // 6/8 jig in D major
+    melody: [74, 78, 81, 78, 81, 86, 85, 81, 76, 85, 81, 76, 83, 79, 74, 83, 79, 74, 81, 78, 74, 76, 78, 76,
+             74, 78, 81, 86, 81, 78, 79, 83, 86, 83, 79, 74, 76, 79, 83, 81, 78, 76, 74, 0, 74, 74, 0, 0],
+    bass: [50, 45, 43, 50, 50, 43, 45, 50],
+    play(i, at, S) {
+      S.note(this.melody[i % 48], this.step * .9, at, 'triangle', .14);
+      if (i % 3 === 0) S.note(this.bass[Math.floor(i / 6) % 8] - (i % 6 ? 0 : 12), this.step * 2.5, at, 'sine', .3);
+    } },
+  { name: 'Таверна', step: .38, // waltz in G
+    melody: [71, 74, 79, 78, 76, 74, 72, 76, 72, 71, 0, 0, 69, 72, 78, 76, 74, 72, 71, 74, 71, 69, 0, 0,
+             71, 74, 79, 81, 79, 78, 76, 79, 76, 74, 0, 71, 72, 76, 74, 71, 69, 67, 69, 71, 69, 67, 0, 0],
+    roots: [43, 50, 48, 43, 50, 50, 43, 50, 43, 50, 48, 43, 48, 43, 50, 43],
+    play(i, at, S) {
+      S.note(this.melody[i % 48], this.step * .95, at, 'sawtooth', .07);
+      const r = this.roots[Math.floor(i / 3) % 16];
+      if (i % 3 === 0) S.note(r - 12, this.step * 1.2, at, 'triangle', .35);
+      else [0, 4, 7].forEach(d => S.note(r + d + (r === 50 ? 0 : 12), this.step * .4, at, 'triangle', .05));
+    } },
+  { name: 'Шторм', step: .2, // driving D minor
+    melody: [62, 0, 65, 0, 69, 0, 67, 65, 64, 0, 0, 0, 61, 0, 0, 0, 62, 0, 65, 0, 69, 0, 72, 70, 69, 0, 0, 0, 0, 0, 0, 0,
+             70, 0, 69, 0, 67, 0, 65, 64, 65, 0, 64, 0, 62, 0, 61, 0, 62, 65, 69, 74, 72, 70, 69, 67, 69, 0, 0, 0, 62, 0, 0, 0],
+    roots: [38, 33, 38, 33, 34, 33, 38, 33],
+    play(i, at, S) {
+      S.note(this.melody[i % 64] + 12, this.step * .9, at, 'square', .06);
+      const r = this.roots[Math.floor(i / 8) % 8], pat = [0, null, 0, 12, 0, null, 0, 12][i % 8];
+      if (pat !== null) S.note(r + pat, this.step * .8, at, 'triangle', .3);
+    } },
+  { name: 'Пиратская песня', step: .2, // the first tune of the game
+    melody: [62, 0, 62, 62, 62, 0, 62, 62, 62, 0, 57, 0, 60, 0, 62, 0, 60, 0, 60, 60, 60, 0, 60, 60, 60, 0, 55, 0, 58, 0, 60, 0],
+    bass: [38, 38, 38, 38, 36, 36, 36, 36],
+    play(i, at, S) {
+      S.note(this.melody[i % 32], this.step * .9, at, 'square', .08);
+      if (i % 4 === 0) S.note(this.bass[(i / 4) % 8], this.step * 3, at, 'triangle', .3);
+    } },
+];
+
 // Sound: everything is synthesized with Web Audio, so the game needs no audio files.
 const Sound = {
-  ctx: null, sfxGain: null, musicGain: null, sfx: true, music: true, timer: null, step: 0, next: 0, holds: new Set(),
+  ctx: null, sfxGain: null, musicGain: null, sfx: true, track: 0, timer: null, step: 0, next: 0, holds: new Set(),
   init() {
     if (!this.ctx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
       this.ctx = new AC();
       this.sfxGain = this.ctx.createGain(); this.sfxGain.connect(this.ctx.destination);
-      this.musicGain = this.ctx.createGain(); this.musicGain.connect(this.ctx.destination);
+      this.musicGain = this.ctx.createGain();
+      const soft = this.ctx.createBiquadFilter(); // takes the edge off square waves so music does not tire the ear
+      soft.type = 'lowpass'; soft.frequency.value = 2400;
+      this.musicGain.connect(soft); soft.connect(this.ctx.destination);
       this.apply();
       this.startMusic();
     }
@@ -892,7 +963,7 @@ const Sound = {
   apply() {
     if (!this.ctx) return;
     this.sfxGain.gain.value = this.sfx ? .5 : 0;
-    this.musicGain.gain.value = this.music ? .18 : 0;
+    this.musicGain.gain.value = this.track >= 0 ? .22 : 0;
   },
   tone(freq, dur, { type = 'triangle', vol = .3, at = 0, to = null, out = this.sfxGain } = {}) {
     if (!this.ctx) return;
@@ -925,32 +996,35 @@ const Sound = {
   sink()  { this.tone(600, .7, { type: 'sine', vol: .3, to: 90 }); },
   win()   { [392, 494, 587, 784].forEach((f, i) => this.tone(f, .35, { at: i * .12, vol: .3 })); },
   lose()  { [392, 349, 311, 262].forEach((f, i) => this.tone(f, .4, { at: i * .16, vol: .25, type: 'square' })); },
-  // A short shanty-style loop in D minor, scheduled a little ahead of time.
-  MELODY: [62, 0, 62, 62, 62, 0, 62, 62, 62, 0, 57, 0, 60, 0, 62, 0, 60, 0, 60, 60, 60, 0, 60, 60, 60, 0, 55, 0, 58, 0, 60, 0],
-  BASS: [38, 38, 38, 38, 36, 36, 36, 36],
+  // Music: each track is a loop of steps; play(step, at) schedules that step's notes.
   startMusic() {
-    const beat = 60 / 150 / 2;
     this.next = this.ctx.currentTime + .1;
     this.timer = setInterval(() => {
+      const tr = TRACKS[this.track];
+      if (!tr) return;
       while (this.next < this.ctx.currentTime + .3) {
-        const at = this.next - this.ctx.currentTime, m = this.MELODY[this.step % this.MELODY.length];
-        const hz = n => 440 * Math.pow(2, (n - 69) / 12);
-        if (m) this.tone(hz(m), beat * .9, { type: 'square', vol: .12, at, out: this.musicGain });
-        if (this.step % 4 === 0) this.tone(hz(this.BASS[(this.step / 4) % this.BASS.length]), beat * 3, { type: 'triangle', vol: .35, at, out: this.musicGain });
-        this.step++; this.next += beat;
+        tr.play(this.step, this.next - this.ctx.currentTime, this);
+        this.step++; this.next += tr.step;
       }
     }, 100);
   },
+  note(n, dur, at, type, vol) { if (n) this.tone(440 * Math.pow(2, (n - 69) / 12), dur, { type, vol, at, out: this.musicGain }); },
 };
-try { const a = JSON.parse(localStorage.getItem('pirates-audio')); if (a) { Sound.sfx = a.sfx; Sound.music = a.music; } } catch (e) {}
+try { const a = JSON.parse(localStorage.getItem('pirates-audio')); if (a) { Sound.sfx = a.sfx; if (Number.isInteger(a.track)) Sound.track = a.track; } } catch (e) {}
 function syncToggles() {
   $('sfxBtn').setAttribute('aria-pressed', Sound.sfx);
-  $('musicBtn').setAttribute('aria-pressed', Sound.music);
+  $('musicBtn').setAttribute('aria-pressed', Sound.track >= 0);
+  $('musicBtn').textContent = 'Музыка: ' + (TRACKS[Sound.track] ? TRACKS[Sound.track].name : 'выкл');
   Sound.apply();
-  try { localStorage.setItem('pirates-audio', JSON.stringify({ sfx: Sound.sfx, music: Sound.music })); } catch (e) {}
+  try { localStorage.setItem('pirates-audio', JSON.stringify({ sfx: Sound.sfx, track: Sound.track })); } catch (e) {}
 }
 $('sfxBtn').addEventListener('click', () => { Sound.sfx = !Sound.sfx; syncToggles(); });
-$('musicBtn').addEventListener('click', () => { Sound.music = !Sound.music; syncToggles(); });
+// Each tap switches to the next tune; after the last one the music turns off.
+$('musicBtn').addEventListener('click', () => {
+  Sound.track = Sound.track + 1 >= TRACKS.length ? -1 : Sound.track + 1;
+  Sound.step = 0;
+  syncToggles();
+});
 syncToggles();
 // Browsers allow sound only after the first tap.
 document.addEventListener('pointerdown', () => Sound.init(), true);
@@ -1011,6 +1085,33 @@ const YSDK = {
 };
 // Yandex limits how often a fullscreen ad can show, so asking between islands is safe.
 async function afterAd(next) { await YSDK.interstitial(); next(); }
+
+// Play log for Claude: each finished attempt goes to the artifact's database, so it can be read back
+// and used to tune the islands. Off the Claude preview (Yandex, a local file) there is no db and nothing is sent.
+const Rec = {
+  cur: null, dbp: window.claude?.use ? window.claude.use('db').catch(() => null) : Promise.resolve(null),
+  start() {
+    this.cur = { level: levelNo, started: Date.now(), log: [], made: {}, fired: {}, chestBroke: 0, chestSank: 0, shuffles: 0, extraMoves: 0 };
+  },
+  move(m) { if (this.cur && this.cur.log.length < 80) this.cur.log.push(m); },
+  async finish(result) {
+    const c = this.cur;
+    this.cur = null;
+    if (!c || !c.log.length) return;
+    const doc = {
+      island: c.level, result, testMode: TEST_MODE,
+      movesUsed: c.log.length, movesGiven: L.moves + c.extraMoves, movesLeft: moves,
+      score, goals: goalList().map(g => ({ kind: g.kind, what: g.kind === 'collect' ? PIECES[g.t].name : g.kind, need: g.need, have: g.have })),
+      specialsMade: c.made, specialsFired: c.fired, chestBroke: c.chestBroke, chestSank: c.chestSank,
+      shuffles: c.shuffles, extraMoves: c.extraMoves, seconds: Math.round((Date.now() - c.started) / 1000),
+      at: new Date().toISOString(), moves: c.log,
+    };
+    try { const db = await this.dbp; if (db) await db.collection('games').add(doc); } catch (e) {}
+  },
+};
+for (const k of ['made', 'fired']) Object.defineProperty(Rec, k, { get() { return this.cur ? this.cur[k] : {}; } });
+for (const k of ['chestBroke', 'chestSank', 'shuffles', 'extraMoves'])
+  Object.defineProperty(Rec, k, { get() { return this.cur ? this.cur[k] : 0; }, set(v) { if (this.cur) this.cur[k] = v; } });
 
 // Tutorial: a spotlight on the cells, a hand showing the gesture, a line of text.
 const HAND = '<svg viewBox="0 0 100 100"><path d="M40 20a8 8 0 0 1 16 0v30l4-1a8 8 0 0 1 9 5l2-1a8 8 0 0 1 10 6a7 7 0 0 1 9 7v12c0 12-10 22-22 22H52c-8 0-14-4-18-10L20 68a8 8 0 0 1 12-10l8 8z" fill="#fff" stroke="#3a2615" stroke-width="4" stroke-linejoin="round"/></svg>';
@@ -1103,7 +1204,7 @@ function tutorialNext() {
 
 // Screens
 function showMap() {
-  Tut.stop();
+  Tut.stop(); Rec.finish('вышел на карту');
   clearHint(); YSDK.gameplay(false);
   $('playScreen').hidden = true;
   $('mapScreen').hidden = false;
@@ -1136,6 +1237,8 @@ function startLevel(n) {
   buildNets();
   L.netTotal = netsLeft;
   Tut.stop();
+  Rec.finish('начал заново');
+  Rec.start();
   const guided = n === 1 && !progress.tips.intro && tutorialBoard();
   if (!guided && !(n === 1 && !progress.tips.intro)) buildBoard(freshTypes());
   updateHud();
@@ -1155,9 +1258,33 @@ $('toMap').addEventListener('click', showMap);
 $('resetBtn').hidden = !TEST_MODE;
 $('resetBtn').addEventListener('click', () => { progress = { unlocked: 1, stars: {}, tips: {} }; saveProgress(); showMap(); });
 
-window.claude?.hot?.snapshot?.(() => ({ levelNo }));
+// When the page is updated while open, the current attempt carries on exactly where it was.
+window.claude?.hot?.snapshot?.(() => levelNo && grid && !over && !busy ? {
+  levelNo, types: types(), score, moves, collected, netsLeft, netTotal: L.netTotal, bonusUsed: !!L.bonusUsed,
+  nets: nets.map(row => row.map(Boolean)),
+} : { levelNo: 0 });
+function restoreLevel(d) {
+  startLevel(d.levelNo);
+  $('overlay').hidden = true;
+  Tut.stop();
+  score = d.score; moves = d.moves; collected = d.collected;
+  L.bonusUsed = d.bonusUsed;
+  buildBoard(d.types);
+  netLayer.innerHTML = '';
+  netsLeft = 0;
+  nets = d.nets.map((row, r) => row.map((on, c) => {
+    if (!on) return null;
+    const el = document.createElement('div');
+    el.className = 'net'; pos(el, r, c); netLayer.appendChild(el); netsLeft++;
+    return el;
+  }));
+  L.netTotal = d.netTotal;
+  updateHud();
+  YSDK.gameplay(true); armHint();
+}
 const boot = data => {
-  data && data.levelNo ? startLevel(data.levelNo) : showMap();
+  if (data && data.levelNo && data.types) restoreLevel(data);
+  else showMap();
   YSDK.init().then(() => YSDK.ready());
 };
 window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
