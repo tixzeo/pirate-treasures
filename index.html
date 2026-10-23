@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Пиратские сокровища</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -431,6 +431,8 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 </style>
 </head>
 <body>
+
+
 <div class="ocean" aria-hidden="true"><div class="sun"></div><div class="cloud" style="top:8%;width:220px;animation-duration:160s;animation-delay:-40s"></div><div class="cloud" style="top:17%;width:140px;animation-duration:120s;animation-delay:-90s"></div><div class="cloud" style="top:24%;width:260px;animation-duration:200s;animation-delay:-10s;opacity:.7"></div><svg class="far" viewBox="0 0 1000 41" preserveAspectRatio="none"><path d="M40 41q30-30 70-26q20-18 50-4q30 2 50 30zM700 41q20-14 50-16q40-26 70-6q30 4 40 22zM880 41q10-8 30-8q20 0 30 8z" fill="#3a2f4a" opacity=".75"/><path d="M118 15q2-10 8-12m-8 12q-8-6-14-4" stroke="#3a2f4a" stroke-width="3" fill="none"/></svg><svg class="sail" viewBox="0 0 46 34"><path d="M4 26h38l-6 7H10z" fill="#2b2433"/><path d="M22 26V2M32 26V8" stroke="#2b2433" stroke-width="2"/><path d="M12 6q10 3 20 0v16q-10 3-20 0zM28 11q6 2 10 0v12q-5 2-10 0z" fill="#3d3446"/></svg><svg class="gull" style="top:12%;animation-delay:-5s" viewBox="0 0 26 12"><path d="M1 8q6-8 12 0q6-8 12 0" fill="none" stroke="#2b2433" stroke-width="2"/></svg><svg class="gull" style="top:19%;animation-delay:-22s;animation-duration:52s" viewBox="0 0 26 12"><path d="M1 8q6-8 12 0q6-8 12 0" fill="none" stroke="#2b2433" stroke-width="2"/></svg><div class="swell" style="top:36%;--w:120px;--crest:13px;background:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='14'%3E%3Cpath d='M0 7.0 Q15.0 0.7000000000000002 30.0 7.0 T60.0 7.0 T90.0 7.0 T120 7.0 V14 H0Z' fill='%232c7393' stroke='rgba(255,255,255,.28)' stroke-width='1.5'/%3E%3C/svg%3E&quot;) 0 0/120px 14px repeat-x,linear-gradient(#2c7393,#2c7393) 0 13px/100% 100% no-repeat;animation-duration:46s;animation-direction:normal"></div><div class="swell" style="top:45%;--w:180px;--crest:19px;background:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='20'%3E%3Cpath d='M0 10.0 Q22.5 1.0 45.0 10.0 T90.0 10.0 T135.0 10.0 T180 10.0 V20 H0Z' fill='%2321607d' stroke='rgba(255,255,255,.28)' stroke-width='1.5'/%3E%3C/svg%3E&quot;) 0 0/180px 20px repeat-x,linear-gradient(#21607d,#21607d) 0 19px/100% 100% no-repeat;animation-duration:34s;animation-direction:reverse"></div><div class="glitter"></div><div class="swell" style="top:58%;--w:240px;--crest:25px;background:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='26'%3E%3Cpath d='M0 13.0 Q30.0 1.299999999999999 60.0 13.0 T120.0 13.0 T180.0 13.0 T240 13.0 V26 H0Z' fill='%23184e68' stroke='rgba(255,255,255,.28)' stroke-width='1.5'/%3E%3C/svg%3E&quot;) 0 0/240px 26px repeat-x,linear-gradient(#184e68,#184e68) 0 25px/100% 100% no-repeat;animation-duration:24s;animation-direction:normal"></div><div class="swell" style="top:74%;--w:320px;--crest:33px;background:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='34'%3E%3Cpath d='M0 17.0 Q40.0 1.6999999999999993 80.0 17.0 T160.0 17.0 T240.0 17.0 T320 17.0 V34 H0Z' fill='%230f3b52' stroke='rgba(255,255,255,.28)' stroke-width='1.5'/%3E%3C/svg%3E&quot;) 0 0/320px 34px repeat-x,linear-gradient(#0f3b52,#0f3b52) 0 33px/100% 100% no-repeat;animation-duration:17s;animation-direction:reverse"></div></div>
 <div class="game">
   <section id="mapScreen" class="game">
@@ -2309,6 +2311,14 @@ function showMap(fresh) {
   $('mapGold').innerHTML = coin(progress.gold);
   // Islands passed before battles existed still count: their companions join right away.
   ALLIES.forEach(x => { if (x.from < progress.unlocked) progress.allies[x.id] = 1; });
+  // Test mode: every companion and fruit at once, and enough gold to try every ship and sailor.
+  if (TEST_MODE) {
+    ALLIES.forEach(x => { progress.allies[x.id] = 1; });
+    FRUITS.forEach(f => { progress.fruits[f.id] = 1; });
+    progress.fruit = progress.fruit || 'storm';
+    progress.gold = Math.max(progress.gold, 100000);
+    $('mapGold').innerHTML = coin(progress.gold);
+  }
   $('portScreen').hidden = true;
   levelNo = 0;
   renderMap(fresh);
