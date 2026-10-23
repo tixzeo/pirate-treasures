@@ -350,6 +350,30 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .scroll button.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 2px rgba(58,38,21,.5); }
 .stars { font-size: 2.4rem; letter-spacing: .15em; color: rgba(58,38,21,.22); }
 .stars .on { color: #c8901f; }
+/* Sea battle */
+.chip.foe { flex: 1 1 100%; gap: 10px; padding: 6px 12px 6px 6px; border-radius: 12px; position: relative; }
+.chip.foe .foeart svg { width: 66px; height: 44px; }
+.foeinfo { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.foeinfo b { font-family: var(--font-display); font-weight: 400; color: var(--brass-hi); }
+.foeinfo small { font-size: .75rem; color: var(--rope); font-weight: 800; }
+.hp { display: block; height: 9px; border-radius: 5px; background: rgba(0,0,0,.5); box-shadow: inset 0 0 0 1px rgba(201,162,79,.6); overflow: hidden; }
+.hp i { display: block; height: 100%; background: linear-gradient(180deg, #ff7b6e, #b3322b); transition: width .3s ease; }
+.chip.foe.hit .foeart { animation: rattle .08s linear 4; }
+.chip.foe .dmg { position: absolute; right: 12px; top: -6px; color: #ff9a8a; font-family: var(--font-display); font-size: 1.3rem; text-shadow: 0 2px 0 #2a1408; animation: dmg .9s ease-out forwards; pointer-events: none; }
+@keyframes dmg { to { transform: translateY(-22px); opacity: 0; } }
+.foebig svg { width: 180px; height: 120px; }
+.joiner { display: flex; gap: 10px; text-align: left; align-items: flex-start; background: rgba(58,38,21,.08); border-radius: 10px; padding: 10px; }
+.joiner .face { width: 54px; height: 54px; flex: none; border-radius: 50%; background: rgba(58,38,21,.1); box-shadow: inset 0 0 0 2px rgba(58,38,21,.35); }
+.joiner p { font-style: italic; margin: 2px 0; }
+.joiner small { color: #6a4a20; font-weight: 800; }
+.fruit { width: 46px; height: 46px; padding: 3px; border-radius: 50%; box-shadow: none;
+  background: conic-gradient(var(--gold) var(--p, 0deg), rgba(0,0,0,.45) 0); }
+.fruit svg { width: 100%; height: 100%; border-radius: 50%; background: #24160b; filter: grayscale(.6) brightness(.8); }
+.fruit.ready svg { filter: none; animation: glow 1.2s ease-in-out infinite; }
+.card.unknown .art svg, .card.unknown .face > * { filter: brightness(0) opacity(.35); }
+.reveal { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(8,20,28,.7); }
+.reveal .big svg { width: 120px; height: 120px; animation: born .6s cubic-bezier(.3, 1.6, .5, 1); }
+.reveal small { color: #8a5c0e; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 /* Port */
 .port { display: flex; flex-direction: column; gap: 10px; }
 .port h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; margin: 8px 0 0; color: var(--gold); text-shadow: 0 2px 0 #3a2615; }
@@ -410,7 +434,18 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
       <h2>Таверна <small id="crewRoom"></small></h2>
       <p class="sub">Наймите моряков за золото. С вами плывут только те, кому хватило места на борту.</p>
       <div class="cards" id="tavern"></div>
+      <h2>Соратники</h2>
+      <p class="sub">Присоединяются после побед над боссами. У каждого свой стиль боя в морских сражениях.</p>
+      <div class="cards" id="allies"></div>
+      <h2>Лавка плодов</h2>
+      <p class="sub" id="fruitClosed">Торговка Мира откроет лавку, когда вы доплывёте до Огненных островов.</p>
+      <div id="fruitShop">
+        <p class="sub">Сундук приносит случайный волшебный плод. Съесть можно один: его сила копится от собранных сокровищ, а потом срабатывает по нажатию. За повторный плод вернут половину цены.</p>
+        <button type="button" data-roll="1" id="rollFruit"></button>
+        <div class="cards" id="fruits"></div>
+      </div>
     </div>
+    <div class="reveal" id="fruitReveal" hidden></div>
   </section>
 
   <section id="playScreen" class="game" hidden>
@@ -460,9 +495,11 @@ const PIECES = [
   { name: 'ядро', svg: '<g fill="#f2c14e" stroke="#8a5c0e" stroke-width="3" stroke-linejoin="round"><polygon points="50,2 40,14 60,14"/><polygon points="50,98 40,86 60,86"/></g><circle cx="50" cy="50" r="32" fill="#2b2d33" stroke="#0c0d10" stroke-width="4"/><ellipse cx="40" cy="38" rx="10" ry="6" fill="#8a93a3" opacity=".7"/><path d="M74 30Q86 26 88 34" fill="none" stroke="#c9a46a" stroke-width="4" stroke-linecap="round"/><circle class="spark" cx="88" cy="36" r="6" fill="#ffcf4a"/>' },
   { name: 'бочка пороха', svg: '<path d="M24 14H76Q88 50 76 88H24Q12 50 24 14Z" fill="#9a5a2c" stroke="#2a1408" stroke-width="4" stroke-linejoin="round"/><path d="M19 32H81M17 70H83" stroke="#3a3f47" stroke-width="7"/><path d="M38 14Q34 50 38 88M62 14Q66 50 62 88" stroke="#6e3c1a" stroke-width="3" fill="none"/><rect x="34" y="42" width="32" height="18" rx="3" fill="#efdcb3" stroke="#2a1408" stroke-width="2"/><text x="50" y="56" font-size="13" font-weight="900" text-anchor="middle" fill="#b3322b" font-family="Arial,sans-serif">XXX</text><path d="M50 14Q52 4 60 4" fill="none" stroke="#c9a46a" stroke-width="4" stroke-linecap="round"/><circle class="spark" cx="61" cy="4" r="6" fill="#ffcf4a"/>' },
   { name: 'компас-бомба', svg: '<circle cx="50" cy="50" r="44" fill="#173a4d" stroke="#f2c14e" stroke-width="5"/><polygon points="50,6 57,43 94,50 57,57 50,94 43,57 6,50 43,43" fill="#f2c14e" stroke="#8a5c0e" stroke-width="2" stroke-linejoin="round"/><polygon points="50,24 54,46 76,50 54,54 50,76 46,54 24,50 46,46" fill="#fff3c4" transform="rotate(45 50 50)"/><circle cx="50" cy="50" r="7" fill="#e3394f" stroke="#6d0f1d" stroke-width="2"/>' },
+  // Wreckage left by enemy shots: cannot be moved or matched, a match next to it clears it.
+  { name: 'обломки', svg: '<g stroke="#2a1408" stroke-width="4" stroke-linejoin="round"><path d="M10 30l62-16 8 16-64 16z" fill="#8a5a34"/><path d="M18 58l68 6-2 18-68-6z" fill="#7a4a28"/><path d="M30 38l10 52-14 2-10-52z" fill="#6b3f1f"/></g><g fill="#c8c8c8" stroke="#555" stroke-width="1"><circle cx="22" cy="33" r="3.5"/><circle cx="68" cy="21" r="3.5"/><circle cx="76" cy="72" r="3.5"/><circle cx="24" cy="82" r="3"/></g><path d="M44 50l8-6M56 60l10-4" stroke="#2a1408" stroke-width="3" stroke-linecap="round"/>' },
 ];
-const CANNON_ROW = 8, CANNON_COL = 9, BARREL = 10, COMPASS = 11;
-const isSpecial = tile => tile && tile.t >= CANNON_ROW;
+const CANNON_ROW = 8, CANNON_COL = 9, BARREL = 10, COMPASS = 11, DEBRIS = 12;
+const isSpecial = tile => tile && tile.t >= CANNON_ROW && tile.t <= COMPASS;
 const CHEST = 7;          // index of the golden chest in PIECES
 const CHEST_FROM = 8;     // chests start dropping from this island
 const TEST_MODE = true;   // всё открыто и сундук выпадает часто; выключить перед публикацией
@@ -494,25 +531,32 @@ const LEVELS = [
 ];
 // After the hand-made ones, islands are generated: fewer moves, bigger goals.
 function levelDef(n) {
+  const foe = foeAt(n);
+  if (foe) {
+    // Companions join after each boss up to 54, so bosses past 24 get extra toughness to match.
+    const k = Math.min(n, 120);
+    return { moves: 26, types: 7, boss: { ...foe, hp: Math.round(150 + (k - 12) * 1.5 + Math.max(0, (k - 24) * 2)), every: n < 40 ? 4 : 3, volley: Math.min(4, 2 + Math.floor(n / 40)) } };
+  }
   if (n <= LEVELS.length) return LEVELS[n - 1];
   const k = n - LEVELS.length;
   let seed = n * 9301 + 49297;
   const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
-  // Checked with the balance bot: past island 20 a casual player still wins about half the time.
-  const def = { moves: Math.max(22, 25 - Math.floor(k / 4)), types: 7 };
-  const kind = k % 3;
-  if (kind === 0) def.score = Math.min(1700, 1150 + k * 25);
+  // Checked with the balance bot: goals grow slowly, moves shrink, wreckage islands join from 26.
+  const def = { moves: Math.max(20, 25 - Math.floor(k / 6)), types: 7 };
+  const kind = n >= 26 ? k % 4 : k % 3;
+  if (kind === 0) def.score = Math.min(1800, 1150 + k * 8);
   if (kind === 1) {
     const a = Math.floor(rnd() * 7), b = (a + 1 + Math.floor(rnd() * 6)) % 7;
-    const cnt = Math.min(14, 12 + Math.floor(k / 5));
+    const cnt = Math.min(16, 12 + Math.floor(k / 10));
     def.collect = { [a]: cnt, [b]: cnt };
   }
   if (kind === 2) {
     const names = ['rows', 'center'];
     def.moves += 4; // nets need room to reach the edges
     def.net = names[Math.floor(k / 3) % names.length];
-    if (k >= 6) def.score = Math.min(1300, 700 + k * 25);
+    if (k >= 6) def.score = Math.min(1500, 700 + k * 12);
   }
+  if (kind === 3) { def.wreck = Math.min(13, 8 + Math.floor(k / 12)); def.moves += 3; }
   return def;
 }
 
@@ -527,6 +571,7 @@ function fixProgress() {
   progress.tips = progress.tips || {}; progress.story = progress.story || {};
   progress.gold = progress.gold || 0; progress.vessel = progress.vessel || 0;
   progress.hired = progress.hired || {}; progress.aboard = progress.aboard || [];
+  progress.allies = progress.allies || {}; progress.fruits = progress.fruits || {};
 }
 fixProgress();
 function saveProgress() {
@@ -542,7 +587,7 @@ const pos = (el, r, c) => { el.style.transform = `translate(${c * 100}%, ${r * 1
 const place = tile => pos(tile.el, tile.r, tile.c);
 function makeTile(t, r, c) {
   const el = document.createElement('div');
-  el.className = t === CHEST || t >= CANNON_ROW ? 'tile rare' : 'tile';
+  el.className = t === CHEST || (t >= CANNON_ROW && t <= COMPASS) ? 'tile rare' : 'tile';
   el.innerHTML = gemSvg(t);
   tileLayer.appendChild(el);
   const tile = { t, r, c, el };
@@ -566,7 +611,7 @@ function lineAt(T, r, c) {
 function findMove(T) {
   // A special piece can always be fired by swapping it with a neighbour.
   for (let r = 0; r < N; r++) for (let c = 0; c < N; c++)
-    if (T[r][c] >= CANNON_ROW) return [[r, c], c + 1 < N ? [r, c + 1] : [r, c - 1]];
+    if (T[r][c] >= CANNON_ROW && T[r][c] <= COMPASS) return [[r, c], c + 1 < N ? [r, c + 1] : [r, c - 1]];
   const sw = (a, b, x, y) => { const k = T[a][b]; T[a][b] = T[x][y]; T[x][y] = k; };
   for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
     for (const [dr, dc] of [[0, 1], [1, 0]]) {
@@ -658,6 +703,8 @@ function goalList() {
   if (L.score) g.push({ kind: 'score', need: L.score, have: Math.min(score, L.score) });
   if (L.collect) for (const t in L.collect) g.push({ kind: 'collect', t: +t, need: L.collect[t], have: Math.min(collected[t] || 0, L.collect[t]) });
   if (L.net) g.push({ kind: 'net', need: L.netTotal, have: L.netTotal - netsLeft });
+  if (L.wreck) g.push({ kind: 'wreck', need: L.wreck, have: Math.min(L.wrecked || 0, L.wreck) });
+  if (L.boss) g.push({ kind: 'boss', need: L.boss.hp, have: Math.min(L.dmg || 0, L.boss.hp) });
   return g;
 }
 const goalsMet = () => goalList().every(g => g.have >= g.need);
@@ -666,11 +713,16 @@ function chipHtml(g) {
   const done = g.have >= g.need ? ' done' : '';
   if (g.kind === 'score') return `<span class="chip${done}">${STAR_SVG} ${g.have} / ${g.need}</span>`;
   if (g.kind === 'collect') return `<span class="chip${done}">${gemSvg(g.t)} ${done ? '✓' : g.need - g.have}</span>`;
+  if (g.kind === 'wreck') return `<span class="chip${done}">${gemSvg(DEBRIS)} ${done ? '✓' : g.need - g.have}</span>`;
+  if (g.kind === 'boss') return `<span class="chip foe${done}"><span class="foeart">${foeSvg(L.boss)}</span><span class="foeinfo"><b>${L.boss.name}</b>` +
+    `<i class="hp"><i style="width:${100 - g.have / g.need * 100}%"></i></i><small>${done ? 'Повержен!' : `Прочность ${g.need - g.have} · залп через ${Math.max(0, L.timer ?? L.boss.every)}`}</small></span></span>`;
   return `<span class="chip${done}"><i class="netcell"></i> ${done ? '✓' : g.need - g.have}</span>`;
 }
 function goalText(g) {
   if (g.kind === 'score') return `Награбьте ${g.need} добычи`;
   if (g.kind === 'collect') return `Соберите ${PIECES[g.t].name}: ${g.need} шт.`;
+  if (g.kind === 'wreck') return 'Расчистите обломки: соберите ряд рядом с каждым';
+  if (g.kind === 'boss') return `Каждое собранное сокровище бьёт по врагу. Каждые ${L.boss.every} хода враг отвечает залпом и оставляет на палубе обломки.`;
   return 'Разрежьте все сети: соберите ряд на каждой клетке с сетью';
 }
 
@@ -679,7 +731,9 @@ function updateHud() {
   $('moves').textContent = moves;
   $('gold').textContent = loot();
   $('movesBox').classList.toggle('low', moves <= 5);
-  $('goals').innerHTML = goalList().map(chipHtml).join('');
+  const f = fruitNow(), p = Math.min(1, (L.charge || 0) / FRUIT_CHARGE);
+  $('goals').innerHTML = goalList().map(chipHtml).join('') + (f && !Tut.allowed
+    ? `<button type="button" class="fruit${p >= 1 ? ' ready' : ''}" id="fruitBtn" style="--p:${p * 360}deg" aria-label="${f.name}: ${f.power}. Заряд ${Math.round(p * 100)}%">${fruitSvg(f)}</button>` : '');
 }
 function flash(text) {
   const el = $('combo');
@@ -869,6 +923,11 @@ async function resolve(pending, swapped = []) {
     if (!groups.length && !pending.length) break;
     const clear = new Set();
     groups.forEach(g => g.keys.forEach(k => clear.add(grid[Math.floor(k / N)][k % N])));
+    // Wreckage next to a match goes with it.
+    groups.forEach(g => g.keys.forEach(k => {
+      const r = Math.floor(k / N), c = k % N;
+      for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) { const w = grid[r + dr] && grid[r + dr][c + dc]; if (w && w.t === DEBRIS) clear.add(w); }
+    }));
     const makes = groups.map(g => specialFor(g, swapped)).filter(Boolean);
     swapped = [];
     const chestNear = chestHit(clear);
@@ -909,9 +968,13 @@ async function resolve(pending, swapped = []) {
       t.el.classList.add('pop');
       grid[t.r][t.c] = null;
       if (t.t < CHEST) collected[t.t] = (collected[t.t] || 0) + 1;
+      if (t.t === DEBRIS) L.wrecked = (L.wrecked || 0) + 1;
       const net = boom && !beforeBoom.has(t) ? null : nets[t.r][t.c];
       if (net) { Sound.cut(); net.classList.add('cut'); setTimeout(() => net.remove(), 300); nets[t.r][t.c] = null; netsLeft--; }
     });
+    const gems = [...clear].filter(t => t.t < CHEST).length;
+    if (L.boss) hitFoe(gems + fired.size * 4 + (ally('bjorn') ? 3 * [...clear].filter(t => t.t === DEBRIS).length : 0));
+    if (progress.fruit) L.charge = Math.min(FRUIT_CHARGE, (L.charge || 0) + gems);
     updateHud();
     await wait(makes.length ? 450 : 200);
     clear.forEach(t => t.el.remove());
@@ -933,7 +996,7 @@ function swapCells(a, b) {
 
 async function trySwap(a, b) {
   if (busy || over || b.r < 0 || b.c < 0 || b.r >= N || b.c >= N) return;
-  if (!Tut.permits(a, b)) { Sound.wrong(); setSel(null); return; }
+  if (!Tut.permits(a, b) || grid[a.r][a.c].t === DEBRIS || grid[b.r][b.c].t === DEBRIS) { Sound.wrong(); setSel(null); return; }
   busy = true;
   Tut.hide();
   clearHint(); setSel(null);
@@ -970,7 +1033,9 @@ async function aimAt(compass, type) {
   await resolve([compass]);
   await afterMove();
 }
-async function afterMove() {
+async function afterMove(spent = true) {
+  if (goalsMet()) { busy = false; return win(); }
+  if (spent && L.boss) await battleTurn();
   busy = false;
   if (goalsMet()) return win();
   if (moves <= 0 && aboard('cook') && !L.cookUsed) {
@@ -1015,9 +1080,14 @@ function win() {
   const stars = ratio >= .3 ? 3 : ratio >= .15 ? 2 : 1;
   progress.stars[levelNo] = Math.max(progress.stars[levelNo] || 0, stars);
   progress.unlocked = Math.max(progress.unlocked, levelNo + 1);
-  const gold = bank(loot());
+  const gold = bank(Math.round(loot() * (L.boss && ally('mira') ? 1.5 : 1)));
+  // Beating a boss brings a new companion aboard.
+  const joined = L.boss && ALLIES.find(a => a.from === levelNo && !ally(a.id));
+  if (joined) { progress.allies[joined.id] = 1; saveProgress(); }
   overlay(
-    `<h2>Остров ${levelNo} взят!</h2>${starsHtml(stars)}<p class="haul">В казну: ${coin('+' + gold)}</p><p>Очки: ${score}, из них ${bonus} за оставшиеся ходы.</p>`,
+    `<h2>${L.boss ? 'Победа в бою!' : `Остров ${levelNo} взят!`}</h2>${L.boss ? `<p>${L.boss.name} больше не страшен.</p>` : ''}${starsHtml(stars)}<p class="haul">В казну: ${coin('+' + gold)}</p>` +
+    (joined ? `<div class="joiner"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${joined.face}</svg><div><b>${joined.name} теперь в команде!</b><p>«${joined.joins}»</p><small>Стиль боя «${joined.style}»: ${joined.perk.toLowerCase()}</small></div></div>`
+      : `<p>Очки: ${score}, из них ${bonus} за оставшиеся ходы.</p>`),
     [['Плыть дальше', () => afterAd(() => voyage(levelNo + 1))], ['Повторить', () => afterAd(() => startLevel(levelNo)), true], ['В порт', () => afterAd(showPort), true]]
   );
 }
@@ -1303,7 +1373,7 @@ async function afterAd(next) { await YSDK.interstitial(); next(); }
 const Rec = {
   cur: null, dbp: window.claude?.use ? window.claude.use('db').catch(() => null) : Promise.resolve(null),
   start() {
-    this.cur = { level: levelNo, started: Date.now(), log: [], made: {}, fired: {}, chestBroke: 0, chestSank: 0, shuffles: 0, extraMoves: 0 };
+    this.cur = { level: levelNo, started: Date.now(), log: [], made: {}, fired: {}, chestBroke: 0, chestSank: 0, shuffles: 0, extraMoves: 0, volleys: 0 };
   },
   move(m) { if (this.cur && this.cur.log.length < 80) this.cur.log.push(m); },
   async finish(result) {
@@ -1313,7 +1383,7 @@ const Rec = {
     const doc = {
       island: c.level, result, testMode: TEST_MODE,
       movesUsed: c.log.length, movesGiven: L.moves + c.extraMoves, movesLeft: moves,
-      score, gold: loot(), ship: vessel().name, crew: progress.aboard, goals: goalList().map(g => ({ kind: g.kind, what: g.kind === 'collect' ? PIECES[g.t].name : g.kind, need: g.need, have: g.have })),
+      score, gold: loot(), volleys: c.volleys, fruit: progress.fruit || null, allies: Object.keys(progress.allies || {}), ship: vessel().name, crew: progress.aboard, goals: goalList().map(g => ({ kind: g.kind, what: g.kind === 'collect' ? PIECES[g.t].name : g.kind, need: g.need, have: g.have })),
       specialsMade: c.made, specialsFired: c.fired, chestBroke: c.chestBroke, chestSank: c.chestSank,
       shuffles: c.shuffles, extraMoves: c.extraMoves, seconds: Math.round((Date.now() - c.started) / 1000),
       at: new Date().toISOString(), moves: c.log,
@@ -1322,7 +1392,7 @@ const Rec = {
   },
 };
 for (const k of ['made', 'fired']) Object.defineProperty(Rec, k, { get() { return this.cur ? this.cur[k] : {}; } });
-for (const k of ['chestBroke', 'chestSank', 'shuffles', 'extraMoves'])
+for (const k of ['chestBroke', 'chestSank', 'shuffles', 'extraMoves', 'volleys'])
   Object.defineProperty(Rec, k, { get() { return this.cur ? this.cur[k] : 0; }, set(v) { if (this.cur) this.cur[k] = v; } });
 
 // Tutorial: a spotlight on the cells, a hand showing the gesture, a line of text.
@@ -1364,6 +1434,7 @@ const TIPS = {
   [BARREL]: ['barrel', 'Бочка пороха! Сдвиньте её, и она взорвёт всё вокруг.'],
   [COMPASS]: ['compass', 'Компас-бомба! Нажмите на неё, а потом на любое сокровище.'],
   [CHEST]: ['chest', 'Золотой сундук! Соберите ряд рядом с ним, пока он не утонул.'],
+  [DEBRIS]: ['wreck', 'Обломки! Их нельзя двигать. Соберите ряд рядом, и они разлетятся.'],
 };
 // Island 1 board with a ready four-in-a-row on row 5: swap (4,3) with (5,3).
 function tutorialBoard() {
@@ -1423,6 +1494,8 @@ const SHIPS = [
   { name: 'Бригантина', price: 1800, moves: 2, crew: 3, masts: 2, len: .9, about: 'Любимый корабль контрабандистов.' },
   { name: 'Фрегат', price: 4000, moves: 3, crew: 4, masts: 3, len: 1, about: 'Гроза торговых путей.' },
   { name: 'Галеон', price: 8000, moves: 4, crew: 5, masts: 3, len: 1.1, castle: true, about: 'Плавучая крепость с полным трюмом.' },
+  { name: 'Линкор', price: 14000, moves: 5, crew: 6, masts: 3, len: 1.12, castle: true, about: 'Сто пушек на трёх палубах.' },
+  { name: 'Флагман', price: 24000, moves: 6, crew: 6, masts: 3, len: 1.15, castle: true, about: 'Корабль, достойный Трона Морского Короля.' },
 ];
 const face = (skin, hat, extra = '') => `<circle cx="32" cy="36" r="18" fill="${skin}"/><circle cx="26" cy="35" r="2.3" fill="#1b1b1b"/><circle cx="38" cy="35" r="2.3" fill="#1b1b1b"/>${extra}${hat}`;
 const CREW = [
@@ -1449,7 +1522,7 @@ const vessel = () => SHIPS[progress.vessel];
 const loot = () => {
   let g = (L.chestGold || 0);
   for (const t in collected) g += (VALUE[t] || 0) * collected[t];
-  return Math.round(g * (aboard('quarter') ? 1.25 : 1));
+  return Math.round(g * (aboard('quarter') ? 1.25 : 1) * (L.goldx2 ? 2 : 1));
 };
 // Pays out the part of `amount` not yet paid this attempt (a lost island pays half, a later win tops it up).
 function bank(amount) {
@@ -1522,6 +1595,21 @@ function renderPort() {
       (state ? `<span class="tag">${state}</span>` : `<button type="button" data-ship="${i}"${progress.gold < s.price ? ' disabled' : ''}>Купить ${coin(s.price)}</button>`) + '</div>';
   }).join('');
   $('crewRoom').textContent = `На борту ${progress.aboard.length} из ${room}`;
+  $('allies').innerHTML = ALLIES.map(a => {
+    const on = ally(a.id);
+    return `<div class="card${on ? ' mine' : ' unknown'}"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${a.face}</svg><div class="info"><b>${on ? a.name : '???'}</b>` +
+      `<p>${on ? `«${a.style}»: ${a.perk}` : `Присоединится после победы над боссом острова ${a.from}`}</p></div></div>`;
+  }).join('');
+  const shop = TEST_MODE || progress.unlocked >= 32;
+  $('fruitShop').hidden = !shop; $('fruitClosed').hidden = shop;
+  $('rollFruit').innerHTML = `Открыть сундук плодов ${coin(fruitPrice())}`;
+  $('rollFruit').disabled = progress.gold < fruitPrice();
+  $('fruits').innerHTML = FRUITS.map(f => {
+    const have = progress.fruits[f.id], on = progress.fruit === f.id;
+    return `<div class="card${on ? ' mine' : ''}${have ? '' : ' unknown'}"><div class="art">${fruitSvg(f)}</div><div class="info"><b>${have ? f.name : '???'}</b>` +
+      `<p>${have ? f.power : 'Ещё не найден'}</p><small>${f.rarity}</small></div>` +
+      (have ? `<button type="button" class="ghost${on ? ' on' : ''}" data-fruit="${f.id}" aria-pressed="${on}">${on ? 'Съеден' : 'Съесть'}</button>` : '') + '</div>';
+  }).join('');
   $('tavern').innerHTML = CREW.map(m => {
     const hired = progress.hired[m.id], on = aboard(m.id);
     const btn = !hired
@@ -1542,6 +1630,25 @@ $('portScreen').addEventListener('click', e => {
     progress.gold -= m.price; progress.hired[m.id] = 1;
     if (progress.aboard.length < vessel().crew) progress.aboard.push(m.id);
     Sound.compass(); saveProgress(); renderPort();
+  } else if (b.dataset.roll) {
+    const price = fruitPrice();
+    progress.gold -= price;
+    let r = Math.random() * 100;
+    const f = FRUITS.find(x => (r -= x.w) < 0) || FRUITS[0];
+    const dup = progress.fruits[f.id];
+    if (dup) progress.gold += Math.floor(price / 2); else progress.fruits[f.id] = 1;
+    if (!progress.fruit) progress.fruit = f.id;
+    Sound.forge(); saveProgress(); renderPort();
+    const el = $('fruitReveal');
+    el.innerHTML = `<div class="scroll"><div class="big">${fruitSvg(f)}</div><h2>${f.name}</h2><small>${f.rarity}</small><p>${f.power}</p>` +
+      `<p>${dup ? `Такой уже есть. Мира вернула ${coin(Math.floor(price / 2))}` : 'Новый плод!'}</p><div class="row"><button type="button" data-close="1">Отлично</button></div></div>`;
+    el.hidden = false;
+    el.querySelector('button').focus({ preventScroll: true });
+  } else if (b.dataset.close) {
+    $('fruitReveal').hidden = true;
+  } else if (b.dataset.fruit) {
+    progress.fruit = progress.fruit === b.dataset.fruit ? null : b.dataset.fruit;
+    Sound.swap(); saveProgress(); renderPort();
   } else if (b.dataset.board) {
     const id = b.dataset.board;
     progress.aboard = aboard(id) ? progress.aboard.filter(x => x !== id) : [...progress.aboard, id];
@@ -1603,6 +1710,283 @@ const FAR_STORY = [
 ];
 const storyFor = n => STORY[n] || ((n - 1) % CHAPTER === 0 ? ['parrot', FAR_STORY[chapterOf(n) % FAR_STORY.length]] : null);
 
+Object.assign(FACES, {
+  admiral: ['Адмирал Стальной Клюв', '<circle cx="32" cy="38" r="18" fill="#e3b48c"/><path d="M6 26q26-24 52 0q-26-6-52 0z" fill="#1d3d55"/><path d="M6 26q26-6 52 0" stroke="#f2c14e" stroke-width="2.5" fill="none"/><circle cx="25" cy="37" r="2.5" fill="#1b1b1b"/><circle cx="39" cy="37" r="2.5" fill="#1b1b1b"/><path d="M30 40l2 10 2-10z" fill="#9aa4ad" stroke="#5a646d"/><path d="M22 48h20" stroke="#5a3a2a" stroke-width="2"/>'],
+  merchant: ['Торговка Мира', face('#d9a77c', '<path d="M12 28q20-20 40 0q-4 6-20 6t-20-6z" fill="#7a3a8a"/><circle cx="32" cy="18" r="4" fill="#f2c14e"/>', '<circle cx="14" cy="40" r="3" fill="#f2c14e"/><circle cx="50" cy="40" r="3" fill="#f2c14e"/><path d="M24 45q8 5 16 0" stroke="#3a2615" stroke-width="2" fill="none"/>')],
+  queen: ['Королева Бурь', '<circle cx="32" cy="38" r="17" fill="#c8d0e6"/><path d="M14 20l6-12 6 9 6-11 6 11 6-9 6 12z" fill="#6a7bb3" stroke="#2a2f4a" stroke-width="1.5"/><path d="M14 30q-4 20 6 30M50 30q4 20-6 30" stroke="#2a2f4a" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="26" cy="37" r="2.5" fill="#1b1b1b"/><circle cx="38" cy="37" r="2.5" fill="#1b1b1b"/><path d="M26 46q6-3 12 0" stroke="#3a2615" stroke-width="2" fill="none"/>'],
+});
+CHAPTERS.push(
+  { name: 'Владения Адмиралтейства', sub: 'Королевский флот не любит пиратов', theme: 'bay' },
+  { name: 'Огненные острова', sub: 'Вулканы, лава и волшебные плоды', theme: 'skull' },
+  { name: 'Рифы Бурь', sub: 'Молнии бьют прямо в мачты', theme: 'fog' },
+  { name: 'Ледяное море', sub: 'Айсберги и вечная ночь', theme: 'fog' },
+  { name: 'Острова Пряностей', sub: 'Здесь хозяйничает Торговая компания', theme: 'bay' },
+  { name: 'Затонувший город', sub: 'Под водой спят каменные улицы', theme: 'kraken' },
+  { name: 'Пустынный берег', sub: 'Пираты, которые ходят по пескам', theme: 'skull' },
+  { name: 'Мангровые болота', sub: 'Туман, корни и ядовитые твари', theme: 'fog' },
+  { name: 'Небесные скалы', sub: 'Острова, что парят над морем', theme: 'bay' },
+  { name: 'Пиратская республика', sub: 'Совет капитанов делит моря', theme: 'skull' },
+  { name: 'Призрачные воды', sub: 'Корабли, которые плывут без команды', theme: 'fog' },
+  { name: 'Бездна Морского Короля', sub: 'Глубже уже некуда', theme: 'kraken' },
+  { name: 'Трон Морского Короля', sub: 'Конец карты и конец пути', theme: 'skull' },
+);
+Object.assign(STORY, {
+  12: ['keeper', 'Шрам привёл к маяку свою «Каракатицу» и палит по скалам! Прогоните его, и вторая часть ключа ваша.'],
+  18: ['parrot', 'Кракен проснулся и всплывает прямо под нами! Все к пушкам, кар-р!'],
+  24: ['scar', 'Вход в пещеру Морского Короля охраняет мой флагман. Хочешь сундук? Сначала победи меня!'],
+  25: ['parrot', 'Сундук Морского Короля открыт! Внутри золото и новая карта, до самого Трона Морского Короля. Но эти воды стерегут королевские фрегаты.'],
+  26: ['admiral', 'Говорит адмирал Стальной Клюв. Пиратам вход в эти воды закрыт. Разворачивайтесь!'],
+  27: ['parrot', 'Адмирал поставил сети у каждого острова. Похоже, он читал записки Шрама.'],
+  28: ['scar', 'Салага, этот адмирал охотился и за мной. Давно мечтаю увидеть его фрегат на дне.'],
+  29: ['parrot', 'Юнга Тим говорит, что у «Неустрашимого» слабая корма. Целься туда!'],
+  30: ['admiral', 'Ко мне, канониры! Я лично потоплю этих выскочек!'],
+  31: ['parrot', 'Огненные острова! Вулканы дымят, а в трюме пахнет жареным попугаем. Не смешно!'],
+  32: ['merchant', 'Торговка Мира, к вашим услугам. Я продаю волшебные плоды: съешь один, и получишь силу моря. Ищите мою лавку в порту!'],
+  33: ['parrot', 'Мира говорит, что плоды растут только у вулканов. Поэтому здесь так жарко... и так дорого.'],
+  34: ['merchant', 'Слышали? В лаве живёт огненный змей. Он сторожит лучшие плоды.'],
+  35: ['parrot', 'Земля трясётся! Змей проснулся. Держите бочки с порохом подальше от огня.'],
+  36: ['parrot', 'Вот он, огненный змей! Цельтесь в голову, кар-р!'],
+  37: ['parrot', 'Рифы Бурь. Здесь молнии бьют прямо в мачты. Я прячусь в трюм.'],
+  38: ['keeper', 'Я приплыл за вами с маяка! Королева Бурь топит корабли и собирает их на дне. Не дайте ей забрать ваш.'],
+  39: ['parrot', 'Белла предлагает зарядить пушки цепными ядрами. Звучит как отличный план.'],
+  40: ['queen', 'Ещё один кораблик в мою коллекцию? Как мило.'],
+  41: ['keeper', 'Свет маяка разгоняет тучи всего на миг. Используйте его!'],
+  42: ['queen', 'Ваш корабль станет украшением моего дна!'],
+  43: ['parrot', 'Ледяное море. Здесь так холодно, что у меня мёрзнет клюв.'],
+  44: ['parrot', 'Во льду вморожены старые корабли. Все они искали Трон Морского Короля.'],
+  45: ['scar', 'Говорят, подо льдом спит левиафан. Давай не будем его будить. Ну пожалуйста.'],
+  46: ['parrot', 'Лёд трещит! Кто-то стучит снизу. Очень большой кто-то.'],
+  47: ['keeper', 'Кузнец, что живёт во льдах, сто лет держал левиафана на цепи. Цепи лопнули.'],
+  48: ['parrot', 'Ледяной левиафан! Тысяча чертей, ну почему всегда я?'],
+  49: ['parrot', 'Острова Пряностей! Тут пахнет корицей и большими деньгами.'],
+  51: ['merchant', 'Здесь всем заправляет Торговая компания. Их флагман «Золотой дракон» берёт пошлину даже с чаек.'],
+  53: ['scar', 'Компания назначила за наши головы награду. Приятно, что нас ценят!'],
+  54: ['merchant', '«Золотой дракон» перекрыл пролив. Потопите его, и я ваша навсегда.'],
+  55: ['parrot', 'Затонувший город! Улицы, дворцы и статуи прямо под водой. Кто тут жил?'],
+  57: ['keeper', 'В старых книгах сказано: город построил Морской Король, а потом утопил его из ревности.'],
+  59: ['parrot', 'Статуи шевелятся! Это не статуи! Это щупальца!'],
+  60: ['keeper', 'Каменный страж охраняет город уже тысячу лет. Пора ему на пенсию.'],
+  61: ['parrot', 'Пустынный берег. Песок, кактусы и... корабль на колёсах?!'],
+  63: ['scar', 'Пустынные пираты ходят по дюнам под парусом. Сумасшедшие. Мне нравится!'],
+  65: ['parrot', 'Их капитан хочет нашу карту. Говорит, без неё песок не пропустит.'],
+  66: ['parrot', '«Песчаный скорпион» выкатился на берег! Готовьте пушки!'],
+  67: ['parrot', 'Мангровые болота. Корни, туман и комары размером с меня.'],
+  69: ['keeper', 'Здесь живёт гидра. Отрубишь одну голову, две злятся сильнее.'],
+  71: ['parrot', 'Я слышу шипение в три голоса. Кар-р, мне страшно в три раза больше!'],
+  72: ['parrot', 'Болотная гидра! Бейте по всем головам сразу!'],
+  73: ['parrot', 'Небесные скалы! Острова висят прямо в воздухе. Мои крылья наконец пригодятся.'],
+  75: ['scar', 'Тут промышляет небесный корсар на «Альбатросе». Нападает сверху, как чайка на бутерброд.'],
+  77: ['parrot', 'Тень над нами! Это «Альбатрос»! Поднять все паруса!'],
+  78: ['parrot', 'Корсар пикирует на палубу! Все к пушкам!'],
+  79: ['parrot', 'Пиратская республика. Тут все пираты. Даже повар. Особенно повар.'],
+  81: ['scar', 'Совет капитанов решил, что Трон Морского Короля принадлежит им. Ха!'],
+  83: ['parrot', 'Совет прислал письмо: «Сдавайтесь». Я его съел. Невкусно.'],
+  84: ['scar', '«Три короны» вышли из гавани. Покажем этим чиновникам в треуголках!'],
+  85: ['parrot', 'Призрачные воды. Тихо, как в сундуке. И холодно, как в сундуке.'],
+  87: ['keeper', 'Здесь плавают корабли без команды. Говорят, их ведёт сам Морской Король.'],
+  89: ['parrot', 'Зелёные огни на горизонте! Призрачный галеон идёт прямо на нас!'],
+  90: ['parrot', 'Призраки тоже боятся пушек. Наверное. Проверим!'],
+  91: ['parrot', 'Бездна Морского Короля. Вода чёрная, как чернила Малыша Кальмара.'],
+  93: ['scar', 'Помнишь, салага, как мы были врагами? Хорошее было время. Простое.'],
+  95: ['keeper', 'Страж Бездны древнее самого моря. Морской Король разбудил его ради нас.'],
+  96: ['parrot', 'Страж Бездны! Кар-р, это самое большое щупальце, что я видел!'],
+  97: ['parrot', 'Трон Морского Короля. Последние острова на карте Мартина.'],
+  98: ['scar', 'Если мы победим, я отдам тебе свою долю сундука. Шучу. Половину доли.'],
+  99: ['keeper', 'Море замерло. Даже волны ждут, чем всё закончится.'],
+  100: ['parrot', 'Морской Король поднимается из глубин! Последний бой, капитан. На абордаж!'],
+  101: ['parrot', 'Морской Король повержен! Все моря свободны, а за троном нашлась ещё одна карта... Кар-р, приключение продолжается!'],
+});
+
+// Sea battles: every sixth island from 12 on is a fight. Matches hit the enemy; every few moves it fires back
+// and its shots turn treasures into wreckage that blocks the deck until a match next to it clears it.
+const FOES = {
+  12: { name: '«Каракатица»', who: 'Шхуна капитана Шрама', art: 'ship', hull: '#2b2433', sail: '#4a4054', flag: '#b3322b' },
+  18: { name: 'Кракен', who: 'Чудовище из глубин', art: 'kraken', skin: '#8a4a6a', attack: 'Удар щупалец!' },
+  24: { name: '«Чёрная Каракатица»', who: 'Флагман капитана Шрама', art: 'ship', hull: '#1d1d22', sail: '#33333d', flag: '#b3322b' },
+  30: { name: '«Неустрашимый»', who: 'Фрегат адмирала Стального Клюва', art: 'ship', hull: '#1d3d55', sail: '#f4ead6', flag: '#2c5a9a' },
+  36: { name: 'Огненный змей', who: 'Хозяин вулканов', art: 'serpent', skin: '#d6552b', attack: 'Огненный плевок!' },
+  42: { name: 'Королева Бурь', who: 'Повелительница молний', art: 'ship', hull: '#2a2f4a', sail: '#6a7bb3', flag: '#f2c14e', attack: 'Удар молнии!' },
+  48: { name: 'Ледяной левиафан', who: 'Спящий во льдах', art: 'serpent', skin: '#8fc7dd', attack: 'Ледяная волна!' },
+  54: { name: '«Золотой дракон»', who: 'Флагман Торговой компании', art: 'ship', hull: '#7a3f1c', sail: '#f2c14e', flag: '#b3322b' },
+  60: { name: 'Страж Затонувшего города', who: 'Каменный кракен', art: 'kraken', skin: '#6f7f86', attack: 'Каменный град!' },
+  66: { name: '«Песчаный скорпион»', who: 'Корабль пустынных пиратов', art: 'ship', hull: '#a0703e', sail: '#e3c27e', flag: '#3a2615' },
+  72: { name: 'Болотная гидра', who: 'Ужас мангровых болот', art: 'serpent', skin: '#5a7a3a', attack: 'Ядовитый плевок!' },
+  78: { name: '«Альбатрос»', who: 'Небесный корсар', art: 'ship', hull: '#e8dcc0', sail: '#9fd3e6', flag: '#2c5a9a' },
+  84: { name: '«Три короны»', who: 'Флагман Совета капитанов', art: 'ship', hull: '#3a1a2a', sail: '#b3322b', flag: '#f2c14e' },
+  90: { name: 'Призрачный галеон', who: 'Корабль без команды', art: 'ship', hull: '#3f6f62', sail: '#bfe8d8', flag: '#1d3d35', ghost: true },
+  96: { name: 'Страж Бездны', who: 'Древний кракен', art: 'kraken', skin: '#2c3a5a', attack: 'Удар из бездны!' },
+  100: { name: 'Морской Король', who: 'Владыка всех морей', art: 'serpent', skin: '#2a8a8a', crown: true, attack: 'Гнев Морского Короля!' },
+};
+const LAST_ISLAND = 100;
+const foeAt = n => FOES[n] || (n > LAST_ISLAND && n % 6 === 0 ? FOES[12 + ((n / 6 - 2) % 15) * 6] : null);
+const FRUIT_CHARGE = 35;
+const WRECK_MAX = 14;
+
+function foeSvg(f) {
+  let g = '<path d="M0 70q15-6 30 0t30 0 30 0 30 0V80H0z" fill="#2c7393" opacity=".8"/>';
+  if (f.art === 'ship') {
+    g += `<g${f.ghost ? ' opacity=".75"' : ''}><path d="M14 52h92l-12 16H26z" fill="${f.hull}" stroke="#120a06" stroke-width="2"/><path d="M8 52v-10h22v10" fill="${f.hull}" stroke="#120a06" stroke-width="2"/>` +
+      [34, 58, 82].map((x, i) => `<path d="M${x} 52V${i === 1 ? 6 : 14}" stroke="#120a06" stroke-width="2.5"/><path d="M${x - 11} ${i === 1 ? 10 : 18}q11 4 22 0v14q-11 4-22 0zM${x - 10} ${i === 1 ? 28 : 34}q10 4 20 0v12q-10 4-20 0z" fill="${f.sail}" stroke="#120a06" stroke-width="1.2"/>`).join('') +
+      `<path d="M58 4l14 3-14 4z" fill="${f.flag}"/><circle cx="58" cy="20" r="4" fill="#120a06"/>` +
+      [30, 46, 62, 78].map(x => `<rect x="${x}" y="57" width="5" height="4" fill="#120a06"/>`).join('') + '</g>';
+  } else if (f.art === 'kraken') {
+    g += `<g fill="${f.skin}" stroke="#1a0d14" stroke-width="2">` +
+      ['M14 72q-6-24 10-34q10-6 4-20q14 10 2 26q-8 12 0 28z', 'M100 72q8-22-6-32q-10-8-2-22q-14 8-4 26q8 12-2 28z', 'M34 72q-2-14 8-20', 'M84 72q2-14-8-20'].map(d => `<path d="${d}"/>`).join('') +
+      `<path d="M30 70q0-46 30-46t30 46z"/></g><circle cx="48" cy="48" r="6" fill="#ffd96b"/><circle cx="72" cy="48" r="6" fill="#ffd96b"/><path d="M46 46h4M70 46h4" stroke="#1a0d14" stroke-width="3"/>`;
+  } else {
+    g += `<g fill="none" stroke="${f.skin}" stroke-width="12" stroke-linecap="round"><path d="M12 70q10-22 22 0M44 70q10-26 22 0"/></g>` +
+      `<path d="M74 70q-6-34 12-48q16-10 26 2q6 10-6 14q-12 2-16 12q-4 10 2 20z" fill="${f.skin}" stroke="#0d1a1a" stroke-width="2"/>` +
+      `<path d="M84 26l-6-12 10 6zM96 20l2-12 6 10z" fill="${f.skin}" stroke="#0d1a1a" stroke-width="1.5"/><circle cx="100" cy="28" r="3.5" fill="#ffd96b"/><path d="M110 34l8 2-8 3" fill="#b3322b"/>` +
+      (f.crown ? '<path d="M86 14l4-10 5 7 5-9 4 9 5-6 1 11z" fill="#f2c14e" stroke="#8a5c0e" stroke-width="1.5"/>' : '');
+  }
+  return `<svg viewBox="0 0 120 80" aria-hidden="true">${g}</svg>`;
+}
+function hitFoe(d) {
+  if (!d) return;
+  d = Math.round(d * (ally('bella') ? 1.25 : 1));
+  L.dmg = (L.dmg || 0) + d;
+  const el = document.querySelector('.chip.foe');
+  if (!el) return;
+  el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
+  const n = document.createElement('b');
+  n.className = 'dmg'; n.textContent = '−' + d;
+  el.appendChild(n);
+  setTimeout(() => n.remove(), 900);
+}
+// The enemy's shots fall on random treasures and leave wreckage behind.
+async function enemyVolley() {
+  const f = L.boss;
+  const room = WRECK_MAX - grid.flat().filter(t => t && t.t === DEBRIS).length;
+  const targets = grid.flat().filter(t => t && t.t < CHEST).sort(() => Math.random() - .5).slice(0, Math.max(0, Math.min(f.volley - (ally('squid') ? 1 : 0), room)));
+  if (!targets.length) return;
+  flash(f.attack || 'Залп!');
+  Sound.cannon();
+  const balls = targets.map((t, i) => {
+    const b = fx('ball col', -1, t.c);
+    b.innerHTML = '<i></i>';
+    b.style.transitionDuration = '420ms';
+    b.style.transitionDelay = i * 90 + 'ms';
+    void b.offsetWidth;
+    pos(b, t.r, t.c);
+    return b;
+  });
+  await wait(420 + targets.length * 90);
+  balls.forEach(b => b.remove());
+  targets.forEach(t => {
+    blastCell(t.r, t.c);
+    t.t = DEBRIS; t.el.className = 'tile born'; t.el.innerHTML = gemSvg(DEBRIS);
+  });
+  quake(); Sound.barrel();
+  Rec.volleys++;
+  await wait(500);
+  targets.forEach(t => t.el.classList.remove('born'));
+}
+// Wreckage islands start with planks scattered on the deck.
+function scatterWreck(count) {
+  const free = grid.flat().filter(t => t.t < CHEST && t.r >= 2).sort(() => Math.random() - .5);
+  free.slice(0, count).forEach(t => { t.t = DEBRIS; t.el.className = 'tile'; t.el.innerHTML = gemSvg(DEBRIS); });
+}
+
+// Magic fruits: bought blind from a chest in the port, one eaten at a time. Matches charge its power.
+const FRUITS = [
+  { id: 'fire', name: 'Плод Пламени', rarity: 'обычный', w: 30, color: '#e8552b', glyph: '<path d="M50 26q16 14 8 30q8-4 8-12q8 18-8 28q-18 6-26-8q-6-14 6-24q-2 8 4 10q-4-14 8-24z" fill="#ffd96b"/>', power: 'Три пушечных ядра сразу летят через палубу' },
+  { id: 'storm', name: 'Плод Молний', rarity: 'обычный', w: 30, color: '#4a6fd6', glyph: '<path d="M56 24L36 54h14l-8 24 22-32H50z" fill="#fff3a0"/>', power: 'Молнии бьют по всем сокровищам нужного вида' },
+  { id: 'tide', name: 'Плод Прилива', rarity: 'редкий', w: 14, color: '#2aa6b8', glyph: '<path d="M28 52q8-10 16 0t16 0 16 0M28 64q8-10 16 0t16 0 16 0" fill="none" stroke="#e9fbff" stroke-width="5" stroke-linecap="round"/>', power: '+3 хода' },
+  { id: 'shadow', name: 'Плод Тени', rarity: 'редкий', w: 14, color: '#5a3a7a', glyph: '<path d="M58 30a22 22 0 1 0 8 36a18 18 0 1 1-8-36z" fill="#d8c8ff"/>', power: 'Две бочки пороха взрываются на палубе' },
+  { id: 'gale', name: 'Плод Урагана', rarity: 'эпический', w: 9, color: '#3f8a5a', glyph: '<path d="M30 38h40M34 48h30M38 58h22M42 68h12" stroke="#e8ffe8" stroke-width="5" stroke-linecap="round"/>', power: 'Компас-бомба, бочка и ядро срабатывают разом' },
+  { id: 'gold', name: 'Золотой плод', rarity: 'легендарный', w: 3, color: '#e0a82e', glyph: '<path d="M50 28l7 15 16 2-12 11 3 16-14-8-14 8 3-16-12-11 16-2z" fill="#fff6c8"/>', power: 'Всё золото с острова удваивается' },
+];
+const FRUIT_PRICE = 400;
+const fruitSvg = f => `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 20q-4-12 6-16" stroke="#5e3a1f" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M54 14q14-10 24 0q-12 8-24 0z" fill="#4fae4a"/><circle cx="50" cy="56" r="36" fill="${f.color}" stroke="#2a1408" stroke-width="3"/><ellipse cx="36" cy="40" rx="9" ry="6" fill="#fff" opacity=".35"/>${f.glyph}</svg>`;
+const fruitNow = () => FRUITS.find(f => f.id === progress.fruit);
+// The goal the player most needs right now decides what a compass from a fruit aims at.
+function neededType() {
+  const g = goalList().find(x => x.kind === 'collect' && x.have < x.need);
+  return g ? g.t : mostCommon();
+}
+async function useFruit() {
+  const f = fruitNow();
+  if (!f || busy || over || (L.charge || 0) < FRUIT_CHARGE || Tut.allowed) return;
+  busy = true; clearHint(); setSel(null);
+  L.charge = 0;
+  Rec.move('плод ' + f.id);
+  flash(f.name + '!'); Sound.compass();
+  const free = grid.flat().filter(t => t && t.t < CHEST).sort(() => Math.random() - .5);
+  const make = type => { const t = free.pop(); t.t = type; t.el.className = 'tile rare born'; t.el.innerHTML = gemSvg(type); return t; };
+  let shots = [];
+  if (f.id === 'fire') shots = [make(CANNON_ROW), make(CANNON_ROW), make(CANNON_COL)];
+  if (f.id === 'storm') { const c = make(COMPASS); c.aim = neededType(); shots = [c]; }
+  if (f.id === 'tide') moves += 3;
+  if (f.id === 'shadow') shots = [make(BARREL), make(BARREL)];
+  if (f.id === 'gale') { const c = make(COMPASS); c.aim = neededType(); shots = [c, make(BARREL), make(CANNON_ROW)]; }
+  if (f.id === 'gold') L.goldx2 = true;
+  updateHud();
+  await wait(450);
+  if (shots.length) await resolve(shots);
+  await afterMove(false);
+}
+
+// Companions join after a boss is beaten. Each brings a fighting style that works in sea battles.
+const ALLIES = [
+  { id: 'tim', from: 12, name: 'Юнга Тим', style: 'Разведка', perk: 'В бою первый залп врага приходит на 2 хода позже',
+    face: face('#f0c4a0', '<path d="M14 28q18-16 36 0q-6-6-18-6t-18 6z" fill="#b3322b"/>', '<path d="M24 45q8 5 16 0" stroke="#3a2615" stroke-width="2" fill="none"/><circle cx="22" cy="41" r="2" fill="#c98f63"/><circle cx="42" cy="41" r="2" fill="#c98f63"/>'),
+    joins: 'Я больше не служу Шраму! Возьмите меня юнгой, я знаю все его хитрости.' },
+  { id: 'squid', from: 18, name: 'Малыш Кальмар', style: 'Чернила', perk: 'Каждый вражеский залп на одно ядро слабее',
+    face: '<path d="M14 40q0-26 18-26t18 26z" fill="#c07a9a" stroke="#5a2a42" stroke-width="2"/><path d="M16 40q-2 12 4 18M26 40v18M38 40v18M48 40q2 12-4 18" stroke="#c07a9a" stroke-width="5" stroke-linecap="round"/><circle cx="26" cy="32" r="4" fill="#fff"/><circle cx="38" cy="32" r="4" fill="#fff"/><circle cx="27" cy="33" r="2" fill="#1b1b1b"/><circle cx="39" cy="33" r="2" fill="#1b1b1b"/>',
+    joins: 'Кракен был моей мамой, но она слишком много спала. Можно я поплыву с вами? Я умею пускать чернила!' },
+  { id: 'scar', from: 24, name: 'Капитан Шрам', style: 'Абордаж', perk: 'В бою каждые 5 ходов на палубе появляется пушечное ядро',
+    face: FACES.scar[1], joins: 'Ладно, салага, ты победил честно. Моя «Каракатица» на дне, так что я иду с тобой. Но сундук делим поровну!' },
+  { id: 'bella', from: 30, name: 'Канонирша Белла', style: 'Прицельный огонь', perk: 'Урон по врагу больше на четверть',
+    face: face('#e8bf98', '<path d="M10 28q22-20 44 0q-22-8-44 0z" fill="#1d3d55"/><path d="M14 24q-6 14 2 26M50 24q6 14-2 26" stroke="#8a3a1f" stroke-width="5" stroke-linecap="round" fill="none"/>', '<path d="M26 45q6 3 12 0" stroke="#b3322b" stroke-width="2.5" fill="none"/>'),
+    joins: 'Адмирал никогда не слушал моих советов. А я лучшая канонирша флота! Покажу, как надо стрелять.' },
+  { id: 'ig', from: 36, name: 'Укротитель огня Иг', style: 'Пламя', perk: 'Бой начинается с двух бочек пороха на палубе',
+    face: face('#b9784f', '<path d="M18 22q4-14 10-6q4-12 10 0q6-8 8 6z" fill="#e8552b"/>', '<path d="M24 45h16" stroke="#3a2615" stroke-width="2.5"/><path d="M20 30l8 2M44 30l-8 2" stroke="#3a2615" stroke-width="2"/>'),
+    joins: 'Огненный змей был моим питомцем, пока не одичал. Спасибо, что усмирили его. Огонь теперь на вашей стороне.' },
+  { id: 'lo', from: 42, name: 'Ветреница Ло', style: 'Молния', perk: 'В бою каждые 4 хода молния бьёт по пяти сокровищам',
+    face: face('#e3c4a8', '<path d="M12 34q2-24 20-24t20 24q-6-12-20-12t-20 12z" fill="#c8d4f0"/>', '<path d="M27 45q5 3 10 0" stroke="#3a2615" stroke-width="2" fill="none"/><path d="M48 14l-4 8h4l-3 7" stroke="#ffd96b" stroke-width="2" fill="none"/>'),
+    joins: 'Я была штурманом Королевы Бурь. Без неё ветер свободен, и я тоже. Молнии будут бить туда, куда я скажу.' },
+  { id: 'bjorn', from: 48, name: 'Кузнец Бьорн', style: 'Молот', perk: 'В бою каждый разбитый обломок наносит врагу 3 урона',
+    face: face('#e8b48c', '<path d="M12 30q20-22 40 0z" fill="#8a8a8a"/><path d="M28 14v-6M36 14v-6" stroke="#8a8a8a" stroke-width="3"/>', '<path d="M16 40q16 26 32 0q-4 8-16 8t-16-8z" fill="#d07a2a"/>'),
+    joins: 'Я сто лет ковал во льдах цепи для левиафана. Теперь буду ковать победы для вас! Обломки? Пф, переплавлю.' },
+  { id: 'mira', from: 54, name: 'Торговка Мира', style: 'Сделка', perk: 'За победу над боссом +50% золота, сундук плодов дешевле на 100',
+    face: FACES.merchant[1],
+    joins: 'Компания обманывала меня годами. Раз вы потопили «Золотого дракона», я торгую только с вами. И со скидкой!' },
+];
+const ally = id => !!(progress.allies && progress.allies[id]);
+const fruitPrice = () => FRUIT_PRICE - (ally('mira') ? 100 : 0);
+function randomRegular(n) { return grid.flat().filter(t => t && t.t < CHEST).sort(() => Math.random() - .5).slice(0, n); }
+function placeSpecial(type) {
+  const [t] = randomRegular(1);
+  if (!t) return;
+  t.t = type; t.el.className = 'tile rare born'; t.el.innerHTML = gemSvg(type);
+}
+// Clears the given tiles as if blown up, then lets the cascade settle.
+async function strike(tiles) {
+  if (!tiles.length) return;
+  Sound.compass();
+  tiles.forEach(t => blastCell(t.r, t.c));
+  quake();
+  await wait(350);
+  tiles.forEach(t => {
+    grid[t.r][t.c] = null;
+    if (t.t < CHEST) collected[t.t] = (collected[t.t] || 0) + 1;
+    t.el.remove();
+  });
+  if (L.boss) hitFoe(tiles.length);
+  updateHud();
+  gravity();
+  await wait(260);
+  await resolve([]);
+}
+// What happens after each of the player's moves in a sea battle.
+async function battleTurn() {
+  L.turns = (L.turns || 0) + 1;
+  if (ally('lo') && L.turns % 4 === 0) { flash('Ло: молния!'); await strike(randomRegular(5)); if (goalsMet()) return; }
+  if (ally('scar') && L.turns % 5 === 0) { flash('Шрам: на абордаж!'); placeSpecial(Math.random() < .5 ? CANNON_ROW : CANNON_COL); }
+  if (--L.timer <= 0) { await enemyVolley(); L.timer = L.boss.every; }
+  updateHud();
+}
+
 // Map art
 const ISLE_BASE = '<ellipse cx="50" cy="52" rx="48" ry="15" fill="#6aa7ad" opacity=".28"/><path d="M8 49q4-15 26-17q16-9 34-1q24 3 24 18q-18 10-42 9q-28 1-42-9z" fill="#e3c27e" stroke="#a7803f" stroke-width="2"/>';
 const ISLE_ART = {
@@ -1614,12 +1998,14 @@ const ISLE_ART = {
   tentacle: '<path d="M30 44q-6-20 8-26q10-4 6-14q12 8 2 18q-8 6-2 22z" fill="#8a4a6a" stroke="#5a2a42" stroke-width="1.5"/><path d="M56 44q2-14 14-16q8-2 6-10q8 8-2 16q-6 4-6 10z" fill="#8a4a6a" stroke="#5a2a42" stroke-width="1.5"/>',
 };
 const CHEST_ART = '<g transform="translate(60 30)"><rect x="0" y="5" width="20" height="12" rx="2" fill="#8a5a34" stroke="#3a2615" stroke-width="1.5"/><path d="M0 8q10-12 20 0z" fill="#a86e3e" stroke="#3a2615" stroke-width="1.5"/><rect x="8" y="7" width="4" height="5" fill="#f2c14e"/></g>';
+const CROWN_ART = '<path d="M38 20l4-14 7 9 6-12 6 12 7-9 4 14z" fill="#f2c14e" stroke="#8a5c0e" stroke-width="2" stroke-linejoin="round"/><circle cx="55" cy="14" r="2.5" fill="#b3322b"/>';
+const SWORDS_ART = '<g transform="translate(64 18)" stroke-linecap="round"><path d="M0 0l18 18M18 0L0 18" stroke="#3a2615" stroke-width="3"/><path d="M-1 5l6-6M13-1l6 6" stroke="#b3322b" stroke-width="3"/></g>';
 const X_ART = '<path d="M20 34l12 9M32 34l-12 9" stroke="#b3322b" stroke-width="4" stroke-linecap="round"/>';
 const THEME_ART = { bay: ['palm', 'hut'], fog: ['palm', 'hill'], kraken: ['hill', 'tentacle'], skull: ['skull', 'hill'] };
 function isleSvg(n, current) {
   const theme = chapterInfo(chapterOf(n)).theme;
   const art = n === 12 ? 'light' : THEME_ART[theme][n % 2];
-  return `<svg class="land" viewBox="0 0 100 64" aria-hidden="true">${ISLE_BASE}${ISLE_ART[art]}${n % CHAPTER === 0 ? CHEST_ART : ''}${current ? X_ART : ''}</svg>`;
+  return `<svg class="land" viewBox="0 0 100 64" aria-hidden="true">${ISLE_BASE}${ISLE_ART[art]}${n === LAST_ISLAND ? CROWN_ART : foeAt(n) ? SWORDS_ART : n % CHAPTER === 0 ? CHEST_ART : ''}${current ? X_ART : ''}</svg>`;
 }
 const DECOR = {
   waves: '<path d="M6 18q6-6 12 0t12 0 12 0M14 30q6-6 12 0t12 0" fill="none" stroke="#3a2615" stroke-width="2" stroke-linecap="round" opacity=".5"/>',
@@ -1640,7 +2026,7 @@ const ROW = 122, BANNER = 92, TOP = 18;
 progress.story = progress.story || {};
 const mapCount = () => {
   const chEnd = Math.ceil(progress.unlocked / CHAPTER) * CHAPTER;
-  return TEST_MODE ? Math.max(4 * CHAPTER, chEnd) : Math.max(LEVELS.length, chEnd + 1);
+  return TEST_MODE ? Math.max(LAST_ISLAND, chEnd) : Math.max(LEVELS.length, chEnd + 1);
 };
 function layoutMap(count) {
   const W = $('sea').clientWidth || 360;
@@ -1826,12 +2212,19 @@ function startLevel(n) {
   Rec.start();
   const guided = n === 1 && !progress.tips.intro && tutorialBoard();
   if (!guided && !(n === 1 && !progress.tips.intro)) { buildBoard(freshTypes()); crewSpecials(); }
+  if (L.wreck) scatterWreck(L.wreck);
+  if (L.boss) {
+    L.dmg = 0; L.turns = 0;
+    L.timer = L.boss.every + (ally('tim') ? 2 : 0);
+    if (ally('ig')) { placeSpecial(BARREL); placeSpecial(BARREL); }
+  }
+  L.charge = 0;
   updateHud();
   const goals = goalList();
   const newKind = L.types > (n > 1 ? levelDef(n - 1).types : 5)
     ? `<p>Новое сокровище: ${PIECES[L.types - 1].name}</p><div class="goals"><span class="chip">${gemSvg(L.types - 1)}</span></div>` : '';
   overlay(
-    `<h2>Остров ${n}</h2><div class="goals">${goals.map(chipHtml).join('')}</div>` +
+    (L.boss ? `<h2>Морской бой!</h2><div class="foebig">${foeSvg(L.boss)}</div><p><b>${L.boss.name}</b>, ${L.boss.who.toLowerCase()}</p>` : `<h2>Остров ${n}</h2><div class="goals">${goals.map(chipHtml).join('')}</div>`) +
     goals.map(g => `<p>${goalText(g)}</p>`).join('') +
     `<p>Ходов: ${L.moves}${L.moves > L.base ? ` (${L.moves - L.base} от корабля и команды)` : ''}</p>${newKind}` +
     (n === CHEST_FROM ? `<p>Здесь может выпасть золотой сундук. Соберите ряд рядом с ним, пока он не опустился на дно, и он взорвёт всю палубу.</p><div class="goals"><span class="chip">${gemSvg(CHEST)}</span></div>` : ''),
@@ -1840,13 +2233,15 @@ function startLevel(n) {
 }
 
 $('toMap').addEventListener('click', showMap);
+$('goals').addEventListener('click', e => { if (e.target.closest('#fruitBtn')) useFruit(); });
 $('resetBtn').hidden = !TEST_MODE;
-$('resetBtn').addEventListener('click', () => { progress = { unlocked: 1, stars: {}, tips: {}, story: {}, gold: 0, vessel: 0, hired: {}, aboard: [] }; Voyage.at = 1; saveProgress(); showMap(); });
+$('resetBtn').addEventListener('click', () => { progress = { unlocked: 1, stars: {}, tips: {}, story: {}, gold: 0, vessel: 0, hired: {}, aboard: [], allies: {}, fruits: {} }; Voyage.at = 1; saveProgress(); showMap(); });
 
 // When the page is updated while open, the current attempt carries on exactly where it was.
 window.claude?.hot?.snapshot?.(() => levelNo && grid && !over && !busy ? {
   levelNo, types: types(), score, moves, collected, netsLeft, netTotal: L.netTotal, bonusUsed: !!L.bonusUsed,
   nets: nets.map(row => row.map(Boolean)),
+  extra: { dmg: L.dmg, timer: L.timer, turns: L.turns, wrecked: L.wrecked, charge: L.charge, goldx2: L.goldx2, cookUsed: L.cookUsed },
 } : { levelNo: 0 });
 function restoreLevel(d) {
   startLevel(d.levelNo);
@@ -1864,6 +2259,7 @@ function restoreLevel(d) {
     return el;
   }));
   L.netTotal = d.netTotal;
+  Object.assign(L, d.extra || {});
   updateHud();
   YSDK.gameplay(true); armHint();
 }
