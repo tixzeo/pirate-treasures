@@ -610,9 +610,14 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
   <div class="toggles">
     <button class="ghost" id="sfxBtn" type="button" aria-pressed="true">Звуки</button>
     <button class="ghost" id="musicBtn" type="button" aria-pressed="true">Музыка</button>
+    <button class="ghost" id="langBtn" type="button" hidden>English</button>
   </div>
 </div>
 
+<script>
+// English text for every fixed Russian line in the game; lines with numbers are translated in place with tx().
+const EN = {"дублоны": "doubloons","рубины": "rubies","изумруды": "emeralds","ракушки": "shells","компасы": "compasses","якоря": "anchors","черепа": "skulls","золотой сундук": "golden chest","ядро": "cannonball","бочка пороха": "powder keg","компас-бомба": "compass bomb","обломки": "wreckage","Расчистите обломки: соберите ряд рядом с каждым": "Clear the wreckage: make a match next to each piece","Разрежьте все сети: соберите ряд на каждой клетке с сетью": "Cut all the nets: make a match on every netted square","Сундук утонул!": "The chest sank!","Йо-хо-хо!": "Yo-ho-ho!","Тысяча чертей!": "Blow me down!","На абордаж!": "Board them!","Бабах!": "Kaboom!","Курс на сокровища!": "Heading for treasure!","Пли!": "Fire!","Бочка пороха!": "Powder keg!","Компас-бомба!": "Compass bomb!","Пушечное ядро!": "Cannonball!","Золотой сундук!": "Golden chest!","Кок: +3 хода!": "Cook: +3 moves!","Волна!": "Wave!","Плыть дальше": "Sail on","Повторить": "Replay","В порт": "To port","Ещё раз": "Try again","На карту": "To the map","Выберите сокровище": "Pick a treasure","Тихая гавань": "Quiet Harbor","Морская джига": "Sea Jig","Таверна": "Tavern","Шторм": "Storm","Пиратская песня": "Pirate Song","выкл": "off","Пушечное ядро! Сдвиньте его, и оно пролетит через весь ряд.": "Cannonball! Swap it and it flies across the whole row.","Пушечное ядро! Сдвиньте его, и оно пролетит через весь столбец.": "Cannonball! Swap it and it flies down the whole column.","Бочка пороха! Сдвиньте её, и она взорвёт всё вокруг.": "Powder keg! Swap it and it blows up everything around it.","Компас-бомба! Нажмите на неё, а потом на любое сокровище.": "Compass bomb! Tap it, then tap any treasure.","Золотой сундук! Соберите ряд рядом с ним, пока он не утонул.": "Golden chest! Make a match next to it before it sinks.","Обломки! Их нельзя двигать. Соберите ряд рядом, и они разлетятся.": "Wreckage! It can't be moved. Make a match next to it and it breaks apart.","Проведите пальцем вниз, чтобы поменять сокровища местами и собрать четыре в ряд.": "Swipe down to swap the treasures and line up four in a row.","Четыре в ряд дали пушечное ядро! Сдвиньте его, чтобы выстрелить.": "Four in a row made a cannonball! Swap it to fire.","Теперь сами!": "Your turn now!","Шлюпка": "Rowboat","Маленькая, зато своя.": "Small, but all yours.","Шлюп": "Sloop","Быстрый одномачтовый парусник.": "A fast single-masted sailboat.","Бригантина": "Brigantine","Любимый корабль контрабандистов.": "Every smuggler's favorite ship.","Фрегат": "Frigate","Гроза торговых путей.": "The terror of the trade routes.","Галеон": "Galleon","Плавучая крепость с полным трюмом.": "A floating fortress with a full hold.","Линкор": "Man-of-war","Сто пушек на трёх палубах.": "A hundred cannons on three decks.","Флагман": "Flagship","Корабль, достойный Трона Морского Короля.": "A ship worthy of the Sea King's Throne.","Боцман": "Bosun","+1 ход на каждом острове": "+1 move on every island","Квартирмейстер": "Quartermaster","+25% золота с каждого острова": "+25% gold from every island","Канонир": "Gunner","Остров начинается с пушечного ядра на палубе": "Each island starts with a cannonball on the board","Кок": "Cook","Когда ходы кончаются, один раз даёт +3 хода": "When moves run out, gives +3 moves once","Пороховщик": "Powder Monkey","Остров начинается с бочки пороха на палубе": "Each island starts with a powder keg on the board","Штурман": "Navigator","Остров начинается с компас-бомбы на палубе": "Each island starts with a compass bomb on the board","Наймите Боцмана в таверне за 300. Лишний ход на каждом острове окупается сразу.": "Hire the Bosun at the tavern for 300. An extra move on every island pays off right away.","Откройте сундук плодов в лавке. Даже обычный плод сильно помогает в бою с боссом.": "Open a fruit chest at the shop. Even a common fruit helps a lot against a boss.","Корабль лучше не бывает. Тратьте золото на сундуки плодов: вдруг выпадет Золотой плод.": "Your ship can't get any better. Spend gold on fruit chests: maybe the Golden Fruit will drop.","У вас лучший корабль на всех морях. Копите на сундуки плодов и нанимайте тех, кого ещё нет.": "You have the best ship on all the seas. Save up for fruit chests and hire whoever you don't have yet.","Корабел Гвоздь": "Shipwright Nail","Хозяйка таверны Роза": "Rosa the Innkeeper","Добро пожаловать на верфь! Тридцать лет строю корабли. Спрашивайте, капитан, не стесняйтесь.": "Welcome to the shipyard! I've been building ships for thirty years. Ask away, captain, don't be shy.","Зачем корабль побольше?": "Why a bigger ship?","Каждый новый корабль даёт ещё один ход на каждом острове и ещё одно место для моряка. Лишний ход часто решает, будет у вас три звезды или поражение.": "Each new ship gives one more move on every island and one more berth for a sailor. One extra move often decides between three stars and defeat.","Что купить сейчас?": "What should I buy now?","Сколько ещё копить?": "How much more to save?","Флагман уже ваш. Лучше корабля я не строил и не построю!": "The Flagship is already yours. I've never built a better ship, and I never will!","Корабль или моряки?": "Ship or sailors?","Сначала Боцман: на шлюпке как раз одно место. Потом Шлюп и Квартирмейстер, он ускорит все накопления. Дальше чередуйте: корабль даёт место, а на место берите нового моряка.": "First the Bosun: the rowboat has exactly one berth. Then the Sloop and the Quartermaster, who speeds up all your saving. After that, alternate: a ship gives a berth, and you fill the berth with a new sailor.","Эль, ром и лучшие моряки на всём побережье! Кого ищете, капитан?": "Ale, rum and the finest sailors on the whole coast! Who are you looking for, captain?","Кого нанять первым?": "Who should I hire first?","Боцмана: он стоит всего 300 и даёт лишний ход на каждом острове. Вторым берите Квартирмейстера, с ним золото копится на четверть быстрее, и все покупки приходят раньше.": "The Bosun: he costs only 300 and gives an extra move on every island. Take the Quartermaster second: gold piles up a quarter faster, so every purchase comes sooner.","Почему не все плывут?": "Why doesn't everyone sail?","Зачем моряки с бомбами?": "Why the sailors with bombs?","Канонир, Пороховщик и Штурман кладут на палубу готовую бомбу в начале острова. Особенно выручает на островах с сетями и обломками, где трудно добраться до краёв.": "The Gunner, the Powder Monkey and the Navigator put a ready bomb on the board at the start of an island. It really helps on islands with nets and wreckage, where the edges are hard to reach.","Кок полезен?": "Is the Cook useful?","Кок спасает, когда ходы кончились: один раз за остров даёт ещё три хода. Берите его, если часто проигрываете в шаге от победы.": "The Cook saves you when moves run out: once per island he gives three more moves. Take him if you often lose one step from victory.","На что потратить золото?": "What should I spend gold on?","Волшебные плоды с Огненных островов! Каждый сундук с сюрпризом. Спрашивайте, расскажу всё.": "Magic fruit from the Fire Islands! Every chest holds a surprise. Ask me anything.","Лавка пока закрыта: плоды везут с Огненных островов. Доплывите до острова 32, и я открою сундуки.": "The shop is closed for now: the fruit comes from the Fire Islands. Reach island 32 and I will open the chests.","Как работают плоды?": "How do fruits work?","Съесть можно только один плод. Пока вы собираете сокровища, его сила копится в кружке рядом с заданиями. Когда кружок засияет, нажмите на него, и плод сработает.": "You can eat only one fruit. As you collect treasures, its power fills the circle next to the goals. When the circle glows, tap it and the fruit takes effect.","Какой плод лучше?": "Which fruit is best?","Плод Молний хорош для заданий «собери». Плод Пламени и Плод Урагана рвут сети и обломки. Плод Прилива спасает, когда не хватает ходов. Золотой плод удваивает добычу, но он очень редкий.": "The Lightning Fruit is good for \"collect\" goals. The Flame Fruit and the Hurricane Fruit tear through nets and wreckage. The Tide Fruit saves you when moves run short. The Golden Fruit doubles your loot, but it is very rare.","Стоит ли брать сундук?": "Is a chest worth it?","Пока рано: сначала корабль и команда, они помогают на каждом острове. А плоды подождут до острова 32.": "Too early: first the ship and crew, they help on every island. Fruit can wait until island 32.","Честно? Сначала корабль и команда, они помогают на каждом острове. Плод хорош как добавка, особенно в боях с боссами.": "Honestly? Ship and crew first, they help on every island. A fruit is a nice extra, especially in boss fights.","Да! Даже обычный плод сильно помогает в бою с боссом. А за повторный плод я верну половину цены.": "Yes! Even a common fruit helps a lot against a boss. And for a duplicate I'll give back half the price.","Был вашим": "Was yours","Ваш корабль": "Your ship","Сначала предыдущий": "Buy the previous one first","Новый плод!": "New fruit!","Отлично": "Great","Ещё не найден": "Not found yet","Съеден": "Eaten","Съесть": "Eat","На борту": "Aboard","На берегу": "Ashore","Бухта Попугая": "Parrot Bay","Тихие воды, где начинается путь": "Calm waters where the journey begins","Туманный архипелаг": "Fog Archipelago","Острова прячутся в тумане": "Islands hiding in the fog","Море Кракена": "Kraken Sea","Глубоко внизу кто-то не спит": "Something is awake down in the deep","Острова Черепа": "Skull Islands","Последний рубеж перед сундуком": "The last stretch before the chest","По новой карте Морского Короля": "By the Sea King's new map","Попугай Жако": "Jaco the Parrot","Капитан Шрам": "Captain Scar","Смотритель маяка": "The Lighthouse Keeper","Кар-р! Капитан, старый Мартин ушёл на покой и отдал нам свою карту. В конце пути лежит Сундук Морского Короля! Начнём с ближайшего острова.": "Squawk! Captain, old Martin has retired and given us his map. At the end of the route lies the Sea King's Chest! Let's start with the nearest island.","На первом острове нашлась записка Мартина: «Дублоны любят тех, кто собирает их дюжинами». Странный был старик.": "We found a note from Martin on the first island: \"Doubloons love those who gather them by the dozen.\" Strange old man.","Чёрный парус на горизонте! Это «Каракатица» капитана Шрама. Он тоже ищет сундук. Поспешим!": "A black sail on the horizon! It's Captain Scar's Cuttlefish. He's after the chest too. Let's hurry!","Местные торгуют изумрудами и компасами. Набьём трюм, пока Шрам всё не скупил.": "The locals trade emeralds and compasses. Let's fill the hold before Scar buys them all.","Ха! Я раскидал по острову рыбацкие сети. Посмотрим, как ты выпутаешься, салага!": "Ha! I've scattered fishing nets all over the island. Let's see you get out of this, landlubber!","Последний остров бухты. Говорят, тут зарыта первая часть ключа от сундука. Копаем, кар-р!": "The last island of the bay. They say the first piece of the chest key is buried here. Dig, squawk!","Туман такой, что клюва не видно. Мартин писал: «В тумане держись рубинов, они светятся».": "The fog is so thick I can't see my own beak. Martin wrote: \"In the fog, stick to rubies, they glow.\"","Здесь попадаются золотые сундуки! Взломаете такой рядом с рядом, пока он не утонул, и он разнесёт всю палубу.": "Golden chests turn up here! Crack one with a match next to it before it sinks, and it blasts the whole board.","На берегу кто-то выложил черепа в ряд. Это знак людей Шрама. Он опередил нас всего на день.": "Someone has laid skulls in a row on the shore. That's the mark of Scar's men. He's only a day ahead of us.","Теперь мои сети в два ряда! Твой попугай запутается первым.": "Now my nets are two rows deep! Your parrot will get tangled first.","В бутылке записка: «Вторая часть ключа у смотрителя маяка». Значит, держим курс на маяк.": "A note in a bottle: \"The second piece of the key is with the lighthouse keeper.\" So we set course for the lighthouse.","Шрам был здесь и спутал мне все сети. Распутаете их, и вторая часть ключа ваша.": "Scar was here and tangled all my nets. Untangle them, and the second piece of the key is yours.","Вода тёмная и глубокая. Матросы шепчутся про кракена. Я не боюсь! Почти.": "The water is dark and deep. The sailors whisper about a kraken. I'm not scared! Almost.","Огромное щупальце утащило бочку пороха прямо с палубы. Похоже, кракен любит фейерверки.": "A huge tentacle grabbed a powder keg right off the deck. Looks like the kraken likes fireworks.","Кракен утащил половину моей команды, но сундук всё равно будет моим!": "The kraken took half my crew, but the chest will still be mine!","Мы выловили юнгу с «Каракатицы». Он говорит, третья часть ключа спрятана на Островах Черепа.": "We fished a cabin boy out of the water from the Cuttlefish. He says the third piece of the key is hidden on the Skull Islands.","Кракен плывёт за нами! Хватаем добычу и полный вперёд!": "The kraken is following us! Grab the loot and full speed ahead!","Кракен уснул на мели, обвив скалу. Тихонько проскользнём мимо. Только не роняйте якорь.": "The kraken fell asleep in the shallows, wrapped around a rock. Let's slip past quietly. Just don't drop the anchor.","Острова Черепа. Здесь даже чайки молчат. Мартин писал: «Сокровище любит смелых и терпеливых».": "The Skull Islands. Even the gulls are silent here. Martin wrote: \"Treasure loves the bold and the patient.\"","Последний шанс, салага: отдай мне ключ, и я оставлю тебе шлюпку!": "Last chance, landlubber: hand over the key and I'll let you keep a rowboat!","Третья часть ключа лежала в черепе на вершине горы. Ключ собран, кар-р!": "The third piece of the key was inside a skull on the mountaintop. The key is whole, squawk!","Шрам сел на рифы, его команда машет нам с мачты. Может, возьмём их юнгами?": "Scar ran aground on the reef, and his crew is waving at us from the mast. Maybe we take them on as cabin boys?","Вот пещера Морского Короля. Вход завален сокровищами. Расчищаем!": "Here's the Sea King's cave. The entrance is piled high with treasure. Clear it!","Сундук Морского Короля открыт! Внутри золото и... ещё одна карта. Похоже, приключения только начинаются!": "The Sea King's Chest is open! Inside is gold and... another map. Looks like the adventure is only beginning!","Новая карта ведёт в воды, где не бывал даже Мартин. Кар-р, страшно интересно!": "The new map leads to waters even Martin never sailed. Squawk, scary and exciting!","Шрам починил «Каракатицу» и снова идёт по нашему следу. Не отставать!": "Scar has patched up the Cuttlefish and is on our trail again. Keep up!","Ветер попутный, трюм полон. Но на карте ещё много крестиков.": "Fair wind, full hold. But there are still plenty of crosses on the map.","Говорят, где-то здесь живёт морской змей. Надеюсь, он вегетарианец.": "They say a sea serpent lives somewhere around here. I hope he's a vegetarian.","Адмирал Стальной Клюв": "Admiral Steelbeak","Торговка Мира": "Mira the Merchant","Королева Бурь": "The Storm Queen","Владения Адмиралтейства": "Admiralty Waters","Королевский флот не любит пиратов": "The Royal Navy doesn't like pirates","Огненные острова": "Fire Islands","Вулканы, лава и волшебные плоды": "Volcanoes, lava and magic fruit","Рифы Бурь": "Storm Reefs","Молнии бьют прямо в мачты": "Lightning strikes right into the masts","Ледяное море": "Ice Sea","Айсберги и вечная ночь": "Icebergs and endless night","Острова Пряностей": "Spice Islands","Здесь хозяйничает Торговая компания": "The Trading Company rules here","Затонувший город": "Sunken City","Под водой спят каменные улицы": "Stone streets sleep under the water","Пустынный берег": "Desert Coast","Пираты, которые ходят по пескам": "Pirates who sail the sands","Мангровые болота": "Mangrove Swamps","Туман, корни и ядовитые твари": "Fog, roots and venomous beasts","Небесные скалы": "Sky Cliffs","Острова, что парят над морем": "Islands that float above the sea","Пиратская республика": "Pirate Republic","Совет капитанов делит моря": "The Captains' Council divides the seas","Призрачные воды": "Ghost Waters","Корабли, которые плывут без команды": "Ships that sail without a crew","Бездна Морского Короля": "The Sea King's Abyss","Глубже уже некуда": "It doesn't get any deeper","Трон Морского Короля": "The Sea King's Throne","Конец карты и конец пути": "The end of the map and the end of the road","Шрам привёл к маяку свою «Каракатицу» и палит по скалам! Прогоните его, и вторая часть ключа ваша.": "Scar has brought his Cuttlefish to the lighthouse and is shelling the rocks! Drive him off, and the second piece of the key is yours.","Кракен проснулся и всплывает прямо под нами! Все к пушкам, кар-р!": "The kraken is awake and surfacing right under us! Everyone to the cannons, squawk!","Вход в пещеру Морского Короля охраняет мой флагман. Хочешь сундук? Сначала победи меня!": "My flagship guards the entrance to the Sea King's cave. Want the chest? Beat me first!","Сундук Морского Короля открыт! Внутри золото и новая карта, до самого Трона Морского Короля. Но эти воды стерегут королевские фрегаты.": "The Sea King's Chest is open! Inside is gold and a new map, all the way to the Sea King's Throne. But royal frigates guard these waters.","Говорит адмирал Стальной Клюв. Пиратам вход в эти воды закрыт. Разворачивайтесь!": "This is Admiral Steelbeak. These waters are closed to pirates. Turn back!","Адмирал поставил сети у каждого острова. Похоже, он читал записки Шрама.": "The admiral has set nets around every island. Looks like he's been reading Scar's notes.","Салага, этот адмирал охотился и за мной. Давно мечтаю увидеть его фрегат на дне.": "Landlubber, that admiral hunted me too. I've long dreamed of seeing his frigate on the seabed.","Юнга Тим говорит, что у «Неустрашимого» слабая корма. Целься туда!": "Cabin boy Tim says the Dauntless has a weak stern. Aim there!","Ко мне, канониры! Я лично потоплю этих выскочек!": "To me, gunners! I will sink these upstarts myself!","Огненные острова! Вулканы дымят, а в трюме пахнет жареным попугаем. Не смешно!": "The Fire Islands! The volcanoes are smoking and the hold smells of roast parrot. Not funny!","Торговка Мира, к вашим услугам. Я продаю волшебные плоды: съешь один, и получишь силу моря. Ищите мою лавку в порту!": "Mira the Merchant, at your service. I sell magic fruit: eat one and gain the power of the sea. Look for my shop in port!","Мира говорит, что плоды растут только у вулканов. Поэтому здесь так жарко... и так дорого.": "Mira says the fruit only grows near volcanoes. That's why it's so hot here... and so expensive.","Слышали? В лаве живёт огненный змей. Он сторожит лучшие плоды.": "Did you hear? A fire serpent lives in the lava. He guards the best fruit.","Земля трясётся! Змей проснулся. Держите бочки с порохом подальше от огня.": "The ground is shaking! The serpent is awake. Keep the powder kegs away from the fire.","Вот он, огненный змей! Цельтесь в голову, кар-р!": "There he is, the fire serpent! Aim for the head, squawk!","Рифы Бурь. Здесь молнии бьют прямо в мачты. Я прячусь в трюм.": "The Storm Reefs. Lightning strikes right into the masts here. I'm hiding in the hold.","Я приплыл за вами с маяка! Королева Бурь топит корабли и собирает их на дне. Не дайте ей забрать ваш.": "I sailed after you from the lighthouse! The Storm Queen sinks ships and collects them on the seabed. Don't let her take yours.","Белла предлагает зарядить пушки цепными ядрами. Звучит как отличный план.": "Bella suggests loading the cannons with chain shot. Sounds like a great plan.","Ещё один кораблик в мою коллекцию? Как мило.": "Another little ship for my collection? How sweet.","Свет маяка разгоняет тучи всего на миг. Используйте его!": "The lighthouse beam parts the clouds for just a moment. Use it!","Ваш корабль станет украшением моего дна!": "Your ship will decorate my seabed!","Ледяное море. Здесь так холодно, что у меня мёрзнет клюв.": "The Ice Sea. It is so cold my beak is freezing.","Во льду вморожены старые корабли. Все они искали Трон Морского Короля.": "Old ships are frozen into the ice. All of them were looking for the Sea King's Throne.","Говорят, подо льдом спит левиафан. Давай не будем его будить. Ну пожалуйста.": "They say a leviathan sleeps under the ice. Let's not wake it. Pretty please.","Лёд трещит! Кто-то стучит снизу. Очень большой кто-то.": "The ice is cracking! Something is knocking from below. Something very big.","Кузнец, что живёт во льдах, сто лет держал левиафана на цепи. Цепи лопнули.": "The smith who lives in the ice kept the leviathan chained for a hundred years. The chains have snapped.","Ледяной левиафан! Тысяча чертей, ну почему всегда я?": "The Ice Leviathan! Blow me down, why is it always me?","Острова Пряностей! Тут пахнет корицей и большими деньгами.": "The Spice Islands! It smells of cinnamon and big money here.","Здесь всем заправляет Торговая компания. Их флагман «Золотой дракон» берёт пошлину даже с чаек.": "The Trading Company runs everything here. Their flagship, the Golden Dragon, charges a toll even to the gulls.","Компания назначила за наши головы награду. Приятно, что нас ценят!": "The Company has put a bounty on our heads. Nice to be appreciated!","«Золотой дракон» перекрыл пролив. Потопите его, и я ваша навсегда.": "The Golden Dragon has blocked the strait. Sink it, and I'm yours forever.","Затонувший город! Улицы, дворцы и статуи прямо под водой. Кто тут жил?": "The Sunken City! Streets, palaces and statues right under the water. Who lived here?","В старых книгах сказано: город построил Морской Король, а потом утопил его из ревности.": "The old books say the Sea King built the city, then drowned it out of jealousy.","Статуи шевелятся! Это не статуи! Это щупальца!": "The statues are moving! Those aren't statues! They're tentacles!","Каменный страж охраняет город уже тысячу лет. Пора ему на пенсию.": "The stone guardian has protected the city for a thousand years. Time he retired.","Пустынный берег. Песок, кактусы и... корабль на колёсах?!": "The Desert Coast. Sand, cacti and... a ship on wheels?!","Пустынные пираты ходят по дюнам под парусом. Сумасшедшие. Мне нравится!": "Desert pirates sail across the dunes. Crazy. I love it!","Их капитан хочет нашу карту. Говорит, без неё песок не пропустит.": "Their captain wants our map. He says the sand won't let him through without it.","«Песчаный скорпион» выкатился на берег! Готовьте пушки!": "The Sand Scorpion has rolled onto the shore! Ready the cannons!","Мангровые болота. Корни, туман и комары размером с меня.": "The Mangrove Swamps. Roots, fog and mosquitoes as big as me.","Здесь живёт гидра. Отрубишь одну голову, две злятся сильнее.": "A hydra lives here. Cut off one head and the other two just get angrier.","Я слышу шипение в три голоса. Кар-р, мне страшно в три раза больше!": "I hear hissing in three voices. Squawk, I'm three times as scared!","Болотная гидра! Бейте по всем головам сразу!": "The Swamp Hydra! Hit all the heads at once!","Небесные скалы! Острова висят прямо в воздухе. Мои крылья наконец пригодятся.": "The Sky Cliffs! Islands hanging right in the air. My wings will finally come in handy.","Тут промышляет небесный корсар на «Альбатросе». Нападает сверху, как чайка на бутерброд.": "A sky corsair on the Albatross hunts here. He strikes from above, like a gull at a sandwich.","Тень над нами! Это «Альбатрос»! Поднять все паруса!": "A shadow above us! It's the Albatross! Raise all sails!","Корсар пикирует на палубу! Все к пушкам!": "The corsair is diving at the deck! Everyone to the cannons!","Пиратская республика. Тут все пираты. Даже повар. Особенно повар.": "The Pirate Republic. Everyone here is a pirate. Even the cook. Especially the cook.","Совет капитанов решил, что Трон Морского Короля принадлежит им. Ха!": "The Captains' Council has decided the Sea King's Throne belongs to them. Ha!","Совет прислал письмо: «Сдавайтесь». Я его съел. Невкусно.": "The Council sent a letter: \"Surrender.\" I ate it. Not tasty.","«Три короны» вышли из гавани. Покажем этим чиновникам в треуголках!": "The Three Crowns has left the harbor. Let's show those bureaucrats in tricorns!","Призрачные воды. Тихо, как в сундуке. И холодно, как в сундуке.": "The Ghost Waters. Quiet as a chest. And cold as a chest.","Здесь плавают корабли без команды. Говорят, их ведёт сам Морской Король.": "Ships without crews sail here. They say the Sea King himself steers them.","Зелёные огни на горизонте! Призрачный галеон идёт прямо на нас!": "Green lights on the horizon! The Ghost Galleon is heading straight for us!","Призраки тоже боятся пушек. Наверное. Проверим!": "Ghosts are afraid of cannons too. Probably. Let's find out!","Бездна Морского Короля. Вода чёрная, как чернила Малыша Кальмара.": "The Sea King's Abyss. The water is as black as Little Squid's ink.","Помнишь, салага, как мы были врагами? Хорошее было время. Простое.": "Remember, landlubber, when we were enemies? Good times. Simple times.","Страж Бездны древнее самого моря. Морской Король разбудил его ради нас.": "The Abyss Warden is older than the sea itself. The Sea King woke it just for us.","Страж Бездны! Кар-р, это самое большое щупальце, что я видел!": "The Abyss Warden! Squawk, that's the biggest tentacle I've ever seen!","Трон Морского Короля. Последние острова на карте Мартина.": "The Sea King's Throne. The last islands on Martin's map.","Если мы победим, я отдам тебе свою долю сундука. Шучу. Половину доли.": "If we win, I'll give you my share of the chest. Kidding. Half my share.","Море замерло. Даже волны ждут, чем всё закончится.": "The sea has gone still. Even the waves are waiting to see how it ends.","Морской Король поднимается из глубин! Последний бой, капитан. На абордаж!": "The Sea King rises from the deep! The final battle, captain. Board them!","Морской Король повержен! Все моря свободны, а за троном нашлась ещё одна карта... Кар-р, приключение продолжается!": "The Sea King is defeated! All the seas are free, and behind the throne there was another map... Squawk, the adventure continues!","«Каракатица»": "The Cuttlefish","Шхуна капитана Шрама": "Captain Scar's schooner","Кракен": "Kraken","Чудовище из глубин": "a monster from the deep","Удар щупалец!": "Tentacle strike!","«Чёрная Каракатица»": "The Black Cuttlefish","Флагман капитана Шрама": "Captain Scar's flagship","«Неустрашимый»": "The Dauntless","Фрегат адмирала Стального Клюва": "Admiral Steelbeak's frigate","Огненный змей": "Fire Serpent","Хозяин вулканов": "lord of the volcanoes","Огненный плевок!": "Fire spit!","Повелительница молний": "mistress of lightning","Удар молнии!": "Lightning strike!","Ледяной левиафан": "Ice Leviathan","Спящий во льдах": "sleeper in the ice","Ледяная волна!": "Ice wave!","«Золотой дракон»": "The Golden Dragon","Флагман Торговой компании": "the Trading Company's flagship","Страж Затонувшего города": "Sunken City Guardian","Каменный кракен": "a stone kraken","Каменный град!": "Hail of stone!","«Песчаный скорпион»": "The Sand Scorpion","Корабль пустынных пиратов": "the desert pirates' ship","Болотная гидра": "Swamp Hydra","Ужас мангровых болот": "terror of the mangroves","Ядовитый плевок!": "Venom spit!","«Альбатрос»": "The Albatross","Небесный корсар": "a sky corsair","«Три короны»": "The Three Crowns","Флагман Совета капитанов": "the Captains' Council flagship","Призрачный галеон": "Ghost Galleon","Корабль без команды": "a ship without a crew","Страж Бездны": "Abyss Warden","Древний кракен": "an ancient kraken","Удар из бездны!": "Strike from the abyss!","Морской Король": "The Sea King","Владыка всех морей": "ruler of all the seas","Гнев Морского Короля!": "The Sea King's wrath!","Залп!": "Broadside!","Плод Пламени": "Flame Fruit","обычный": "common","Три пушечных ядра сразу летят через палубу": "Three cannonballs fly across the board at once","Плод Молний": "Lightning Fruit","Молнии бьют по всем сокровищам нужного вида": "Lightning strikes every treasure of the kind you need","Плод Прилива": "Tide Fruit","редкий": "rare","+3 хода": "+3 moves","Плод Тени": "Shadow Fruit","Две бочки пороха взрываются на палубе": "Two powder kegs explode on the board","Плод Урагана": "Hurricane Fruit","эпический": "epic","Компас-бомба, бочка и ядро срабатывают разом": "A compass bomb, a keg and a cannonball go off together","Золотой плод": "Golden Fruit","легендарный": "legendary","Всё золото с острова удваивается": "All the island's gold is doubled","Юнга Тим": "Tim the Cabin Boy","Разведка": "Scouting","В бою первый залп врага приходит на 2 хода позже": "In battle, the enemy's first broadside comes 2 moves later","Я больше не служу Шраму! Возьмите меня юнгой, я знаю все его хитрости.": "I don't serve Scar anymore! Take me on as cabin boy, I know all his tricks.","Малыш Кальмар": "Little Squid","Чернила": "Ink","Каждый вражеский залп на одно ядро слабее": "Every enemy broadside fires one ball fewer","Кракен был моей мамой, но она слишком много спала. Можно я поплыву с вами? Я умею пускать чернила!": "The kraken was my mom, but she slept too much. Can I sail with you? I can squirt ink!","Абордаж": "Boarding","В бою каждые 5 ходов на палубе появляется пушечное ядро": "In battle, a cannonball appears on the board every 5 moves","Ладно, салага, ты победил честно. Моя «Каракатица» на дне, так что я иду с тобой. Но сундук делим поровну!": "Fine, landlubber, you won fair and square. My Cuttlefish is on the seabed, so I'm coming with you. But we split the chest evenly!","Канонирша Белла": "Bella the Gunner","Прицельный огонь": "Sharpshooting","Урон по врагу больше на четверть": "A quarter more damage to the enemy","Адмирал никогда не слушал моих советов. А я лучшая канонирша флота! Покажу, как надо стрелять.": "The admiral never listened to my advice. And I'm the best gunner in the fleet! I'll show you how to shoot.","Укротитель огня Иг": "Ig the Fire Tamer","Пламя": "Flame","Бой начинается с двух бочек пороха на палубе": "Battles start with two powder kegs on the board","Огненный змей был моим питомцем, пока не одичал. Спасибо, что усмирили его. Огонь теперь на вашей стороне.": "The fire serpent was my pet until it went wild. Thank you for calming it. Fire is on your side now.","Ветреница Ло": "Lo the Windcaller","Молния": "Lightning","В бою каждые 4 хода молния бьёт по пяти сокровищам": "In battle, lightning strikes five treasures every 4 moves","Я была штурманом Королевы Бурь. Без неё ветер свободен, и я тоже. Молнии будут бить туда, куда я скажу.": "I was the Storm Queen's navigator. Without her the wind is free, and so am I. Lightning will strike wherever I say.","Кузнец Бьорн": "Bjorn the Smith","Молот": "Hammer","В бою каждый разбитый обломок наносит врагу 3 урона": "In battle, each piece of wreckage you break deals 3 damage","Я сто лет ковал во льдах цепи для левиафана. Теперь буду ковать победы для вас! Обломки? Пф, переплавлю.": "For a hundred years I forged chains for the leviathan in the ice. Now I'll forge victories for you! Wreckage? Pfft, I'll melt it down.","Сделка": "The Deal","За победу над боссом +50% золота, сундук плодов дешевле на 100": "+50% gold for beating a boss, fruit chests cost 100 less","Компания обманывала меня годами. Раз вы потопили «Золотого дракона», я торгую только с вами. И со скидкой!": "The Company cheated me for years. Since you sank the Golden Dragon, I trade only with you. At a discount!","Я знаю их канониров: залп будет позже!": "I know their gunners: the broadside will be late!","Чернила! Одно ядро мимо!": "Ink! One ball misses!","На абордаж! Держи ядро!": "Board them! Catch a cannonball!","Точно в цель!": "Right on target!","Огонь на палубу!": "Fire on deck!","Молния, бей!": "Lightning, strike!","Переплавлю этот хлам!": "I'll melt this junk down!","Двойная выручка!": "Double profit!","Вот это залп!": "What a broadside!","Капитан, вы гений!": "Captain, you're a genius!","Кар-р-расота!": "Squa-a-awesome!","Кар-р! Куда плывём, капитан?": "Squawk! Where are we sailing, captain?","Я чую сокровища! Или это рыба.": "I smell treasure! Or maybe fish.","Не забудь заглянуть в порт!": "Don't forget to stop by the port!","Шрам? Где? Я не боюсь!": "Scar? Where? I'm not scared!","Мартин говорил: терпение и три в ряд!": "Martin used to say: patience and three in a row!","Хочу печенье. Пиратское.": "I want a cracker. A pirate cracker.","Ветер попутный, кар-р!": "Fair wind, squawk!","Ещё один остров, и я посплю.": "One more island and I'm taking a nap.","Кар-р!": "Squawk!","Палуба в порядке, капитан! Все по местам.": "The deck is shipshape, captain! Everyone at their posts.","Казна в порядке, до последнего дублона.": "The treasury is in order, down to the last doubloon.","Пушки заряжены, капитан!": "The cannons are loaded, captain!","Обед через час. Сегодня уха, и никакого рома... почти.": "Lunch in an hour. Fish soup today, and no rum... almost.","Осторожнее, капитан, тут порох. Только не с факелом!": "Careful, captain, there is powder here. No torches!","Звёзды ясные, курс проложен.": "The stars are clear, the course is plotted.","Капитан! Я драил палубу, пока вас не было. Почти всю!": "Captain! I scrubbed the deck while you were away. Almost all of it!","Буль! То есть... здравствуйте, капитан!": "Blub! I mean... hello, captain!","Чего уставился, салага? Ладно-ладно... капитан.": "What are you staring at, landlubber? Fine, fine... captain.","Пушки начищены, порох сухой. Жду приказа.": "Cannons polished, powder dry. Awaiting orders.","Ш-ш-ш... это я с огнём разговариваю. Что нужно?": "Shhh... I'm talking to the fire. What do you need?","Ветер сегодня попутный. Это я постаралась.": "The wind is fair today. That's my doing.","Ха! Палуба крепкая, каждую скобу сам ковал.": "Ha! The deck is solid, I forged every bracket myself.","Капитан! Я подсчитала нашу выручку, вам понравится.": "Captain! I've counted our takings, you'll like this.","Чем дольше остров, тем ценнее лишний ход. На островах с сетями не спешите: сначала рвите сети у краёв.": "The longer the island, the more an extra move is worth. On net islands, don't rush: cut the nets at the edges first.","Звёзды тоже приносят золото. Переиграть остров на три звезды бывает выгоднее, чем плыть дальше.": "Stars bring gold too. Replaying an island for three stars can pay better than sailing on.","Моё ядро взрывайте там, где больше всего сетей или обломков. Ядро бьёт целую линию.": "Set off my cannonball where the nets or wreckage are thickest. A cannonball hits a whole line.","Мой суп даёт три хода, когда ходы кончились. Но только один раз за остров, так что не тратьте ходы зря!": "My soup gives three moves when you run out. But only once per island, so don't waste moves!","Бочка пороха взрывает всё вокруг. Подтащите её поближе к сундуку или к завалу.": "A powder keg blows up everything around it. Drag it close to a chest or a pile of wreckage.","Компас-бомба убирает все сокровища одного вида. Меняйте её с тем, что нужно по заданию.": "A compass bomb removes every treasure of one kind. Swap it with whatever the goal needs.","Следите за счётчиком залпа у врага. Пока до залпа далеко, копите комбо.": "Watch the enemy's broadside counter. While the broadside is far off, build up combos.","Обломки мешают только рядом с собой. Собирайте сокровища возле них, и палуба очистится сама.": "Wreckage only blocks what is next to it. Match treasures beside it and the board clears itself.","Ядро, что я подкидываю, лучше взрывать вдоль линии с обломками. Двойная польза, хе-хе.": "The cannonball I toss you is best fired along a line of wreckage. Double the use, heh-heh.","Чем больше сокровищ за один ход, тем больнее врагу. Ищите ходы на четыре и пять в ряд.": "The more treasures in one move, the more it hurts the enemy. Look for four and five in a row.","Бочки пороха в начале боя не тратьте сразу. Подождите, пока враг завалит палубу обломками.": "Don't use the powder kegs right at the start of a battle. Wait until the enemy fills the board with wreckage.","Каждый четвёртый ход моя молния бьёт сама. Считайте ходы и не торопитесь.": "Every fourth move my lightning strikes on its own. Count your moves and take your time.","Каждый разбитый обломок бьёт врага на 3. В бою завал не беда, а запас урона!": "Every piece of wreckage you break hits the enemy for 3. In battle, wreckage is not a problem, it is stored damage!","Боссы платят щедрее всех, а с моими сделками ещё на половину больше. Не пропускайте боссов!": "Bosses pay the best, and with my deals half as much again. Don't skip the bosses!","Сходни": "Gangway","Жако": "Jaco","Сундук дня": "Daily chest","Доска славы": "Hall of Fame","Каюта": "Cabin","Штурвал": "Helm","Встать за штурвал": "Take the helm","Каюта капитана": "Captain's cabin","Здесь трофеи с побеждённых боссов и награды за подвиги. За каждый подвиг положено золото!": "Trophies from beaten bosses and rewards for great deeds are kept here. Every deed earns gold!","Войти в каюту": "Enter the cabin","Внизу шумит порт: верфь, таверна и лавка плодов. Там подскажут, на что лучше тратить золото.": "The port bustles below: the shipyard, the tavern and the fruit shop. They will tell you what is best to spend gold on.","Сойти в порт": "Go ashore","Кар-р! Капитан на палубе! Спрашивайте, я всё знаю. Ну, почти всё.": "Squawk! Captain on deck! Ask me anything, I know everything. Well, almost everything.","Куда плывём?": "Where are we sailing?","Кто ещё к нам придёт?": "Who else will join us?","Вся команда в сборе! Лучше команды нет на всех морях.": "The whole crew is here! There is no better crew on all the seas.","Расскажи что-нибудь": "Tell me something","Чем ты помогаешь?": "How do you help?","Дай совет": "Give me a tip","Как это работает?": "How does it work?","Каждый день здесь новый сундук и три задания. Чем больше дней подряд вы открываете сундук, тем он богаче, до семи дней. Задания выполняются сами, пока вы плаваете по островам.": "Every day there is a new chest and three tasks here. The more days in a row you open the chest, the richer it gets, up to seven days. Tasks fill up on their own as you sail the islands.","Открыть и удвоить за рекламу": "Open and double for an ad","Сегодняшний сундук уже открыт. Выполняйте задания, а новый сундук появится завтра!": "Today's chest is already open. Do the tasks, and a new chest will appear tomorrow!","Смотрю, кто из капитанов впереди...": "Checking which captains are ahead...","Как попасть на доску?": "How do I get on the board?","Каждая звезда за остров идёт в зачёт. Переигрывайте острова на три звезды, и вы подниметесь выше.": "Every island star counts. Replay islands for three stars and you will climb higher.","Как ты сражаешься?": "How do you fight?","Как ты к нам попал?": "How did you join us?","Первая добыча": "First Loot","Взять первый остров": "Take the first island","Морской волк": "Old Sea Dog","Взять 10 островов": "Take 10 islands","Полпути": "Halfway There","Взять 50 островов": "Take 50 islands","Король морей": "King of the Seas","Взять все 100 островов": "Take all 100 islands","Звездочёт": "Stargazer","Собрать 50 звёзд": "Collect 50 stars","Созвездие": "Constellation","Собрать 200 звёзд": "Collect 200 stars","Первый бой": "First Battle","Победить босса": "Defeat a boss","Гроза морей": "Terror of the Seas","Победить 8 боссов": "Defeat 8 bosses","Вся команда в сборе": "The Whole Crew","Собрать всех 8 соратников": "Gather all 8 companions","Наставник": "Mentor","Обучить соратника до 3 уровня": "Train a companion to level 3","Полная таверна": "Full Tavern","Нанять всех 6 моряков": "Hire all 6 sailors","Адмирал": "Admiral","Купить Флагман": "Buy the Flagship","Сад чудес": "Garden of Wonders","Найти все 6 плодов": "Find all 6 fruits","Подрывник": "Demolition Expert","Взорвать 200 бомб": "Set off 200 bombs","Сундук полон": "Full Chest","Добыть 20 000 золота": "Earn 20,000 gold","Верный капитан": "Loyal Captain","Открывать сундук дня 7 дней подряд": "Open the daily chest 7 days in a row","Выполнено": "Done","Ещё нет": "Not yet","Награда получена": "Reward collected","Пиратские сокровища": "Pirate Treasures","Сброс": "Reset","На палубу": "To the deck","← Палуба": "← Deck","Порт": "Port","Верфь": "Shipyard","Лавка плодов": "Fruit shop","Лавка откроется, когда вы доплывёте до Огненных островов.": "The shop opens when you reach the Fire Islands.","Палуба": "Deck","Нажмите на моряка, чтобы подойти и поговорить. Сходни ведут в порт, штурвал к островам. Стрелки ← → тоже ходят.": "Tap a sailor to walk over and talk. The gangway leads to port, the helm to the islands. The ← → arrow keys walk too.","Трофеи": "Trophies","С каждого побеждённого босса на полку встаёт трофей.": "Every defeated boss puts a trophy on the shelf.","Подвиги": "Deeds","За каждый подвиг один раз положено золото.": "Each deed pays gold once.","← Карта": "← Map","Золото": "Gold","Ходы": "Moves","Очки": "Score","Меняйте соседние сокровища местами, чтобы собрать три в ряд. Проведите пальцем или нажмите на два по очереди.": "Swap neighboring treasures to line up three in a row. Swipe, or tap two in turn.","Звуки": "Sound","Музыка": "Music","Карта сокровищ": "Treasure map","Лавки порта": "Port shops","Палуба корабля": "Ship deck","Задания острова": "Island goals","Палуба 8 на 8": "Board, 8 by 8","Повержен!": "Defeated!","Победа в бою!": "Battle won!","Ходы закончились": "Out of moves","До сокровищ было рукой подать:": "The treasure was within reach:","Морской бой!": "Sea battle!","Скрытый пират": "Hidden pirate","Остров 1": "Island 1"};
+</script>
 <script>
 const N = 8;
 // Treasure art. Swap this array to reskin the whole game.
@@ -697,6 +702,58 @@ function levelDef(n) {
 }
 
 const $ = id => document.getElementById(id);
+// Language: Russian is written in the code, English comes from EN. Yandex says which language the player uses.
+let LANG = 'ru';
+const en = () => LANG === 'en';
+const tx = (ru, eng) => en() ? eng : ru;
+const tr = v => {
+  if (!en() || typeof v !== 'string') return v;
+  const k = v.trim();
+  return EN[k] === undefined ? v : v.replace(k, EN[k]);
+};
+const lcf = t => t ? t[0].toLowerCase() + t.slice(1) : t;
+// In English every fixed line that reaches the page is swapped as it appears; the Russian original is kept to switch back.
+const I18N = {
+  text(n) {
+    const ru = n.__ru ?? n.data;
+    if (!/[А-яЁё]/.test(ru) && n.__ru === undefined) return;
+    const want = en() ? tr(ru) : ru;
+    if (want !== ru) n.__ru = ru;
+    if (n.data !== want) { n.__set = want; n.data = want; }
+  },
+  attr(el, a) {
+    const key = '__ru_' + a, ru = el[key] ?? el.getAttribute(a);
+    if (ru === null || (!/[А-яЁё]/.test(ru) && el[key] === undefined)) return;
+    const want = en() ? tr(ru) : ru;
+    if (want !== ru) el[key] = ru;
+    if (el.getAttribute(a) !== want) { el['__set_' + a] = want; el.setAttribute(a, want); }
+  },
+  walk(root) {
+    if (root.nodeType === 3) return this.text(root);
+    if (root.nodeType !== 1) return;
+    ['aria-label', 'title'].forEach(a => root.hasAttribute(a) && this.attr(root, a));
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+    for (let n = w.nextNode(); n; n = w.nextNode()) {
+      if (n.nodeType === 3) this.text(n);
+      else ['aria-label', 'title'].forEach(a => n.hasAttribute(a) && this.attr(n, a));
+    }
+  },
+};
+new MutationObserver(list => {
+  if (!en()) return;
+  for (const m of list) {
+    if (m.type === 'childList') m.addedNodes.forEach(n => I18N.walk(n));
+    // Our own swaps come back here too; only a change made by the game resets the remembered original.
+    else if (m.type === 'characterData') { if (m.target.data !== m.target.__set) { delete m.target.__ru; I18N.text(m.target); } }
+    else if (m.target.getAttribute(m.attributeName) !== m.target['__set_' + m.attributeName]) { delete m.target['__ru_' + m.attributeName]; I18N.attr(m.target, m.attributeName); }
+  }
+}).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['aria-label', 'title'] });
+function setLang(l) {
+  LANG = l === 'en' ? 'en' : 'ru';
+  document.documentElement.lang = LANG;
+  document.title = tx('Пиратские сокровища', 'Pirate Treasures');
+  I18N.walk(document.body);
+}
 const tileLayer = $('tileLayer'), netLayer = $('netLayer'), fxLayer = $('fxLayer'), boardEl = $('board');
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
@@ -853,14 +910,14 @@ function chipHtml(g) {
   if (g.kind === 'collect') return `<span class="chip${done}">${gemSvg(g.t)} ${done ? '✓' : g.need - g.have}</span>`;
   if (g.kind === 'wreck') return `<span class="chip${done}">${gemSvg(DEBRIS)} ${done ? '✓' : g.need - g.have}</span>`;
   if (g.kind === 'boss') return `<span class="chip foe${done}"><span class="foeart">${foeSvg(L.boss)}</span><span class="foeinfo"><b>${L.boss.name}</b>` +
-    `<i class="hp"><i style="width:${100 - g.have / g.need * 100}%"></i></i><small>${done ? 'Повержен!' : `Прочность ${g.need - g.have} · залп через ${Math.max(0, L.timer ?? L.boss.every)}`}</small></span></span>`;
+    `<i class="hp"><i style="width:${100 - g.have / g.need * 100}%"></i></i><small>${done ? tx('Повержен!', 'Defeated!') : tx(`Прочность ${g.need - g.have} · залп через ${Math.max(0, L.timer ?? L.boss.every)}`, `Hull ${g.need - g.have} · broadside in ${Math.max(0, L.timer ?? L.boss.every)}`)}</small></span></span>`;
   return `<span class="chip${done}"><i class="netcell"></i> ${done ? '✓' : g.need - g.have}</span>`;
 }
 function goalText(g) {
-  if (g.kind === 'score') return `Награбьте ${g.need} добычи`;
-  if (g.kind === 'collect') return `Соберите ${PIECES[g.t].name}: ${g.need} шт.`;
+  if (g.kind === 'score') return tx(`Награбьте ${g.need} добычи`, `Plunder ${g.need} loot`);
+  if (g.kind === 'collect') return tx(`Соберите ${PIECES[g.t].name}: ${g.need} шт.`, `Collect ${g.need} ${tr(PIECES[g.t].name)}`);
   if (g.kind === 'wreck') return 'Расчистите обломки: соберите ряд рядом с каждым';
-  if (g.kind === 'boss') return `Каждое собранное сокровище бьёт по врагу. Каждые ${L.boss.every} хода враг отвечает залпом и оставляет на палубе обломки.`;
+  if (g.kind === 'boss') return tx(`Каждое собранное сокровище бьёт по врагу. Каждые ${L.boss.every} хода враг отвечает залпом и оставляет на палубе обломки.`, `Every treasure you collect hits the enemy. Every ${L.boss.every} moves the enemy fires a broadside and leaves wreckage on the board.`);
   return 'Разрежьте все сети: соберите ряд на каждой клетке с сетью';
 }
 
@@ -871,7 +928,7 @@ function updateHud() {
   $('movesBox').classList.toggle('low', moves <= 5);
   const f = fruitNow(), p = Math.min(1, (L.charge || 0) / FRUIT_CHARGE);
   $('goals').innerHTML = goalList().map(chipHtml).join('') + (f && !Tut.allowed
-    ? `<button type="button" class="fruit${p >= 1 ? ' ready' : ''}" id="fruitBtn" style="--p:${p * 360}deg" aria-label="${f.name}: ${f.power}. Заряд ${Math.round(p * 100)}%">${fruitSvg(f)}</button>` : '');
+    ? `<button type="button" class="fruit${p >= 1 ? ' ready' : ''}" id="fruitBtn" style="--p:${p * 360}deg" aria-label="${tr(f.name)}: ${tr(f.power)}. ${tx('Заряд', 'Charge')} ${Math.round(p * 100)}%">${fruitSvg(f)}</button>` : '');
 }
 function flash(text) {
   const el = $('combo');
@@ -1101,7 +1158,7 @@ async function resolve(pending, swapped = []) {
     if (boom) { grid.forEach(row => row.forEach(t => t && clear.add(t))); Rec.chestBroke++; L.chestGold = (L.chestGold || 0) + CHEST_GOLD; }
     score += clear.size * 10 * combo;
     if (boom) { flash('Золотой сундук!'); Sound.boom(); }
-    else if (!fired.size && !makes.length) { Sound.match(combo); if (combo > 1) flash(COMBO_WORDS[combo] || `Комбо ×${combo}`); if (combo === 3) cheer(); }
+    else if (!fired.size && !makes.length) { Sound.match(combo); if (combo > 1) flash(COMBO_WORDS[combo] || tx(`Комбо ×${combo}`, `Combo ×${combo}`)); if (combo === 3) cheer(); }
     else if (!fired.size) Sound.match(combo);
     clear.forEach(t => {
       t.el.classList.add('pop');
@@ -1229,20 +1286,20 @@ function win() {
   if (joined) { progress.allies[joined.id] = 1; saveProgress(); }
   if (L.boss && !joined && ally('mira')) allyCameo('mira');
   overlay(
-    `<h2>${L.boss ? 'Победа в бою!' : `Остров ${levelNo} взят!`}</h2>${L.boss ? `<p>${L.boss.name} больше не страшен.</p>` : ''}${starsHtml(stars)}<p class="haul">В казну: ${coin('+' + gold)}</p>` +
-    (joined ? `<div class="joiner"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${joined.face}</svg><div><b>${joined.name} теперь в команде!</b><p>«${joined.joins}»</p><small>Стиль боя «${joined.style}»: ${joined.perk.toLowerCase()}</small></div></div>`
-      : `<p>Очки: ${score}, из них ${bonus} за оставшиеся ходы.</p>`),
+    `<h2>${L.boss ? tx('Победа в бою!', 'Battle won!') : tx(`Остров ${levelNo} взят!`, `Island ${levelNo} taken!`)}</h2>${L.boss ? `<p>${tx(`${L.boss.name} больше не страшен.`, `${tr(L.boss.name)} is no longer a threat.`)}</p>` : ''}${starsHtml(stars)}<p class="haul">${tx('В казну:', 'To the treasury:')} ${coin('+' + gold)}</p>` +
+    (joined ? `<div class="joiner"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${joined.face}</svg><div><b>${tx(`${joined.name} теперь в команде!`, `${tr(joined.name)} joined the crew!`)}</b><p>«${tr(joined.joins)}»</p><small>${tx(`Стиль боя «${joined.style}»: ${joined.perk.toLowerCase()}`, `Fighting style "${tr(joined.style)}": ${lcf(tr(joined.perk))}`)}</small></div></div>`
+      : `<p>${tx(`Очки: ${score}, из них ${bonus} за оставшиеся ходы.`, `Score: ${score}, including ${bonus} for moves left.`)}</p>`),
     [['Плыть дальше', () => afterAd(() => voyage(levelNo + 1))], ['Повторить', () => afterAd(() => startLevel(levelNo)), true], ['В порт', () => afterAd(showPort), true]]
   );
   // One rewarded video doubles the island's gold. No interstitial after it: the player just watched an ad.
   if (gold && YSDK.canReward()) {
     const row = $('overlay').querySelector('.row'), b = document.createElement('button');
-    b.type = 'button'; b.className = 'double'; b.innerHTML = `Удвоить ${coin('+' + gold)} за рекламу`;
+    b.type = 'button'; b.className = 'double'; b.innerHTML = tx(`Удвоить ${coin('+' + gold)} за рекламу`, `Double ${coin('+' + gold)} for an ad`);
     b.addEventListener('click', async () => {
       b.disabled = true;
       if (!(await YSDK.rewarded())) { b.disabled = false; return; }
       progress.gold += gold; saveProgress(); Sound.forge();
-      $('overlay').querySelector('.haul').innerHTML = `В казну: ${coin('+' + gold * 2)}`;
+      $('overlay').querySelector('.haul').innerHTML = `${tx('В казну:', 'To the treasury:')} ${coin('+' + gold * 2)}`;
       b.remove();
     });
     row.before(b);
@@ -1256,7 +1313,7 @@ function lose() {
   Daily.attempt(false);
   const buttons = [['Ещё раз', () => afterAd(() => startLevel(levelNo))], ['На карту', showMap, true]];
   // One rewarded video per attempt buys extra moves.
-  if (!L.bonusUsed && YSDK.canReward()) buttons.unshift([`+${EXTRA_MOVES} ходов за рекламу`, async () => {
+  if (!L.bonusUsed && YSDK.canReward()) buttons.unshift([tx(`+${EXTRA_MOVES} ходов за рекламу`, `+${EXTRA_MOVES} moves for an ad`), async () => {
     L.bonusUsed = true;
     if (!(await YSDK.rewarded())) return lose();
     moves += EXTRA_MOVES; over = false; Rec.extraMoves += EXTRA_MOVES;
@@ -1264,8 +1321,8 @@ function lose() {
     $('overlay').hidden = true;
     YSDK.gameplay(true); armHint();
   }]);
-  overlay(`<h2>Ходы закончились</h2><p>До сокровищ было рукой подать:</p><div class="goals">${left}</div>` +
-    (gold ? `<p class="haul">Спасли половину добычи: ${coin('+' + gold)}</p>` : ''), buttons);
+  overlay(`<h2>${tx('Ходы закончились', 'Out of moves')}</h2><p>${tx('До сокровищ было рукой подать:', 'The treasure was within reach:')}</p><div class="goals">${left}</div>` +
+    (gold ? `<p class="haul">${tx('Спасли половину добычи:', 'Half the loot saved:')} ${coin('+' + gold)}</p>` : ''), buttons);
 }
 
 function setSel(tile) {
@@ -1454,7 +1511,7 @@ try { const a = JSON.parse(localStorage.getItem('pirates-audio')); if (a) { Soun
 function syncToggles() {
   $('sfxBtn').setAttribute('aria-pressed', Sound.sfx);
   $('musicBtn').setAttribute('aria-pressed', Sound.track >= 0);
-  $('musicBtn').textContent = 'Музыка: ' + (TRACKS[Sound.track] ? TRACKS[Sound.track].name : 'выкл');
+  $('musicBtn').textContent = tx('Музыка: ', 'Music: ') + tr(TRACKS[Sound.track] ? TRACKS[Sound.track].name : 'выкл');
   Sound.apply();
   try { localStorage.setItem('pirates-audio', JSON.stringify({ sfx: Sound.sfx, track: Sound.track })); } catch (e) {}
 }
@@ -1566,8 +1623,9 @@ const Daily = {
   },
   text(x) {
     return {
-      collect: () => `Собрать ${x.need} ${DAILY_GEN[x.t]}`, wins: () => `Взять ${x.need} острова`, stars3: () => `Пройти ${x.need} острова на три звезды`,
-      gold: () => `Добыть ${x.need} золота`, bombs: () => `Взорвать ${x.need} бомб: ядра, бочки, компасы`,
+      collect: () => tx(`Собрать ${x.need} ${DAILY_GEN[x.t]}`, `Collect ${x.need} ${tr(PIECES[x.t].name)}`), wins: () => tx(`Взять ${x.need} острова`, `Take ${x.need} islands`),
+      stars3: () => tx(`Пройти ${x.need} острова на три звезды`, `Finish ${x.need} islands with three stars`),
+      gold: () => tx(`Добыть ${x.need} золота`, `Earn ${x.need} gold`), bombs: () => tx(`Взорвать ${x.need} бомб: ядра, бочки, компасы`, `Set off ${x.need} bombs: cannonballs, kegs, compasses`),
     }[x.k]();
   },
   reward: () => Math.round((150 + Math.min(progress.unlocked, 100) * 3) / 10) * 10,
@@ -1827,18 +1885,18 @@ const perIsland = () => Math.round((250 + progress.unlocked * 4) * (aboard('quar
 function spendAdvice() {
   const g = progress.gold, next = SHIPS[progress.vessel + 1], room = vessel().crew - progress.aboard.length;
   const shore = CREW.find(m => progress.hired[m.id] && !aboard(m.id));
-  if (shore && room > 0) return `${shore.name} ждёт на берегу, а на борту есть свободное место. Возьмите его в плавание в таверне, это бесплатно!`;
+  if (shore && room > 0) return tx(`${shore.name} ждёт на берегу, а на борту есть свободное место. Возьмите его в плавание в таверне, это бесплатно!`, `The ${tr(shore.name)} is waiting ashore, and there is a free berth aboard. Take him along from the tavern, it's free!`);
   if (!progress.hired.bosun) return g >= 300
     ? 'Наймите Боцмана в таверне за 300. Лишний ход на каждом острове окупается сразу.'
-    : `Копите на Боцмана: не хватает ${300 - g}. Лишний ход на каждом острове очень выручает.`;
+    : tx(`Копите на Боцмана: не хватает ${300 - g}. Лишний ход на каждом острове очень выручает.`, `Save up for the Bosun: ${300 - g} more to go. An extra move on every island really helps.`);
   if (!progress.hired.quarter && room > 0) return g >= 500
-    ? `Наймите Квартирмейстера за 500. Он прибавляет четверть к добыче и вернёт свою цену примерно за ${Math.ceil(500 / (perIsland() * .25))} островов.`
-    : `Копите на Квартирмейстера: не хватает ${500 - g}. С ним все следующие покупки придут быстрее.`;
-  if (next && g >= next.price) return `Хватает на ${accusative(next.name)}! Это ещё ход на каждом острове и новое место для моряка. Загляните на верфь.`;
+    ? tx(`Наймите Квартирмейстера за 500. Он прибавляет четверть к добыче и вернёт свою цену примерно за ${Math.ceil(500 / (perIsland() * .25))} островов.`, `Hire the Quartermaster for 500. He adds a quarter to your loot and pays for himself in about ${Math.ceil(500 / (perIsland() * .25))} islands.`)
+    : tx(`Копите на Квартирмейстера: не хватает ${500 - g}. С ним все следующие покупки придут быстрее.`, `Save up for the Quartermaster: ${500 - g} more to go. With him every later purchase comes sooner.`);
+  if (next && g >= next.price) return tx(`Хватает на ${accusative(next.name)}! Это ещё ход на каждом острове и новое место для моряка. Загляните на верфь.`, `You can afford the ${tr(next.name)}! That's another move on every island and a new berth for a sailor. Visit the shipyard.`);
   const hire = room > 0 && CREW.find(m => !progress.hired[m.id]);
-  if (hire && g >= hire.price) return `На борту есть свободное место. Наймите в таверне: ${hire.name}, ${hire.perk.toLowerCase()}.`;
+  if (hire && g >= hire.price) return tx(`На борту есть свободное место. Наймите в таверне: ${hire.name}, ${hire.perk.toLowerCase()}.`, `There is a free berth aboard. Hire at the tavern: the ${tr(hire.name)}, ${lcf(tr(hire.perk))}.`);
   if (fruitOpen() && !progress.fruit && g >= fruitPrice()) return 'Откройте сундук плодов в лавке. Даже обычный плод сильно помогает в бою с боссом.';
-  if (next) return `Копите на ${accusative(next.name)}: не хватает ${next.price - g}. Это примерно ${Math.max(1, Math.ceil((next.price - g) / perIsland()))} островов.`;
+  if (next) return tx(`Копите на ${accusative(next.name)}: не хватает ${next.price - g}. Это примерно ${Math.max(1, Math.ceil((next.price - g) / perIsland()))} островов.`, `Save up for the ${tr(next.name)}: ${next.price - g} more to go. That's about ${Math.max(1, Math.ceil((next.price - g) / perIsland()))} islands.`);
   if (fruitOpen() && g >= fruitPrice()) return 'Корабль лучше не бывает. Тратьте золото на сундуки плодов: вдруг выпадет Золотой плод.';
   return 'У вас лучший корабль на всех морях. Копите на сундуки плодов и нанимайте тех, кого ещё нет.';
 }
@@ -1854,14 +1912,14 @@ const SHOPS = {
       const next = SHIPS[progress.vessel + 1];
       if (!next) return 'Флагман уже ваш. Лучше корабля я не строил и не построю!';
       const left = next.price - progress.gold;
-      return left <= 0 ? `Золота хватает! ${next.name} ждёт вас у причала.`
-        : `Следующий корабль, ${next.name}, стоит ${next.price}. Не хватает ${left}, это примерно ${Math.max(1, Math.ceil(left / perIsland()))} островов.`;
+      return left <= 0 ? tx(`Золота хватает! ${next.name} ждёт вас у причала.`, `You have enough gold! The ${tr(next.name)} is waiting at the pier.`)
+        : tx(`Следующий корабль, ${next.name}, стоит ${next.price}. Не хватает ${left}, это примерно ${Math.max(1, Math.ceil(left / perIsland()))} островов.`, `The next ship, the ${tr(next.name)}, costs ${next.price}. You need ${left} more, about ${Math.max(1, Math.ceil(left / perIsland()))} islands.`);
     } },
     { q: 'Корабль или моряки?', a: 'Сначала Боцман: на шлюпке как раз одно место. Потом Шлюп и Квартирмейстер, он ускорит все накопления. Дальше чередуйте: корабль даёт место, а на место берите нового моряка.' },
   ] }),
   tavern: () => ({ who: INNKEEPER, hello: 'Эль, ром и лучшие моряки на всём побережье! Кого ищете, капитан?', asks: [
     { q: 'Кого нанять первым?', a: 'Боцмана: он стоит всего 300 и даёт лишний ход на каждом острове. Вторым берите Квартирмейстера, с ним золото копится на четверть быстрее, и все покупки приходят раньше.' },
-    { q: 'Почему не все плывут?', a: () => `На вашем корабле мест: ${vessel().crew}, занято ${progress.aboard.length}. Кому не хватило места, ждёт на берегу. Корабль побольше на верфи даёт ещё место.` },
+    { q: 'Почему не все плывут?', a: () => tx(`На вашем корабле мест: ${vessel().crew}, занято ${progress.aboard.length}. Кому не хватило места, ждёт на берегу. Корабль побольше на верфи даёт ещё место.`, `Your ship has ${vessel().crew} berths, ${progress.aboard.length} taken. Whoever doesn't fit waits ashore. A bigger ship from the shipyard gives another berth.`) },
     { q: 'Зачем моряки с бомбами?', a: 'Канонир, Пороховщик и Штурман кладут на палубу готовую бомбу в начале острова. Особенно выручает на островах с сетями и обломками, где трудно добраться до краёв.' },
     { q: 'Кок полезен?', a: 'Кок спасает, когда ходы кончились: один раз за остров даёт ещё три хода. Берите его, если часто проигрываете в шаге от победы.' },
     { q: 'На что потратить золото?', a: spendAdvice },
@@ -1875,7 +1933,7 @@ const SHOPS = {
       if (!fruitOpen()) return 'Пока рано: сначала корабль и команда, они помогают на каждом острове. А плоды подождут до острова 32.';
       if (progress.vessel < 2 || !progress.hired.bosun) return 'Честно? Сначала корабль и команда, они помогают на каждом острове. Плод хорош как добавка, особенно в боях с боссами.';
       const f = fruitNow();
-      return f ? `У вас уже есть ${f.name}. Новый сундук стоит брать ради редких плодов. За повтор верну половину цены.`
+      return f ? tx(`У вас уже есть ${f.name}. Новый сундук стоит брать ради редких плодов. За повтор верну половину цены.`, `You already have the ${tr(f.name)}. A new chest is worth it for the rare fruits. For a duplicate I give back half the price.`)
         : 'Да! Даже обычный плод сильно помогает в бою с боссом. А за повторный плод я верну половину цены.';
     } },
     { q: 'На что потратить золото?', a: spendAdvice },
@@ -1896,13 +1954,13 @@ function renderPort() {
   $('yard').innerHTML = SHIPS.map((s, i) => {
     const state = i < cur ? 'Был вашим' : i === cur ? 'Ваш корабль' : i === cur + 1 ? null : 'Сначала предыдущий';
     return `<div class="card${i === cur ? ' mine' : ''}"><div class="art">${shipSvg(i)}</div><div class="info"><b>${s.name}</b><p>${s.about}</p>` +
-      `<small>${s.moves ? `+${s.moves} ${s.moves === 1 ? 'ход' : 'хода'} на острове · ` : ''}мест в команде: ${s.crew}</small></div>` +
-      (state ? `<span class="tag">${state}</span>` : `<button type="button" data-ship="${i}"${progress.gold < s.price ? ' disabled' : ''}>Купить ${coin(s.price)}</button>`) + '</div>';
+      `<small>${s.moves ? tx(`+${s.moves} ${s.moves === 1 ? 'ход' : 'хода'} на острове · `, `+${s.moves} move${s.moves === 1 ? '' : 's'} per island · `) : ''}${tx('мест в команде:', 'crew berths:')} ${s.crew}</small></div>` +
+      (state ? `<span class="tag">${state}</span>` : `<button type="button" data-ship="${i}"${progress.gold < s.price ? ' disabled' : ''}>${tx('Купить', 'Buy')} ${coin(s.price)}</button>`) + '</div>';
   }).join('');
-  $('crewRoom').textContent = `На борту ${progress.aboard.length} из ${room}. Кому не хватило места, ждёт на берегу.`;
+  $('crewRoom').textContent = tx(`На борту ${progress.aboard.length} из ${room}. Кому не хватило места, ждёт на берегу.`, `Aboard: ${progress.aboard.length} of ${room}. Whoever doesn't fit waits ashore.`);
   const shop = fruitOpen();
   $('fruitShop').hidden = !shop; $('fruitClosed').hidden = shop;
-  $('rollFruit').innerHTML = `Открыть сундук плодов ${coin(fruitPrice())}`;
+  $('rollFruit').innerHTML = `${tx('Открыть сундук плодов', 'Open a fruit chest')} ${coin(fruitPrice())}`;
   $('rollFruit').disabled = progress.gold < fruitPrice();
   $('fruits').innerHTML = FRUITS.map(f => {
     const have = progress.fruits[f.id], on = progress.fruit === f.id;
@@ -1913,7 +1971,7 @@ function renderPort() {
   $('tavern').innerHTML = CREW.map(m => {
     const hired = progress.hired[m.id], on = aboard(m.id);
     const btn = !hired
-      ? `<button type="button" data-hire="${m.id}"${progress.gold < m.price ? ' disabled' : ''}>Нанять ${coin(m.price)}</button>`
+      ? `<button type="button" data-hire="${m.id}"${progress.gold < m.price ? ' disabled' : ''}>${tx('Нанять', 'Hire')} ${coin(m.price)}</button>`
       : `<button type="button" class="ghost${on ? ' on' : ''}" data-board="${m.id}" aria-pressed="${on}"${!on && progress.aboard.length >= room ? ' disabled' : ''}>${on ? 'На борту' : 'На берегу'}</button>`;
     return `<div class="card${on ? ' mine' : ''}"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${m.face}</svg><div class="info"><b>${m.name}</b><p>${m.perk}</p></div>${btn}</div>`;
   }).join('');
@@ -1927,15 +1985,15 @@ $('portScreen').addEventListener('click', e => {
     const i = +b.dataset.ship;
     progress.gold -= SHIPS[i].price; progress.vessel = i;
     Sound.forge(); saveProgress();
-    openShop('yard', `Отличный выбор! ${SHIPS[i].name} уже на воде. Теперь на борту ${SHIPS[i].crew} ${SHIPS[i].crew < 5 ? 'места' : 'мест'} для команды, загляните в таверну.`);
+    openShop('yard', tx(`Отличный выбор! ${SHIPS[i].name} уже на воде. Теперь на борту ${SHIPS[i].crew} ${SHIPS[i].crew < 5 ? 'места' : 'мест'} для команды, загляните в таверну.`, `Excellent choice! The ${tr(SHIPS[i].name)} is already afloat. Now there are ${SHIPS[i].crew} crew berths aboard, drop by the tavern.`));
   } else if (b.dataset.hire) {
     const m = CREW.find(x => x.id === b.dataset.hire);
     progress.gold -= m.price; progress.hired[m.id] = 1;
     const room = progress.aboard.length < vessel().crew;
     if (room) progress.aboard.push(m.id);
     Sound.compass(); saveProgress();
-    openShop('tavern', room ? `${m.name} допивает эль и поднимается на борт. Хороший выбор, капитан!`
-      : `${m.name} нанят, но мест на корабле нет, так что пока ждёт на берегу. На верфи продают корабли побольше.`);
+    openShop('tavern', room ? tx(`${m.name} допивает эль и поднимается на борт. Хороший выбор, капитан!`, `The ${tr(m.name)} finishes his ale and goes aboard. Good choice, captain!`)
+      : tx(`${m.name} нанят, но мест на корабле нет, так что пока ждёт на берегу. На верфи продают корабли побольше.`, `The ${tr(m.name)} is hired, but the ship is full, so he waits ashore for now. The shipyard sells bigger ships.`));
   } else if (b.dataset.roll) {
     const price = fruitPrice();
     progress.gold -= price;
@@ -1945,10 +2003,10 @@ $('portScreen').addEventListener('click', e => {
     if (dup) progress.gold += Math.floor(price / 2); else progress.fruits[f.id] = 1;
     if (!progress.fruit) progress.fruit = f.id;
     Sound.forge(); saveProgress();
-    openShop('fruit', dup ? `Ой, ${f.name} у вас уже есть. Держите половину цены назад, всё честно.` : `${f.name}! ${f.power}. Хорошая находка, капитан.`);
+    openShop('fruit', dup ? tx(`Ой, ${f.name} у вас уже есть. Держите половину цены назад, всё честно.`, `Oh, you already have the ${tr(f.name)}. Here's half the price back, fair and square.`) : tx(`${f.name}! ${f.power}. Хорошая находка, капитан.`, `${tr(f.name)}! ${tr(f.power)}. A fine find, captain.`));
     const el = $('fruitReveal');
     el.innerHTML = `<div class="scroll"><div class="big">${fruitSvg(f)}</div><h2>${f.name}</h2><small>${f.rarity}</small><p>${f.power}</p>` +
-      `<p>${dup ? `Такой уже есть. Мира вернула ${coin(Math.floor(price / 2))}` : 'Новый плод!'}</p><div class="row"><button type="button" data-close="1">Отлично</button></div></div>`;
+      `<p>${dup ? tx(`Такой уже есть. Мира вернула ${coin(Math.floor(price / 2))}`, `Already have it. Mira gave back ${coin(Math.floor(price / 2))}`) : tx('Новый плод!', 'New fruit!')}</p><div class="row"><button type="button" data-close="1">Отлично</button></div></div>`;
     el.hidden = false;
     el.querySelector('button').focus({ preventScroll: true });
   } else if (b.dataset.close) {
@@ -1975,7 +2033,7 @@ const CHAPTERS = [
 ];
 const chapterOf = n => Math.floor((n - 1) / CHAPTER);
 const chapterInfo = k => CHAPTERS[k] || {
-  name: `Неизведанные воды, часть ${k - CHAPTERS.length + 1}`, sub: 'По новой карте Морского Короля',
+  name: tx(`Неизведанные воды, часть ${k - CHAPTERS.length + 1}`, `Uncharted Waters, part ${k - CHAPTERS.length + 1}`), sub: 'По новой карте Морского Короля',
   theme: CHAPTERS[k % CHAPTERS.length].theme,
 };
 const FACES = {
@@ -2228,7 +2286,7 @@ async function useFruit() {
   busy = true; clearHint(); setSel(null);
   L.charge = 0;
   Rec.move('плод ' + f.id);
-  flash(f.name + '!'); Sound.compass();
+  flash(tr(f.name) + '!'); Sound.compass();
   const free = grid.flat().filter(t => t && t.t < CHEST).sort(() => Math.random() - .5);
   const make = type => { const t = free.pop(); t.t = type; t.el.className = 'tile rare born'; t.el.innerHTML = gemSvg(type); return t; };
   let shots = [];
@@ -2275,14 +2333,14 @@ const ally = id => !!(progress.allies && progress.allies[id]);
 const alv = id => ally(id) ? progress.allyLv?.[id] || 1 : 0;
 const TRAIN_COST = [0, 0, 1500, 4000];
 const ALLY_PERK = {
-  tim: l => `В бою первый залп врага приходит на ${[0, 2, 3, 4][l]} хода позже`,
-  squid: l => `Каждый вражеский залп на ${l >= 3 ? 'два ядра' : 'одно ядро'} слабее`,
-  scar: l => `В бою каждые ${6 - l} ${6 - l === 5 ? 'ходов' : 'хода'} на палубе появляется пушечное ядро`,
-  bella: l => `Урон по врагу больше на ${[0, 25, 35, 50][l]}%`,
-  ig: l => `Бой начинается с ${['', 'двух', 'трёх', 'четырёх'][l]} бочек пороха на палубе`,
-  lo: l => `В бою каждые ${l >= 3 ? 3 : 4} хода молния бьёт по ${['', 'пяти', 'шести', 'семи'][l]} сокровищам`,
-  bjorn: l => `В бою каждый разбитый обломок наносит врагу ${2 + l} урона`,
-  mira: l => `За победу над боссом +${[0, 50, 65, 80][l]}% золота, сундук плодов дешевле на ${50 + 50 * l}`,
+  tim: l => tx(`В бою первый залп врага приходит на ${[0, 2, 3, 4][l]} хода позже`, `In battle, the enemy's first broadside comes ${[0, 2, 3, 4][l]} moves later`),
+  squid: l => tx(`Каждый вражеский залп на ${l >= 3 ? 'два ядра' : 'одно ядро'} слабее`, `Every enemy broadside fires ${l >= 3 ? 'two balls' : 'one ball'} fewer`),
+  scar: l => tx(`В бою каждые ${6 - l} ${6 - l === 5 ? 'ходов' : 'хода'} на палубе появляется пушечное ядро`, `In battle, a cannonball appears on the board every ${6 - l} moves`),
+  bella: l => tx(`Урон по врагу больше на ${[0, 25, 35, 50][l]}%`, `${[0, 25, 35, 50][l]}% more damage to the enemy`),
+  ig: l => tx(`Бой начинается с ${['', 'двух', 'трёх', 'четырёх'][l]} бочек пороха на палубе`, `Battles start with ${['', 'two', 'three', 'four'][l]} powder kegs on the board`),
+  lo: l => tx(`В бою каждые ${l >= 3 ? 3 : 4} хода молния бьёт по ${['', 'пяти', 'шести', 'семи'][l]} сокровищам`, `In battle, lightning strikes ${['', 'five', 'six', 'seven'][l]} treasures every ${l >= 3 ? 3 : 4} moves`),
+  bjorn: l => tx(`В бою каждый разбитый обломок наносит врагу ${2 + l} урона`, `In battle, each piece of wreckage you break deals ${2 + l} damage`),
+  mira: l => tx(`За победу над боссом +${[0, 50, 65, 80][l]}% золота, сундук плодов дешевле на ${50 + 50 * l}`, `+${[0, 50, 65, 80][l]}% gold for beating a boss, fruit chests cost ${50 + 50 * l} less`),
 };
 const allyPerk = (a, l = Math.max(1, alv(a.id))) => ALLY_PERK[a.id](l);
 const fruitPrice = () => FRUIT_PRICE - (alv('mira') ? 50 + 50 * alv('mira') : 0);
@@ -2359,6 +2417,7 @@ function battleStart() {
 }
 // Types a line out letter by letter while the speaker's portrait talks; a tap shows it all at once.
 function typeLine(p, face, text) {
+  text = tr(text);
   let i = 0;
   face.classList.add('talking');
   const tick = () => {
@@ -2487,7 +2546,7 @@ function renderMap(fresh = 0) {
     const locked = n > progress.unlocked || n === fresh, current = n === progress.unlocked && n !== fresh;
     const p = pts[n];
     html += `<button type="button" class="isle${current ? ' current' : ''}${locked ? ' locked' : ''}" data-n="${n}" style="left:${p.x}px;top:${p.y}px"` +
-      `${!TEST_MODE && locked ? ' disabled' : ''} aria-label="Остров ${n}${locked ? ', ещё не открыт' : `, звёзд: ${s}`}">` +
+      `${!TEST_MODE && locked ? ' disabled' : ''} aria-label="${tx('Остров', 'Island')} ${n}${locked ? tx(', ещё не открыт', ', locked') : tx(`, звёзд: ${s}`, `, stars: ${s}`)}">` +
       `${isleSvg(n, current)}<b class="seal">${n}</b><small>${[0, 1, 2].map(i => `<span class="${i < s ? 'on' : ''}">★</span>`).join('')}</small></button>`;
   }
   html += `<div class="ship" id="ship">${shipSvg(progress.vessel)}</div><button type="button" class="parrot" id="parrot" aria-label="Попугай Жако">${PARROT_SVG}<span class="say" id="parrotSay" hidden></span></button>`;
@@ -2567,9 +2626,9 @@ function tellStory(n, [who, text]) {
   const ch = chapterInfo(chapterOf(n));
   const el = $('story');
   el.innerHTML = `<div class="scroll">` +
-    ((n - 1) % CHAPTER === 0 ? `<div class="chapter">Глава ${chapterOf(n) + 1}. ${ch.name}<small>${ch.sub}</small></div>` : '') +
+    ((n - 1) % CHAPTER === 0 ? `<div class="chapter">${tx('Глава', 'Chapter')} ${chapterOf(n) + 1}. ${tr(ch.name)}<small>${ch.sub}</small></div>` : '') +
     `<div class="line"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${face}</svg><div><div class="who">${name}</div><p aria-label="${text}"></p></div></div>` +
-    `<div class="row"><button type="button">К острову ${n}</button></div></div>`;
+    `<div class="row"><button type="button">${tx('К острову', 'To island')} ${n}</button></div></div>`;
   el.hidden = false;
   typeLine(el.querySelector('.line p'), el.querySelector('.line .face'), text);
   if (who === 'parrot') parrotSay('Кар-р!');
@@ -2674,7 +2733,7 @@ function showDeck(from) {
 }
 function renderDeck(at) {
   const spots = Deck.spots = deckSpots(), v = vessel();
-  $('deckTitle').textContent = 'Палуба: ' + v.name;
+  $('deckTitle').textContent = tx('Палуба: ', 'Deck: ') + tr(v.name);
   $('deckGold').innerHTML = coin(progress.gold);
   const deck = $('deck'), view = $('deckView');
   deck.style.width = Math.max(view.clientWidth, spots.length * 96 + 80) + 'px';
@@ -2722,7 +2781,7 @@ function arrive() {
   const el = $('deckTalk');
   if (s.id === 'helm') {
     const n = Math.min(progress.unlocked, mapCount());
-    talk(el, 'Штурвал', HELM_ART, `Курс на остров ${n}: ${chapterInfo(chapterOf(n)).name}. Команда ждёт приказа, капитан.`, [
+    talk(el, 'Штурвал', HELM_ART, tx(`Курс на остров ${n}: ${chapterInfo(chapterOf(n)).name}. Команда ждёт приказа, капитан.`, `Course set for island ${n}: ${tr(chapterInfo(chapterOf(n)).name)}. The crew awaits your orders, captain.`), [
       { q: 'Встать за штурвал', go: b => {
         b.disabled = true;
         document.querySelector('.spot.helm').classList.add('spin');
@@ -2744,8 +2803,8 @@ function arrive() {
     ]);
   } else if (s.id === 'parrot') {
     talk(el, FACES.parrot[0], s.face, 'Кар-р! Капитан на палубе! Спрашивайте, я всё знаю. Ну, почти всё.', [
-      { q: 'Куда плывём?', a: () => { const n = Math.min(progress.unlocked, mapCount()); return `На остров ${n}, это ${chapterInfo(chapterOf(n)).name}. Вставайте за штурвал, он на корме справа!`; } },
-      { q: 'Кто ещё к нам придёт?', a: () => { const a = ALLIES.find(x => !ally(x.id)); return a ? `Говорят, после победы над боссом острова ${a.from} к нам кое-кто попросится. Кар-р, секрет!` : 'Вся команда в сборе! Лучше команды нет на всех морях.'; } },
+      { q: 'Куда плывём?', a: () => { const n = Math.min(progress.unlocked, mapCount()); return tx(`На остров ${n}, это ${chapterInfo(chapterOf(n)).name}. Вставайте за штурвал, он на корме справа!`, `To island ${n}, in ${tr(chapterInfo(chapterOf(n)).name)}. Take the helm, it's at the stern on the right!`); } },
+      { q: 'Кто ещё к нам придёт?', a: () => { const a = ALLIES.find(x => !ally(x.id)); return a ? tx(`Говорят, после победы над боссом острова ${a.from} к нам кое-кто попросится. Кар-р, секрет!`, `They say once we beat the boss of island ${a.from}, someone will ask to join us. Squawk, it's a secret!`) : 'Вся команда в сборе! Лучше команды нет на всех морях.'; } },
       { q: 'На что потратить золото?', a: spendAdvice },
       { q: 'Расскажи что-нибудь', a: () => PARROT_LINES[Math.floor(Math.random() * PARROT_LINES.length)] },
     ]);
@@ -2754,7 +2813,7 @@ function arrive() {
   } else {
     const m = s.crew;
     talk(el, m.name, m.face, DECK_HELLO[m.id], [
-      { q: 'Чем ты помогаешь?', a: `${m.perk}. Пока я на борту, так и будет.` },
+      { q: 'Чем ты помогаешь?', a: tx(`${m.perk}. Пока я на борту, так и будет.`, `${tr(m.perk)}. As long as I'm aboard, that's how it is.`) },
       { q: 'Дай совет', a: DECK_TIPS[m.id] },
     ]);
   }
@@ -2774,27 +2833,28 @@ function dailyTalk(el, line) {
       if (mult > 1 && !(await YSDK.rewarded())) { b.disabled = false; return; }
       const got = Daily.openChest(mult);
       Sound.forge(); $('deckGold').innerHTML = coin(progress.gold); markPing();
-      dailyTalk(el, `Сундук открыт: ${got} золота! ${d.streak > 1 ? `Уже ${d.streak} ${d.streak < 5 ? 'дня' : 'дней'} подряд, завтра сундук будет ещё богаче.` : 'Заходите завтра, и сундук станет богаче.'}`);
+      dailyTalk(el, tx(`Сундук открыт: ${got} золота! ${d.streak > 1 ? `Уже ${d.streak} ${d.streak < 5 ? 'дня' : 'дней'} подряд, завтра сундук будет ещё богаче.` : 'Заходите завтра, и сундук станет богаче.'}`,
+        `Chest opened: ${got} gold! ${d.streak > 1 ? `${d.streak} days in a row now, tomorrow's chest will be even richer.` : "Come back tomorrow and the chest will be richer."}`));
     };
     go();
   };
   const asks = d.chest ? [{ q: 'Как это работает?', a: 'Каждый день здесь новый сундук и три задания. Чем больше дней подряд вы открываете сундук, тем он богаче, до семи дней. Задания выполняются сами, пока вы плаваете по островам.' }]
-    : [{ q: `Открыть сундук ${coin(g)}`, go: open(1) }, ...(YSDK.canReward() ? [{ q: `Открыть и удвоить за рекламу`, go: open(2) }] : []),
+    : [{ q: `${tx('Открыть сундук', 'Open the chest')} ${coin(g)}`, go: open(1) }, ...(YSDK.canReward() ? [{ q: tx('Открыть и удвоить за рекламу', 'Open and double for an ad'), go: open(2) }] : []),
       { q: 'Как это работает?', a: 'Каждый день здесь новый сундук и три задания. Чем больше дней подряд вы открываете сундук, тем он богаче, до семи дней. Задания выполняются сами, пока вы плаваете по островам.' }];
   talk(el, 'Сундук дня', DAILY_ART, line || (d.chest ? 'Сегодняшний сундук уже открыт. Выполняйте задания, а новый сундук появится завтра!'
-    : `День ${streak} подряд! Сегодня в сундуке ${g} золота.`), asks, {
+    : tx(`День ${streak} подряд! Сегодня в сундуке ${g} золота.`, `Day ${streak} in a row! Today the chest holds ${g} gold.`)), asks, {
     html, click: b => {
       const got = Daily.claim(+b.dataset.claim);
       if (!got) return;
       Sound.compass(); $('deckGold').innerHTML = coin(progress.gold); markPing();
-      dailyTalk(el, `Задание выполнено! ${got} золота в казну.`);
+      dailyTalk(el, tx(`Задание выполнено! ${got} золота в казну.`, `Task done! ${got} gold to the treasury.`));
     },
   });
 }
 // Leaderboard on the deck: the best captains by stars, from Yandex Games.
 function fameTalk(el) {
   const mine = totalStars();
-  const say = talk(el, 'Доска славы', FAME_ART, YSDK.sdk ? 'Смотрю, кто из капитанов впереди...' : `Доска славы оживёт в Яндекс Играх: там будут лучшие капитаны по звёздам. Ваши звёзды: ${mine} ★.`, [
+  const say = talk(el, 'Доска славы', FAME_ART, YSDK.sdk ? 'Смотрю, кто из капитанов впереди...' : tx(`Доска славы оживёт в Яндекс Играх: там будут лучшие капитаны по звёздам. Ваши звёзды: ${mine} ★.`, `The Hall of Fame comes alive on Yandex Games: the best captains by stars will be there. Your stars: ${mine} ★.`), [
     { q: 'Как попасть на доску?', a: 'Каждая звезда за остров идёт в зачёт. Переигрывайте острова на три звезды, и вы подниметесь выше.' },
   ]);
   if (!YSDK.sdk) return;
@@ -2802,27 +2862,27 @@ function fameTalk(el) {
   YSDK.top().then(res => {
     if ($('deckScreen').hidden || Deck.spots[Deck.at]?.id !== 'fame') return;
     const rows = res?.entries || [];
-    if (!rows.length) { say(`Пока на доске пусто. Будьте первым! Ваши звёзды: ${mine} ★.`); return; }
+    if (!rows.length) { say(tx(`Пока на доске пусто. Будьте первым! Ваши звёзды: ${mine} ★.`, `The board is empty so far. Be the first! Your stars: ${mine} ★.`)); return; }
     const me = res.userRank;
     const box = document.createElement('ol');
     box.className = 'fame';
-    box.innerHTML = rows.map(r => `<li class="${r.rank === me ? 'me' : ''}"><b>${r.rank}</b><span>${esc(r.player?.publicName || 'Скрытый пират')}</span><em>${r.score} ★</em></li>`).join('');
+    box.innerHTML = rows.map(r => `<li class="${r.rank === me ? 'me' : ''}"><b>${r.rank}</b><span>${esc(r.player?.publicName || tx('Скрытый пират', 'Hidden pirate'))}</span><em>${r.score} ★</em></li>`).join('');
     el.querySelector('.asks').before(box);
-    say(me ? `Вы на ${me} месте! Звёзд у вас: ${mine} ★.` : `Ваши звёзды: ${mine} ★. Войдите в аккаунт Яндекса, чтобы попасть на доску.`);
+    say(me ? tx(`Вы на ${me} месте! Звёзд у вас: ${mine} ★.`, `You're in place ${me}! Your stars: ${mine} ★.`) : tx(`Ваши звёзды: ${mine} ★. Войдите в аккаунт Яндекса, чтобы попасть на доску.`, `Your stars: ${mine} ★. Sign in to your Yandex account to get on the board.`));
   });
 }
 // A companion on deck: their story, their style at the current level, a tip, and training for gold.
 function allyTalk(el, a, line) {
   const l = alv(a.id), cost = TRAIN_COST[l + 1];
-  talk(el, `${a.name} ${'★'.repeat(l)}`, a.face, line || DECK_HELLO[a.id], [
-    { q: 'Как ты сражаешься?', a: () => `Мой стиль боя «${a.style}», уровень ${alv(a.id)}. ${allyPerk(a)}.` },
+  talk(el, `${tr(a.name)} ${'★'.repeat(l)}`, a.face, line || DECK_HELLO[a.id], [
+    { q: 'Как ты сражаешься?', a: () => tx(`Мой стиль боя «${a.style}», уровень ${alv(a.id)}. ${allyPerk(a)}.`, `My fighting style is "${tr(a.style)}", level ${alv(a.id)}. ${allyPerk(a)}.`) },
     { q: 'Как ты к нам попал?', a: a.joins },
     { q: 'Дай совет', a: DECK_TIPS[a.id] },
-    ...(cost ? [{ q: `Обучить до ${l + 1} уровня ${coin(cost)}`, go: () => {
-      if (progress.gold < cost) { Sound.wrong(); allyTalk(el, a, `Обучение стоит ${cost} золота, а в казне ${progress.gold}. Возьмите ещё пару островов, капитан!`); return; }
+    ...(cost ? [{ q: `${tx(`Обучить до ${l + 1} уровня`, `Train to level ${l + 1}`)} ${coin(cost)}`, go: () => {
+      if (progress.gold < cost) { Sound.wrong(); allyTalk(el, a, tx(`Обучение стоит ${cost} золота, а в казне ${progress.gold}. Возьмите ещё пару островов, капитан!`, `Training costs ${cost} gold, and the treasury has ${progress.gold}. Take a couple more islands, captain!`)); return; }
       progress.gold -= cost; progress.allyLv[a.id] = l + 1; saveProgress();
       Sound.forge(); $('deckGold').innerHTML = coin(progress.gold); markPing();
-      allyTalk(el, a, `Уровень ${l + 1}! Теперь так: ${allyPerk(a, l + 1).toLowerCase()}.`);
+      allyTalk(el, a, tx(`Уровень ${l + 1}! Теперь так: ${allyPerk(a, l + 1).toLowerCase()}.`, `Level ${l + 1}! Now it's like this: ${lcf(allyPerk(a, l + 1))}.`));
     } }] : []),
   ]);
 }
@@ -2855,16 +2915,16 @@ function showCabin() {
 function renderCabin() {
   $('cabinGold').innerHTML = coin(progress.gold);
   const won = bossesBeaten();
-  $('shelfCount').textContent = `${won.length} из ${Object.keys(FOES).filter(n => n <= LAST_ISLAND).length}`;
+  $('shelfCount').textContent = `${won.length} ${tx('из', 'of')} ${Object.keys(FOES).filter(n => n <= LAST_ISLAND).length}`;
   $('shelf').innerHTML = Object.keys(FOES).map(Number).filter(n => n <= LAST_ISLAND).map(n => {
     const f = FOES[n], on = won.includes(n);
-    return `<div class="trophy${on ? '' : ' unknown'}">${foeSvg(f)}<b>${on ? f.name : '???'}</b><small>Остров ${n}</small></div>`;
+    return `<div class="trophy${on ? '' : ' unknown'}">${foeSvg(f)}<b>${on ? f.name : '???'}</b><small>${tx('Остров', 'Island')} ${n}</small></div>`;
   }).join('');
   $('achList').innerHTML = ACH.map(a => {
     const have = Math.min(a.need, a.have()), done = have >= a.need, got = progress.achDone[a.id];
     return `<div class="card${got ? ' mine' : ''}${done ? '' : ' unknown'}"><div class="art">${MEDAL(done)}</div><div class="info"><b>${a.name}</b><p>${a.about}</p>` +
-      `<small>${a.need > 1 ? `${have} / ${a.need}` : done ? 'Выполнено' : 'Ещё нет'}</small></div>` +
-      (got ? '<span class="tag">Награда получена</span>' : `<button type="button" data-ach="${a.id}"${done ? '' : ' disabled'}>Забрать ${coin(a.gold)}</button>`) + '</div>';
+      `<small>${a.need > 1 ? `${have} / ${a.need}` : done ? tx('Выполнено', 'Done') : tx('Ещё нет', 'Not yet')}</small></div>` +
+      (got ? `<span class="tag">${tx('Награда получена', 'Reward collected')}</span>` : `<button type="button" data-ach="${a.id}"${done ? '' : ' disabled'}>${tx('Забрать', 'Collect')} ${coin(a.gold)}</button>`) + '</div>';
   }).join('');
 }
 $('cabinScreen').addEventListener('click', e => {
@@ -2933,7 +2993,7 @@ function startLevel(n) {
   L.moves += vessel().moves + (aboard('bosun') ? 1 : 0);
   score = 0; moves = L.moves; collected = {}; busy = false; over = false; sel = null;
   screen('playScreen');
-  $('levelTitle').textContent = 'Остров ' + n;
+  $('levelTitle').textContent = tx('Остров ', 'Island ') + n;
   $('overlay').hidden = true;
   buildNets();
   L.netTotal = netsLeft;
@@ -2952,12 +3012,12 @@ function startLevel(n) {
   updateHud();
   const goals = goalList();
   const newKind = L.types > (n > 1 ? levelDef(n - 1).types : 5)
-    ? `<p>Новое сокровище: ${PIECES[L.types - 1].name}</p><div class="goals"><span class="chip">${gemSvg(L.types - 1)}</span></div>` : '';
+    ? `<p>${tx('Новое сокровище:', 'New treasure:')} ${tr(PIECES[L.types - 1].name)}</p><div class="goals"><span class="chip">${gemSvg(L.types - 1)}</span></div>` : '';
   overlay(
-    (L.boss ? `<h2>Морской бой!</h2><div class="foebig">${foeSvg(L.boss)}</div><p><b>${L.boss.name}</b>, ${L.boss.who.toLowerCase()}</p>` : `<h2>Остров ${n}</h2><div class="goals">${goals.map(chipHtml).join('')}</div>`) +
+    (L.boss ? `<h2>${tx('Морской бой!', 'Sea battle!')}</h2><div class="foebig">${foeSvg(L.boss)}</div><p><b>${L.boss.name}</b>, ${tx(L.boss.who.toLowerCase(), tr(L.boss.who))}</p>` : `<h2>${tx('Остров', 'Island')} ${n}</h2><div class="goals">${goals.map(chipHtml).join('')}</div>`) +
     goals.map(g => `<p>${goalText(g)}</p>`).join('') +
-    `<p>Ходов: ${L.moves}${L.moves > L.base ? ` (${L.moves - L.base} от корабля и команды)` : ''}</p>${newKind}` +
-    (n === CHEST_FROM ? `<p>Здесь может выпасть золотой сундук. Соберите ряд рядом с ним, пока он не опустился на дно, и он взорвёт всю палубу.</p><div class="goals"><span class="chip">${gemSvg(CHEST)}</span></div>` : ''),
+    `<p>${tx('Ходов:', 'Moves:')} ${L.moves}${L.moves > L.base ? tx(` (${L.moves - L.base} от корабля и команды)`, ` (${L.moves - L.base} from ship and crew)`) : ''}</p>${newKind}` +
+    (n === CHEST_FROM ? `<p>${tx('Здесь может выпасть золотой сундук. Соберите ряд рядом с ним, пока он не опустился на дно, и он взорвёт всю палубу.', 'A golden chest can drop here. Make a match next to it before it sinks, and it blasts the whole board.')}</p><div class="goals"><span class="chip">${gemSvg(CHEST)}</span></div>` : ''),
     [['На абордаж!', () => { $('overlay').hidden = true; YSDK.gameplay(true); guided ? tutorialStart() : armHint(); battleStart(); }]]
   );
 }
@@ -2993,10 +3053,32 @@ function restoreLevel(d) {
   updateHud();
   YSDK.gameplay(true); armHint();
 }
+// Language: a choice saved by the test-mode button wins, then Yandex's language, then the browser's.
+const LANG_KEY = 'pirates-lang';
+const RU_LANGS = ['ru', 'be', 'uk', 'kk', 'uz'];
+const langOf = code => RU_LANGS.includes(String(code || 'ru').slice(0, 2).toLowerCase()) ? 'ru' : 'en';
+let savedLang = null;
+try { savedLang = localStorage.getItem(LANG_KEY); } catch (e) {}
+$('langBtn').hidden = !TEST_MODE;
+$('langBtn').addEventListener('click', () => {
+  try { localStorage.setItem(LANG_KEY, en() ? 'ru' : 'en'); } catch (e) {}
+  location.reload();
+});
 const boot = data => {
+  setLang(savedLang || langOf(navigator.language));
+  $('langBtn').textContent = en() ? 'Русский' : 'English';
+  syncToggles();
   if (data && data.levelNo && data.types) restoreLevel(data);
   else showDeck();
-  YSDK.init().then(() => YSDK.ready());
+  YSDK.init().then(() => {
+    const l = YSDK.sdk?.environment?.i18n?.lang;
+    if (l && !savedLang && langOf(l) !== LANG) {
+      setLang(langOf(l));
+      syncToggles();
+      if (!$('deckScreen').hidden) renderDeck(Deck.at);
+    }
+    YSDK.ready();
+  });
 };
 window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
 </script>
