@@ -435,6 +435,22 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .asks button { padding: 6px 12px; font-size: .85rem; }
 .asks button.ask { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 2px rgba(58,38,21,.45); }
 .asks button.ask.asked { color: rgba(58,38,21,.6); box-shadow: inset 0 0 0 2px rgba(58,38,21,.2); }
+.ping::after { content: ""; display: inline-block; width: 9px; height: 9px; margin-left: 6px; vertical-align: middle; border-radius: 50%; background: #ff5a4a; box-shadow: 0 0 0 2px #2a1408; animation: beacon 1.6s ease-in-out infinite; }
+.merchant .extra { grid-column: 1 / -1; }
+.tasks, .fame { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; grid-column: 1 / -1; }
+.tasks li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: rgba(58,38,21,.08); }
+.tasks li span { flex: 1; display: flex; flex-direction: column; gap: 3px; font-size: .9rem; line-height: 1.25; }
+.tasks li i { display: block; height: 7px; border-radius: 4px; background: linear-gradient(90deg, var(--good) var(--p), rgba(58,38,21,.18) var(--p)); }
+.tasks li small { color: rgba(58,38,21,.6); font-size: .75rem; }
+.tasks li button { padding: 6px 10px; font-size: .85rem; }
+.tasks li.done { box-shadow: inset 0 0 0 2px var(--good); }
+.tasks li.claimed { opacity: .55; }
+.tasks li > b { color: var(--good); font-size: 1.2rem; padding: 0 8px; }
+.fame li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 8px; padding: 6px 10px; border-radius: 8px; background: rgba(58,38,21,.08); }
+.fame li.me { box-shadow: inset 0 0 0 2px var(--gold); background: rgba(242,193,78,.25); }
+.fame em { font-style: normal; font-weight: 800; color: #8a5c0e; }
+.fame span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scroll .double { align-self: center; }
 /* Ship deck: a side view the captain walks along, sails above, crew standing on the planks */
 .deckview { border-radius: 16px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin;
   box-shadow: inset 0 0 0 2px #2a1408, 0 12px 30px rgba(0,0,0,.45); background: linear-gradient(180deg, rgba(27,47,79,.25), rgba(243,184,107,.12) 60%, transparent); }
@@ -477,7 +493,7 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   .tile, .tile svg, .combo, .net { transition-duration: .01s; }
   .tile.spin svg, .tile.aim svg, .fx.ray, .fx.spot, .fx.hand.swipe, .fx.hand.tap,
-  .face *, .story .face, .merchant, .merchant .face, .fig, .fig *, .captain, .deck .mast .cloth, .spot.helm .wheel, .cameo, .cameo *, .chip.foe *, .parrot *, .ocean *, .ship svg, .wake, .decor.fogpuff, .isle.current .seal, .isle.reveal .land, .story .scroll,
+  .face *, .story .face, .ping::after, .merchant, .merchant .face, .fig, .fig *, .captain, .deck .mast .cloth, .spot.helm .wheel, .cameo, .cameo *, .chip.foe *, .parrot *, .ocean *, .ship svg, .wake, .decor.fogpuff, .isle.current .seal, .isle.reveal .land, .story .scroll,
   .tile.hint svg, .tile.rare svg, .tile.born svg, .tile.rinse svg, .fx.tide, .tile.shake svg, .tile .spark, .board.quake { animation: none; }
 }
 </style>
@@ -1037,6 +1053,7 @@ async function resolve(pending, swapped = []) {
       if (fired.has(sp)) continue;
       fired.add(sp); clear.add(sp);
       Rec.fired[PIECES[sp.t].name] = (Rec.fired[PIECES[sp.t].name] || 0) + 1;
+      if (isSpecial(sp)) Daily.bump('bombs');
       for (const t of await fire(sp)) {
         clear.add(t);
         if (isSpecial(t) && !fired.has(t)) queue.push(t);
@@ -1180,6 +1197,8 @@ function win() {
   progress.stars[levelNo] = Math.max(progress.stars[levelNo] || 0, stars);
   progress.unlocked = Math.max(progress.unlocked, levelNo + 1);
   const gold = bank(Math.round(loot() * (L.boss && ally('mira') ? 1.5 : 1)));
+  Daily.attempt(true, stars);
+  YSDK.setScore(totalStars());
   // Beating a boss brings a new companion aboard.
   const joined = L.boss && ALLIES.find(a => a.from === levelNo && !ally(a.id));
   if (joined) { progress.allies[joined.id] = 1; saveProgress(); }
@@ -1190,12 +1209,26 @@ function win() {
       : `<p>Очки: ${score}, из них ${bonus} за оставшиеся ходы.</p>`),
     [['Плыть дальше', () => afterAd(() => voyage(levelNo + 1))], ['Повторить', () => afterAd(() => startLevel(levelNo)), true], ['В порт', () => afterAd(showPort), true]]
   );
+  // One rewarded video doubles the island's gold. No interstitial after it: the player just watched an ad.
+  if (gold && YSDK.canReward()) {
+    const row = $('overlay').querySelector('.row'), b = document.createElement('button');
+    b.type = 'button'; b.className = 'double'; b.innerHTML = `Удвоить ${coin('+' + gold)} за рекламу`;
+    b.addEventListener('click', async () => {
+      b.disabled = true;
+      if (!(await YSDK.rewarded())) { b.disabled = false; return; }
+      progress.gold += gold; saveProgress(); Sound.forge();
+      $('overlay').querySelector('.haul').innerHTML = `В казну: ${coin('+' + gold * 2)}`;
+      b.remove();
+    });
+    row.before(b);
+  }
 }
 function lose() {
   Tut.stop(); Rec.finish('поражение');
   over = true; clearHint(); Sound.lose(); YSDK.gameplay(false);
   const left = goalList().filter(g => g.have < g.need).map(chipHtml).join('');
   const gold = bank(Math.floor(loot() / 2));
+  Daily.attempt(false);
   const buttons = [['Ещё раз', () => afterAd(() => startLevel(levelNo))], ['На карту', showMap, true]];
   // One rewarded video per attempt buys extra moves.
   if (!L.bonusUsed && YSDK.canReward()) buttons.unshift([`+${EXTRA_MOVES} ходов за рекламу`, async () => {
@@ -1417,6 +1450,8 @@ document.addEventListener('contextmenu', e => e.preventDefault());
 // Yandex Games SDK. On Yandex the platform serves /sdk.js next to the game; anywhere else
 // (a local file, the preview) it is missing and the game simply runs without ads and cloud saves.
 const EXTRA_MOVES = 5;
+const LEADERBOARD = 'stars';
+const totalStars = () => Object.values(progress.stars).reduce((a, b) => a + b, 0);
 const YSDK = {
   sdk: null, player: null,
   async init() {
@@ -1455,6 +1490,19 @@ const YSDK = {
     });
   },
   canReward() { return !!this.sdk || TEST_MODE; },
+  // Leaderboard "stars" (created in the Yandex console). Newer SDKs have sdk.leaderboards, older ones getLeaderboards().
+  async board() {
+    if (!this.sdk) return null;
+    if (this.sdk.leaderboards) return this.sdk.leaderboards;
+    try {
+      const lb = await this.sdk.getLeaderboards();
+      return { setScore: (n, v) => lb.setLeaderboardScore(n, v), getEntries: (n, o) => lb.getLeaderboardEntries(n, o) };
+    } catch (e) { return null; }
+  },
+  async setScore(v) { try { await (await this.board())?.setScore(LEADERBOARD, v); } catch (e) {} },
+  async top() {
+    try { return await (await this.board())?.getEntries(LEADERBOARD, { quantityTop: 10, includeUser: true, quantityAround: 2 }) || null; } catch (e) { return null; }
+  },
   rewarded() {
     return new Promise(done => {
       if (!this.sdk) return done(TEST_MODE); // без Яндекса в тестовом режиме награда выдаётся сразу
@@ -1467,6 +1515,66 @@ const YSDK = {
 };
 // Yandex limits how often a fullscreen ad can show, so asking between islands is safe.
 async function afterAd(next) { await YSDK.interstitial(); next(); }
+
+// Daily: a chest that grows with a streak of days in a row, and three tasks that change every day.
+const DAILY_GEN = ['дублонов', 'рубинов', 'изумрудов', 'ракушек', 'компасов'];
+const dayKey = (d = new Date()) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+const Daily = {
+  get s() { return progress.daily; },
+  // Same three tasks all day: picked by a number made from the date.
+  check() {
+    const today = dayKey();
+    if (progress.daily && progress.daily.day === today) return;
+    let seed = [...today].reduce((a, ch) => a * 31 + ch.charCodeAt(0) >>> 0, 7);
+    const pick = n => { seed = (seed * 1103515245 + 12345) >>> 0; return (seed >>> 8) % n; };
+    const u = Math.min(progress.unlocked, 100);
+    const pool = [
+      { k: 'wins', need: 3 }, { k: 'stars3', need: 2 }, { k: 'gold', need: Math.round((600 + u * 12) / 50) * 50 }, { k: 'bombs', need: 6 },
+    ];
+    const other = pool.splice(pick(pool.length), 1).concat(pool.splice(pick(pool.length), 1));
+    const old = progress.daily || {};
+    progress.daily = {
+      day: today, chest: false, streak: old.streak || 0, last: old.last || '',
+      tasks: [{ k: 'collect', t: pick(5), need: 40 + pick(4) * 5 }, ...other].map(x => ({ ...x, have: 0, claimed: false })),
+    };
+    saveProgress();
+  },
+  text(x) {
+    return {
+      collect: () => `Собрать ${x.need} ${DAILY_GEN[x.t]}`, wins: () => `Взять ${x.need} острова`, stars3: () => `Пройти ${x.need} острова на три звезды`,
+      gold: () => `Добыть ${x.need} золота`, bombs: () => `Взорвать ${x.need} бомб: ядра, бочки, компасы`,
+    }[x.k]();
+  },
+  reward: () => Math.round((150 + Math.min(progress.unlocked, 100) * 3) / 10) * 10,
+  streakNext() { const y = new Date(); y.setDate(y.getDate() - 1); return this.s.last === dayKey(y) ? Math.min(7, this.s.streak + 1) : 1; },
+  chestGold() { return Math.round((100 + Math.min(progress.unlocked, 100) * 4) * (1 + (this.streakNext() - 1) * .25) / 10) * 10; },
+  bump(k, n = 1, t) {
+    this.check();
+    this.s.tasks.forEach(x => { if (x.k === k && (t === undefined || x.t === t) && !x.claimed) x.have = Math.min(x.need, x.have + n); });
+  },
+  // Counts treasures gathered since the last count, so a continued attempt is not counted twice.
+  attempt(won, stars) {
+    L.dSeen = L.dSeen || {};
+    for (const t in collected) { const d = collected[t] - (L.dSeen[t] || 0); if (d > 0 && t < 5) this.bump('collect', d, +t); }
+    L.dSeen = { ...collected };
+    if (won) { this.bump('wins'); if (stars === 3) this.bump('stars3'); }
+    saveProgress();
+  },
+  ready() { this.check(); return !this.s.chest || this.s.tasks.some(x => x.have >= x.need && !x.claimed); },
+  openChest(mult) {
+    const g = this.chestGold() * mult;
+    this.s.streak = this.streakNext(); this.s.last = this.s.day; this.s.chest = true;
+    progress.gold += g; saveProgress();
+    return g;
+  },
+  claim(i) {
+    const x = this.s.tasks[i];
+    if (!x || x.claimed || x.have < x.need) return 0;
+    x.claimed = true; const g = this.reward();
+    progress.gold += g; saveProgress();
+    return g;
+  },
+};
 
 // Play log for Claude: each finished attempt goes to the artifact's database, so it can be read back
 // and used to tune the islands. Off the Claude preview (Yandex, a local file) there is no db and nothing is sent.
@@ -1629,6 +1737,7 @@ function bank(amount) {
   const add = Math.max(0, amount - (L.paid || 0));
   L.paid = Math.max(L.paid || 0, amount);
   progress.gold += add;
+  if (add) Daily.bump('gold', add);
   saveProgress();
   return add;
 }
@@ -2442,14 +2551,18 @@ addEventListener('resize', () => {
 
 // Talk box: a portrait speaks a line, and the questions under it each get their own answer.
 // A question with `go` is an action instead (leave for the port, take the helm).
-function talk(el, name, face, line, asks) {
+// `extra` adds a block under the line (task list, leaderboard) whose buttons go to extra.click.
+function talk(el, name, face, line, asks, extra) {
   el.innerHTML = `<svg class="face" viewBox="0 0 64 64" aria-hidden="true">${face}</svg><div><div class="who">${name}</div><p></p></div>` +
+    (extra ? `<div class="extra">${extra.html}</div>` : '') +
     `<div class="asks">${asks.map((a, i) => `<button type="button" class="${a.go ? 'go' : 'ask'}" data-ask="${i}">${a.q}</button>`).join('')}</div>`;
   el.hidden = false;
   const p = el.querySelector('p'), f = el.querySelector('.face');
   const say = text => { clearTimeout(p.t); delete p.dataset.done; p.setAttribute('aria-label', text); typeLine(p, f, text); };
   say(line);
   el.onclick = e => {
+    const x = e.target.closest('.extra button');
+    if (x && !x.disabled && extra?.click) return extra.click(x, say);
     const b = e.target.closest('[data-ask]');
     if (!b) return;
     const a = asks[+b.dataset.ask];
@@ -2457,6 +2570,7 @@ function talk(el, name, face, line, asks) {
     b.classList.add('asked'); Sound.swap();
     say(typeof a.a === 'function' ? a.a() : a.a);
   };
+  return say;
 }
 
 // Ship deck: the captain walks between the crew. The gangway leads to port, the helm to the islands.
@@ -2472,6 +2586,9 @@ const HELM_WHEEL = '<g class="wheel"><circle cx="32" cy="30" r="17" fill="none" 
   [0, 45, 90, 135].map(d => `<path d="M32 6v48" stroke="#8a5a34" stroke-width="3" stroke-linecap="round" transform="rotate(${d} 32 30)"/>`).join('') + '</g>';
 const HELM_ART = `<path d="M28 42h8v20h-8z" fill="#5e3a1f"/>${HELM_WHEEL}`;
 const GANGWAY_ART = '<path d="M6 58L50 34l6 6-44 24z" fill="#8a5a34" stroke="#3a2615" stroke-width="1.5"/><path d="M12 54l40-22M18 51l3 5M30 45l3 5M42 38l3 5" stroke="#3a2615" stroke-width="1.5"/><path d="M10 50V36M52 30V16" stroke="#5e3a1f" stroke-width="3"/><path d="M10 38q20-2 42-20" stroke="#e2c58a" stroke-width="2" fill="none"/>';
+const DAILY_ART = '<path d="M10 34q0-18 22-18t22 18z" fill="#a8652f" stroke="#3a2615" stroke-width="2"/><rect x="10" y="34" width="44" height="24" rx="2" fill="#8a5a34" stroke="#3a2615" stroke-width="2"/><path d="M10 40h44M22 17v41M42 17v41" stroke="#c9a24f" stroke-width="3"/><rect x="28" y="36" width="8" height="9" rx="1.5" fill="#f2c14e" stroke="#3a2615" stroke-width="1.5"/>';
+const FAME_ART = '<path d="M14 62V30M50 62V30" stroke="#5e3a1f" stroke-width="4"/><rect x="8" y="8" width="48" height="34" rx="3" fill="#8a5a34" stroke="#3a2615" stroke-width="2"/><rect x="12" y="12" width="40" height="26" fill="#efdcb3"/><path d="M17 19h20M17 25h26M17 31h16" stroke="#3a2615" stroke-width="2.5"/><path d="M45 14l2 4 4 .5-3 3 1 4-4-2-4 2 1-4-3-3 4-.5z" fill="#f2c14e"/>';
+const esc = t => String(t).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
 const DECK_HELLO = {
   bosun: 'Палуба в порядке, капитан! Все по местам.', quarter: 'Казна в порядке, до последнего дублона.', gunner: 'Пушки заряжены, капитан!',
   cook: 'Обед через час. Сегодня уха, и никакого рома... почти.', powder: 'Осторожнее, капитан, тут порох. Только не с факелом!', navigator: 'Звёзды ясные, курс проложен.',
@@ -2497,10 +2614,10 @@ const DECK_TIPS = {
 };
 const Deck = { at: 0, spots: [], t: 0 };
 function deckSpots() {
-  const s = [{ id: 'port', name: 'Сходни', art: GANGWAY_ART }, { id: 'parrot', name: 'Жако', face: FACES.parrot[1] }];
+  const s = [{ id: 'port', name: 'Сходни', art: GANGWAY_ART }, { id: 'parrot', name: 'Жако', face: FACES.parrot[1] }, { id: 'daily', name: 'Сундук дня', art: DAILY_ART }];
   progress.aboard.forEach(id => { const m = CREW.find(x => x.id === id); if (m) s.push({ id, name: m.name, face: m.face, crew: m }); });
   ALLIES.filter(a => ally(a.id)).forEach(a => s.push({ id: a.id, name: a.name, face: a.face, ally: a }));
-  s.push({ id: 'helm', name: 'Штурвал', art: HELM_ART });
+  s.push({ id: 'fame', name: 'Доска славы', art: FAME_ART }, { id: 'helm', name: 'Штурвал', art: HELM_ART });
   return s;
 }
 const MASTS = { 1: [.55], 2: [.36, .68], 3: [.24, .5, .76] };
@@ -2530,7 +2647,7 @@ function renderDeck(at) {
       (s.art ? `<svg class="prop" viewBox="0 0 64 64" aria-hidden="true">${s.art}</svg>`
         : s.id === 'parrot' ? `<span class="fig"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${s.face}</svg>${PERCH}</span>`
         : figure(s.face, COATS[s.id] || '#5e3a1f')) +
-      `<small>${s.name}</small></button>`).join('') +
+      `<small${s.id === 'daily' && Daily.ready() ? ' class="ping"' : ''}>${s.name}</small></button>`).join('') +
     `<div class="captain" id="captain">${figure(CAPTAIN, COATS.captain)}</div>`;
   Deck.at = at < 0 ? spots.length - 1 : Math.min(at, spots.length - 1);
   const cap = $('captain');
@@ -2573,6 +2690,10 @@ function arrive() {
         setTimeout(() => showMap(), matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 750);
       } },
     ]);
+  } else if (s.id === 'daily') {
+    dailyTalk(el);
+  } else if (s.id === 'fame') {
+    fameTalk(el);
   } else if (s.id === 'port') {
     talk(el, 'Сходни', GANGWAY_ART, 'Внизу шумит порт: верфь, таверна и лавка плодов. Там подскажут, на что лучше тратить золото.', [
       { q: 'Сойти в порт', go: () => { Sound.swap(); showPort(); } },
@@ -2598,6 +2719,64 @@ function arrive() {
       { q: 'Дай совет', a: DECK_TIPS[m.id] },
     ]);
   }
+}
+// Daily chest on the deck: today's chest, and three tasks with their own rewards.
+function dailyTalk(el, line) {
+  Daily.check();
+  const d = Daily.s, g = Daily.chestGold(), streak = Daily.streakNext();
+  const html = '<ul class="tasks">' + d.tasks.map((x, i) => {
+    const done = x.have >= x.need;
+    return `<li class="${x.claimed ? 'claimed' : done ? 'done' : ''}"><span>${Daily.text(x)}<i style="--p:${Math.round(x.have / x.need * 100)}%"></i><small>${x.have} / ${x.need}</small></span>` +
+      (x.claimed ? '<b>✓</b>' : `<button type="button" data-claim="${i}"${done ? '' : ' disabled'}>${coin('+' + Daily.reward())}</button>`) + '</li>';
+  }).join('') + '</ul>';
+  const open = mult => b => {
+    b.disabled = true;
+    const go = async () => {
+      if (mult > 1 && !(await YSDK.rewarded())) { b.disabled = false; return; }
+      const got = Daily.openChest(mult);
+      Sound.forge(); $('deckGold').innerHTML = coin(progress.gold); markPing();
+      dailyTalk(el, `Сундук открыт: ${got} золота! ${d.streak > 1 ? `Уже ${d.streak} ${d.streak < 5 ? 'дня' : 'дней'} подряд, завтра сундук будет ещё богаче.` : 'Заходите завтра, и сундук станет богаче.'}`);
+    };
+    go();
+  };
+  const asks = d.chest ? [{ q: 'Как это работает?', a: 'Каждый день здесь новый сундук и три задания. Чем больше дней подряд вы открываете сундук, тем он богаче, до семи дней. Задания выполняются сами, пока вы плаваете по островам.' }]
+    : [{ q: `Открыть сундук ${coin(g)}`, go: open(1) }, ...(YSDK.canReward() ? [{ q: `Открыть и удвоить за рекламу`, go: open(2) }] : []),
+      { q: 'Как это работает?', a: 'Каждый день здесь новый сундук и три задания. Чем больше дней подряд вы открываете сундук, тем он богаче, до семи дней. Задания выполняются сами, пока вы плаваете по островам.' }];
+  talk(el, 'Сундук дня', DAILY_ART, line || (d.chest ? 'Сегодняшний сундук уже открыт. Выполняйте задания, а новый сундук появится завтра!'
+    : `День ${streak} подряд! Сегодня в сундуке ${g} золота.`), asks, {
+    html, click: b => {
+      const got = Daily.claim(+b.dataset.claim);
+      if (!got) return;
+      Sound.compass(); $('deckGold').innerHTML = coin(progress.gold); markPing();
+      dailyTalk(el, `Задание выполнено! ${got} золота в казну.`);
+    },
+  });
+}
+// Leaderboard on the deck: the best captains by stars, from Yandex Games.
+function fameTalk(el) {
+  const mine = totalStars();
+  const say = talk(el, 'Доска славы', FAME_ART, YSDK.sdk ? 'Смотрю, кто из капитанов впереди...' : `Доска славы оживёт в Яндекс Играх: там будут лучшие капитаны по звёздам. Ваши звёзды: ${mine} ★.`, [
+    { q: 'Как попасть на доску?', a: 'Каждая звезда за остров идёт в зачёт. Переигрывайте острова на три звезды, и вы подниметесь выше.' },
+  ]);
+  if (!YSDK.sdk) return;
+  YSDK.setScore(mine);
+  YSDK.top().then(res => {
+    if ($('deckScreen').hidden || Deck.spots[Deck.at]?.id !== 'fame') return;
+    const rows = res?.entries || [];
+    if (!rows.length) { say(`Пока на доске пусто. Будьте первым! Ваши звёзды: ${mine} ★.`); return; }
+    const me = res.userRank;
+    const box = document.createElement('ol');
+    box.className = 'fame';
+    box.innerHTML = rows.map(r => `<li class="${r.rank === me ? 'me' : ''}"><b>${r.rank}</b><span>${esc(r.player?.publicName || 'Скрытый пират')}</span><em>${r.score} ★</em></li>`).join('');
+    el.querySelector('.asks').before(box);
+    say(me ? `Вы на ${me} месте! Звёзд у вас: ${mine} ★.` : `Ваши звёзды: ${mine} ★. Войдите в аккаунт Яндекса, чтобы попасть на доску.`);
+  });
+}
+// A red dot on the deck button when the daily chest or a finished task is waiting.
+function markPing() {
+  const on = Daily.ready();
+  $('toDeck').classList.toggle('ping', on);
+  document.querySelector('.spot[data-spot="2"] small')?.classList.toggle('ping', on);
 }
 $('deck').addEventListener('click', e => {
   const b = e.target.closest('[data-spot]');
@@ -2636,6 +2815,7 @@ function showMap(fresh) {
   $('totalStars').textContent = `★ ${total}`;
   grantUnlocks();
   $('mapGold').innerHTML = coin(progress.gold);
+  markPing();
   levelNo = 0;
   renderMap(fresh);
   followShip(shipSpot(Voyage.at).y, false);
