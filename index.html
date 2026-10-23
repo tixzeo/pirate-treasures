@@ -87,7 +87,7 @@ button.ghost:active { box-shadow: 0 1px 0 #2a1408, inset 0 0 0 1.5px #2a1408; }
 .coin { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
 .coin svg { width: 1.15em; height: 1.15em; }
 .purse { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.purse #toPort { margin-left: auto; padding: 7px 14px; }
+.purse #toDeck { margin-left: auto; padding: 7px 14px; }
 button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 
 /* Open sea behind every screen: sunset sky, far islands, a passing ship, rolling swells */
@@ -236,7 +236,7 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
   .hint-text { display: block; }
   #mapScreen { max-width: 760px; width: 100%; margin-inline: auto; }
   .map { height: max(340px, calc(100vh - 190px)); height: max(340px, calc(100dvh - 190px)); }
-  #portScreen { max-width: 760px; margin-inline: auto; }
+  #portScreen, #deckScreen { max-width: 760px; margin-inline: auto; }
   .cards { grid-template-columns: 1fr 1fr; }
   .toggles { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: 16px; }
 }
@@ -421,11 +421,63 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .card button.ghost.on { background: linear-gradient(180deg, #3f8a5a, #22603a); }
 .scroll .haul { font-weight: 800; font-size: 1.1rem; }
 .scroll .coin { color: #8a5c0e; }
+/* Port tabs and merchants: one shop at a time, its keeper answers questions above the goods */
+.tabs { display: flex; gap: 6px; }
+.tabs button { flex: 1; padding: 9px 6px; font-size: .95rem; }
+.tabs button[aria-selected="true"] { background: linear-gradient(180deg, var(--brass-hi), var(--brass) 55%, #a8812e); color: var(--ink); text-shadow: none; box-shadow: 0 3px 0 #6e4f14, inset 0 0 0 1.5px rgba(90,60,10,.6); }
+.merchant { display: grid; grid-template-columns: auto 1fr; gap: 10px 12px; align-items: start; padding: 12px 14px; border-radius: 12px;
+  background: var(--parchment); color: var(--ink); box-shadow: inset 0 0 0 2px rgba(58,38,21,.25), 0 10px 26px rgba(0,0,0,.45); animation: rise .3s cubic-bezier(.3, 1.3, .5, 1); }
+.merchant .face { width: 68px; height: 68px; border-radius: 50%; background: rgba(58,38,21,.1); box-shadow: inset 0 0 0 2px rgba(58,38,21,.35); animation: lean 3s ease-in-out infinite; transform-origin: 50% 90%; }
+.merchant .face.talking { animation: talk .26s ease-in-out infinite alternate; }
+.merchant .who { font-family: var(--font-display); font-size: 1.1rem; color: var(--blood); }
+.merchant p { margin: 2px 0 0; line-height: 1.4; min-height: 4.2em; cursor: pointer; }
+.asks { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
+.asks button { padding: 6px 12px; font-size: .85rem; }
+.asks button.ask { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 2px rgba(58,38,21,.45); }
+.asks button.ask.asked { color: rgba(58,38,21,.6); box-shadow: inset 0 0 0 2px rgba(58,38,21,.2); }
+/* Ship deck: a side view the captain walks along, sails above, crew standing on the planks */
+.deckview { border-radius: 16px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin;
+  box-shadow: inset 0 0 0 2px #2a1408, 0 12px 30px rgba(0,0,0,.45); background: linear-gradient(180deg, rgba(27,47,79,.25), rgba(243,184,107,.12) 60%, transparent); }
+.deck { position: relative; height: 300px; min-width: 100%; }
+.deck > * { position: absolute; }
+.deck .rail { left: 0; right: 0; bottom: 96px; height: 34px;
+  background: linear-gradient(180deg, #6e4423, var(--wood-dark)) 0 0 / 100% 8px no-repeat,
+    repeating-linear-gradient(90deg, transparent 0 16px, #5e3a1f 16px 22px) 0 8px / 100% 100% no-repeat; }
+.deck .floor { left: 0; right: 0; bottom: 0; height: 96px;
+  background: repeating-linear-gradient(90deg, rgba(0,0,0,.14) 0 1.5px, transparent 1.5px 120px),
+    repeating-linear-gradient(180deg, var(--plank) 0 15px, var(--plank-dark) 15px 16px);
+  box-shadow: inset 0 6px 0 rgba(0,0,0,.25), inset 0 -3px 0 #2a1408; }
+.deck .mast { bottom: 120px; width: 130px; height: 180px; translate: -50% 0; pointer-events: none; overflow: visible; }
+.deck .mast .cloth { transform-origin: 50% 0; animation: billow 4s ease-in-out infinite alternate; }
+@keyframes billow { to { transform: scaleX(1.04) skewX(-2deg); } }
+.spot { bottom: 10px; width: 84px; translate: -50% 0; padding: 0 0 4px; background: none; box-shadow: none; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; color: var(--parchment); z-index: 1; }
+.spot:active { transform: none; box-shadow: none; }
+.spot small { margin-top: 2px; padding: 2px 8px; border-radius: 99px; background: rgba(36,22,11,.85); font-size: .72rem; line-height: 1.3; white-space: nowrap; max-width: 92px; overflow: hidden; text-overflow: ellipsis; }
+.spot.near small { background: var(--brass); color: var(--ink); }
+.fig { display: flex; flex-direction: column; align-items: center; animation: breathe 3.2s ease-in-out infinite; transform-origin: 50% 100%; }
+.spot:nth-child(odd) .fig { animation-delay: -1.4s; }
+@keyframes breathe { 50% { transform: scaleY(1.025) translateY(-1px); } }
+.fig .face { width: 50px; height: 50px; margin-bottom: -12px; z-index: 1; overflow: visible; }
+.fig .body { width: 38px; height: 42px; overflow: visible; }
+.spot .prop { width: 76px; height: 86px; overflow: visible; }
+.spot.helm .wheel { transform-box: fill-box; transform-origin: center; transition: transform .7s cubic-bezier(.3, .1, .3, 1); }
+.spot.helm.spin .wheel { transform: rotate(-300deg); }
+.captain { bottom: 6px; width: 60px; translate: -50% 0; z-index: 2; pointer-events: none; display: flex; flex-direction: column; align-items: center;
+  transition-property: left; transition-timing-function: linear; }
+.captain .fig { animation: none; }
+.captain.left .fig { scale: -1 1; }
+.captain.walking .fig { animation: stride .32s ease-in-out infinite alternate; }
+.captain.walking .leg.a { animation: legs .32s ease-in-out infinite alternate; }
+.captain.walking .leg.b { animation: legs .32s ease-in-out infinite alternate-reverse; }
+.leg { transform-box: fill-box; transform-origin: 50% 0; }
+@keyframes stride { to { transform: translateY(-3px); } }
+@keyframes legs { from { transform: rotate(-18deg); } to { transform: rotate(18deg); } }
 .hint-text { margin: 0; color: #e3eef0; font-size: .85rem; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
 @media (prefers-reduced-motion: reduce) {
   .tile, .tile svg, .combo, .net { transition-duration: .01s; }
   .tile.spin svg, .tile.aim svg, .fx.ray, .fx.spot, .fx.hand.swipe, .fx.hand.tap,
-  .face *, .story .face, .cameo, .cameo *, .chip.foe *, .parrot *, .ocean *, .ship svg, .wake, .decor.fogpuff, .isle.current .seal, .isle.reveal .land, .story .scroll,
+  .face *, .story .face, .merchant, .merchant .face, .fig, .fig *, .captain, .deck .mast .cloth, .spot.helm .wheel, .cameo, .cameo *, .chip.foe *, .parrot *, .ocean *, .ship svg, .wake, .decor.fogpuff, .isle.current .seal, .isle.reveal .land, .story .scroll,
   .tile.hint svg, .tile.rare svg, .tile.born svg, .tile.rinse svg, .fx.tide, .tile.shake svg, .tile .spark, .board.quake { animation: none; }
 }
 </style>
@@ -443,7 +495,7 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
     <div class="purse">
       <span class="plaque" id="mapGold"></span>
       <span class="plaque" id="totalStars"></span>
-      <button type="button" id="toPort">Порт: корабль и команда</button>
+      <button type="button" id="toDeck">На палубу</button>
     </div>
     <div class="mapwrap">
       <div class="map" id="map" aria-label="Карта сокровищ"><div class="sea" id="sea"></div></div>
@@ -453,29 +505,43 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 
   <section id="portScreen" class="game" hidden>
     <header>
-      <button class="ghost" id="portBack" type="button">← Карта</button>
+      <button class="ghost" id="portBack" type="button">← Палуба</button>
       <h1>Порт</h1>
       <span class="plaque" id="portGold"></span>
     </header>
     <div class="port">
-      <h2>Верфь</h2>
-      <p class="sub">Корабль побольше даёт лишние ходы на каждом острове и места для команды.</p>
-      <div class="cards" id="yard"></div>
-      <h2>Таверна <small id="crewRoom"></small></h2>
-      <p class="sub">Наймите моряков за золото. С вами плывут только те, кому хватило места на борту.</p>
-      <div class="cards" id="tavern"></div>
-      <h2>Соратники</h2>
-      <p class="sub">Присоединяются после побед над боссами. У каждого свой стиль боя в морских сражениях.</p>
-      <div class="cards" id="allies"></div>
-      <h2>Лавка плодов</h2>
-      <p class="sub" id="fruitClosed">Торговка Мира откроет лавку, когда вы доплывёте до Огненных островов.</p>
-      <div id="fruitShop">
-        <p class="sub">Сундук приносит случайный волшебный плод. Съесть можно один: его сила копится от собранных сокровищ, а потом срабатывает по нажатию. За повторный плод вернут половину цены.</p>
-        <button type="button" data-roll="1" id="rollFruit"></button>
-        <div class="cards" id="fruits"></div>
+      <div class="tabs" role="tablist" aria-label="Лавки порта">
+        <button type="button" class="ghost" role="tab" data-tab="yard">Верфь</button>
+        <button type="button" class="ghost" role="tab" data-tab="tavern">Таверна</button>
+        <button type="button" class="ghost" role="tab" data-tab="fruit">Лавка плодов</button>
+      </div>
+      <div class="merchant" id="merchant"></div>
+      <div class="cards" id="yard" data-pane="yard" role="tabpanel"></div>
+      <div data-pane="tavern" role="tabpanel">
+        <p class="sub" id="crewRoom"></p>
+        <div class="cards" id="tavern"></div>
+      </div>
+      <div data-pane="fruit" role="tabpanel">
+        <p class="sub" id="fruitClosed">Лавка откроется, когда вы доплывёте до Огненных островов.</p>
+        <div id="fruitShop">
+          <button type="button" data-roll="1" id="rollFruit"></button>
+          <div class="cards" id="fruits"></div>
+        </div>
       </div>
     </div>
     <div class="fruit-reveal" id="fruitReveal" hidden></div>
+  </section>
+
+  <section id="deckScreen" class="game" hidden>
+    <header>
+      <h1 id="deckTitle">Палуба</h1>
+      <span class="plaque" id="deckGold"></span>
+    </header>
+    <div class="deckview" id="deckView">
+      <div class="deck" id="deck" aria-label="Палуба корабля"></div>
+    </div>
+    <div class="merchant" id="deckTalk" hidden></div>
+    <p class="sub">Нажмите на моряка, чтобы подойти и поговорить. Сходни ведут в порт, штурвал к островам. Стрелки ← → тоже ходят.</p>
   </section>
 
   <section id="playScreen" class="game" hidden>
@@ -1612,15 +1678,86 @@ function shipSvg(tier) {
   return `<svg viewBox="0 0 80 70" aria-hidden="true">${g}</svg>`;
 }
 
-// Port: the shipyard sells the next ship, the tavern hires crew; crew sail only while there is room aboard.
+// Port: three shops behind tabs. The shipyard sells the next ship, the tavern hires crew, Mira sells fruit;
+// crew sail only while there is room aboard. Each shop's keeper answers a beginner's questions.
+let portTab = 'yard';
 function showPort() {
-  $('mapScreen').hidden = true;
-  $('playScreen').hidden = true;
-  $('portScreen').hidden = false;
+  screen('portScreen');
+  openShop(portTab);
+}
+const fruitOpen = () => TEST_MODE || progress.unlocked >= 32;
+const accusative = name => name.replace(/а$/, 'у');
+// Rough gold for one island at the captain's current stage, used to say how long a purchase takes to save for.
+const perIsland = () => Math.round((250 + progress.unlocked * 4) * (aboard('quarter') ? 1.25 : 1));
+// What to spend gold on next, most useful first: the advice every shopkeeper and the parrot give.
+function spendAdvice() {
+  const g = progress.gold, next = SHIPS[progress.vessel + 1], room = vessel().crew - progress.aboard.length;
+  const shore = CREW.find(m => progress.hired[m.id] && !aboard(m.id));
+  if (shore && room > 0) return `${shore.name} ждёт на берегу, а на борту есть свободное место. Возьмите его в плавание в таверне, это бесплатно!`;
+  if (!progress.hired.bosun) return g >= 300
+    ? 'Наймите Боцмана в таверне за 300. Лишний ход на каждом острове окупается сразу.'
+    : `Копите на Боцмана: не хватает ${300 - g}. Лишний ход на каждом острове очень выручает.`;
+  if (!progress.hired.quarter && room > 0) return g >= 500
+    ? `Наймите Квартирмейстера за 500. Он прибавляет четверть к добыче и вернёт свою цену примерно за ${Math.ceil(500 / (perIsland() * .25))} островов.`
+    : `Копите на Квартирмейстера: не хватает ${500 - g}. С ним все следующие покупки придут быстрее.`;
+  if (next && g >= next.price) return `Хватает на ${accusative(next.name)}! Это ещё ход на каждом острове и новое место для моряка. Загляните на верфь.`;
+  const hire = room > 0 && CREW.find(m => !progress.hired[m.id]);
+  if (hire && g >= hire.price) return `На борту есть свободное место. Наймите в таверне: ${hire.name}, ${hire.perk.toLowerCase()}.`;
+  if (fruitOpen() && !progress.fruit && g >= fruitPrice()) return 'Откройте сундук плодов в лавке. Даже обычный плод сильно помогает в бою с боссом.';
+  if (next) return `Копите на ${accusative(next.name)}: не хватает ${next.price - g}. Это примерно ${Math.max(1, Math.ceil((next.price - g) / perIsland()))} островов.`;
+  if (fruitOpen() && g >= fruitPrice()) return 'Корабль лучше не бывает. Тратьте золото на сундуки плодов: вдруг выпадет Золотой плод.';
+  return 'У вас лучший корабль на всех морях. Копите на сундуки плодов и нанимайте тех, кого ещё нет.';
+}
+const SHIPWRIGHT = ['Корабел Гвоздь', face('#d9a77c', '<path d="M44 22l10-9" stroke="#e0b030" stroke-width="3" stroke-linecap="round"/><path d="M52 15l3-3" stroke="#3a2615" stroke-width="3" stroke-linecap="round"/>',
+  '<path d="M16 40q16 24 32 0q-4 8-16 8t-16-8z" fill="#c8c8c8"/><path d="M20 29q4-3 9 0M35 29q4-3 9 0" stroke="#8a8a8a" stroke-width="2.5" fill="none"/><path d="M27 44q5 2 10 0" stroke="#3a2615" stroke-width="2" fill="none"/>')];
+const INNKEEPER = ['Хозяйка таверны Роза', face('#efc6a2', '<path d="M12 30q20-24 40 0q-20-8-40 0z" fill="#3f8a5a"/><path d="M50 26l8 6-6 2z" fill="#3f8a5a"/>',
+  '<path d="M12 30q-2 14 4 22M52 30q2 14-4 22" stroke="#7a3a1f" stroke-width="5" stroke-linecap="round" fill="none"/><circle cx="15" cy="43" r="2.5" fill="#f2c14e"/><circle cx="49" cy="43" r="2.5" fill="#f2c14e"/><path d="M26 45q6 4 12 0" stroke="#b3322b" stroke-width="2.5" fill="none"/>')];
+const SHOPS = {
+  yard: () => ({ who: SHIPWRIGHT, hello: 'Добро пожаловать на верфь! Тридцать лет строю корабли. Спрашивайте, капитан, не стесняйтесь.', asks: [
+    { q: 'Зачем корабль побольше?', a: 'Каждый новый корабль даёт ещё один ход на каждом острове и ещё одно место для моряка. Лишний ход часто решает, будет у вас три звезды или поражение.' },
+    { q: 'Что купить сейчас?', a: spendAdvice },
+    { q: 'Сколько ещё копить?', a: () => {
+      const next = SHIPS[progress.vessel + 1];
+      if (!next) return 'Флагман уже ваш. Лучше корабля я не строил и не построю!';
+      const left = next.price - progress.gold;
+      return left <= 0 ? `Золота хватает! ${next.name} ждёт вас у причала.`
+        : `Следующий корабль, ${next.name}, стоит ${next.price}. Не хватает ${left}, это примерно ${Math.max(1, Math.ceil(left / perIsland()))} островов.`;
+    } },
+    { q: 'Корабль или моряки?', a: 'Сначала Боцман: на шлюпке как раз одно место. Потом Шлюп и Квартирмейстер, он ускорит все накопления. Дальше чередуйте: корабль даёт место, а на место берите нового моряка.' },
+  ] }),
+  tavern: () => ({ who: INNKEEPER, hello: 'Эль, ром и лучшие моряки на всём побережье! Кого ищете, капитан?', asks: [
+    { q: 'Кого нанять первым?', a: 'Боцмана: он стоит всего 300 и даёт лишний ход на каждом острове. Вторым берите Квартирмейстера, с ним золото копится на четверть быстрее, и все покупки приходят раньше.' },
+    { q: 'Почему не все плывут?', a: () => `На вашем корабле мест: ${vessel().crew}, занято ${progress.aboard.length}. Кому не хватило места, ждёт на берегу. Корабль побольше на верфи даёт ещё место.` },
+    { q: 'Зачем моряки с бомбами?', a: 'Канонир, Пороховщик и Штурман кладут на палубу готовую бомбу в начале острова. Особенно выручает на островах с сетями и обломками, где трудно добраться до краёв.' },
+    { q: 'Кок полезен?', a: 'Кок спасает, когда ходы кончились: один раз за остров даёт ещё три хода. Берите его, если часто проигрываете в шаге от победы.' },
+    { q: 'На что потратить золото?', a: spendAdvice },
+  ] }),
+  fruit: () => ({ who: FACES.merchant, hello: fruitOpen()
+    ? 'Волшебные плоды с Огненных островов! Каждый сундук с сюрпризом. Спрашивайте, расскажу всё.'
+    : 'Лавка пока закрыта: плоды везут с Огненных островов. Доплывите до острова 32, и я открою сундуки.', asks: [
+    { q: 'Как работают плоды?', a: 'Съесть можно только один плод. Пока вы собираете сокровища, его сила копится в кружке рядом с заданиями. Когда кружок засияет, нажмите на него, и плод сработает.' },
+    { q: 'Какой плод лучше?', a: 'Плод Молний хорош для заданий «собери». Плод Пламени и Плод Урагана рвут сети и обломки. Плод Прилива спасает, когда не хватает ходов. Золотой плод удваивает добычу, но он очень редкий.' },
+    { q: 'Стоит ли брать сундук?', a: () => {
+      if (!fruitOpen()) return 'Пока рано: сначала корабль и команда, они помогают на каждом острове. А плоды подождут до острова 32.';
+      if (progress.vessel < 2 || !progress.hired.bosun) return 'Честно? Сначала корабль и команда, они помогают на каждом острове. Плод хорош как добавка, особенно в боях с боссами.';
+      const f = fruitNow();
+      return f ? `У вас уже есть ${f.name}. Новый сундук стоит брать ради редких плодов. За повтор верну половину цены.`
+        : 'Да! Даже обычный плод сильно помогает в бою с боссом. А за повторный плод я верну половину цены.';
+    } },
+    { q: 'На что потратить золото?', a: spendAdvice },
+  ] }),
+};
+// The keeper of the open shop speaks: their greeting on arrival, or a reaction after a purchase.
+function openShop(tab, line) {
+  portTab = tab;
   renderPort();
+  const shop = SHOPS[tab]();
+  talk($('merchant'), shop.who[0], shop.who[1], line || shop.hello, shop.asks);
 }
 function renderPort() {
   $('portGold').innerHTML = coin(progress.gold);
+  document.querySelectorAll('#portScreen [role="tab"]').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === portTab));
+  document.querySelectorAll('#portScreen [data-pane]').forEach(p => { p.hidden = p.dataset.pane !== portTab; });
   const cur = progress.vessel, room = vessel().crew;
   $('yard').innerHTML = SHIPS.map((s, i) => {
     const state = i < cur ? 'Был вашим' : i === cur ? 'Ваш корабль' : i === cur + 1 ? null : 'Сначала предыдущий';
@@ -1628,13 +1765,8 @@ function renderPort() {
       `<small>${s.moves ? `+${s.moves} ${s.moves === 1 ? 'ход' : 'хода'} на острове · ` : ''}мест в команде: ${s.crew}</small></div>` +
       (state ? `<span class="tag">${state}</span>` : `<button type="button" data-ship="${i}"${progress.gold < s.price ? ' disabled' : ''}>Купить ${coin(s.price)}</button>`) + '</div>';
   }).join('');
-  $('crewRoom').textContent = `На борту ${progress.aboard.length} из ${room}`;
-  $('allies').innerHTML = ALLIES.map(a => {
-    const on = ally(a.id);
-    return `<div class="card${on ? ' mine' : ' unknown'}"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${a.face}</svg><div class="info"><b>${on ? a.name : '???'}</b>` +
-      `<p>${on ? `«${a.style}»: ${a.perk}` : `Присоединится после победы над боссом острова ${a.from}`}</p></div></div>`;
-  }).join('');
-  const shop = TEST_MODE || progress.unlocked >= 32;
+  $('crewRoom').textContent = `На борту ${progress.aboard.length} из ${room}. Кому не хватило места, ждёт на берегу.`;
+  const shop = fruitOpen();
   $('fruitShop').hidden = !shop; $('fruitClosed').hidden = shop;
   $('rollFruit').innerHTML = `Открыть сундук плодов ${coin(fruitPrice())}`;
   $('rollFruit').disabled = progress.gold < fruitPrice();
@@ -1655,15 +1787,21 @@ function renderPort() {
 $('portScreen').addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b || b.disabled) return;
-  if (b.dataset.ship) {
+  if (b.dataset.tab) {
+    if (b.dataset.tab !== portTab) { Sound.swap(); openShop(b.dataset.tab); }
+  } else if (b.dataset.ship) {
     const i = +b.dataset.ship;
     progress.gold -= SHIPS[i].price; progress.vessel = i;
-    Sound.forge(); saveProgress(); renderPort();
+    Sound.forge(); saveProgress();
+    openShop('yard', `Отличный выбор! ${SHIPS[i].name} уже на воде. Теперь на борту ${SHIPS[i].crew} ${SHIPS[i].crew < 5 ? 'места' : 'мест'} для команды, загляните в таверну.`);
   } else if (b.dataset.hire) {
     const m = CREW.find(x => x.id === b.dataset.hire);
     progress.gold -= m.price; progress.hired[m.id] = 1;
-    if (progress.aboard.length < vessel().crew) progress.aboard.push(m.id);
-    Sound.compass(); saveProgress(); renderPort();
+    const room = progress.aboard.length < vessel().crew;
+    if (room) progress.aboard.push(m.id);
+    Sound.compass(); saveProgress();
+    openShop('tavern', room ? `${m.name} допивает эль и поднимается на борт. Хороший выбор, капитан!`
+      : `${m.name} нанят, но мест на корабле нет, так что пока ждёт на берегу. На верфи продают корабли побольше.`);
   } else if (b.dataset.roll) {
     const price = fruitPrice();
     progress.gold -= price;
@@ -1672,7 +1810,8 @@ $('portScreen').addEventListener('click', e => {
     const dup = progress.fruits[f.id];
     if (dup) progress.gold += Math.floor(price / 2); else progress.fruits[f.id] = 1;
     if (!progress.fruit) progress.fruit = f.id;
-    Sound.forge(); saveProgress(); renderPort();
+    Sound.forge(); saveProgress();
+    openShop('fruit', dup ? `Ой, ${f.name} у вас уже есть. Держите половину цены назад, всё честно.` : `${f.name}! ${f.power}. Хорошая находка, капитан.`);
     const el = $('fruitReveal');
     el.innerHTML = `<div class="scroll"><div class="big">${fruitSvg(f)}</div><h2>${f.name}</h2><small>${f.rarity}</small><p>${f.power}</p>` +
       `<p>${dup ? `Такой уже есть. Мира вернула ${coin(Math.floor(price / 2))}` : 'Новый плод!'}</p><div class="row"><button type="button" data-close="1">Отлично</button></div></div>`;
@@ -1689,8 +1828,8 @@ $('portScreen').addEventListener('click', e => {
     Sound.swap(); saveProgress(); renderPort();
   }
 });
-$('portBack').addEventListener('click', () => { $('portScreen').hidden = true; showMap(); });
-$('toPort').addEventListener('click', showPort);
+$('portBack').addEventListener('click', () => showDeck('port'));
+$('toDeck').addEventListener('click', () => showDeck('helm'));
 
 // Story: chapters of six islands; a speaker's line greets the ship at each island, shown once.
 const CHAPTER = 6;
@@ -2296,19 +2435,187 @@ function voyage(n) {
   showMap(fresh);
   setTimeout(() => visit(n, fresh), 450);
 }
-addEventListener('resize', () => { if (!$('mapScreen').hidden && !Voyage.busy) renderMap(); });
+addEventListener('resize', () => {
+  if (!$('mapScreen').hidden && !Voyage.busy) renderMap();
+  if (!$('deckScreen').hidden) renderDeck(Deck.at);
+});
+
+// Talk box: a portrait speaks a line, and the questions under it each get their own answer.
+// A question with `go` is an action instead (leave for the port, take the helm).
+function talk(el, name, face, line, asks) {
+  el.innerHTML = `<svg class="face" viewBox="0 0 64 64" aria-hidden="true">${face}</svg><div><div class="who">${name}</div><p></p></div>` +
+    `<div class="asks">${asks.map((a, i) => `<button type="button" class="${a.go ? 'go' : 'ask'}" data-ask="${i}">${a.q}</button>`).join('')}</div>`;
+  el.hidden = false;
+  const p = el.querySelector('p'), f = el.querySelector('.face');
+  const say = text => { clearTimeout(p.t); delete p.dataset.done; p.setAttribute('aria-label', text); typeLine(p, f, text); };
+  say(line);
+  el.onclick = e => {
+    const b = e.target.closest('[data-ask]');
+    if (!b) return;
+    const a = asks[+b.dataset.ask];
+    if (a.go) { a.go(b); return; }
+    b.classList.add('asked'); Sound.swap();
+    say(typeof a.a === 'function' ? a.a() : a.a);
+  };
+}
+
+// Ship deck: the captain walks between the crew. The gangway leads to port, the helm to the islands.
+const CAPTAIN = face('#e3b48c', '<path d="M6 27q26-26 52 0q-8-7-26-7t-26 7z" fill="#1d1d22"/><path d="M13 23q19-8 38 0" stroke="#f2c14e" stroke-width="2" fill="none"/><path d="M28 13l4-4 4 4-4 3z" fill="#f4ead6"/>',
+  '<path d="M24 45q8 4 16 0" stroke="#3a2615" stroke-width="2" fill="none"/><path d="M22 41q10 5 20 0" stroke="#5e3a1f" stroke-width="2.5" fill="none"/>');
+const COATS = { captain: '#a3262a', parrot: '#3fa34d', bosun: '#3a5a7a', quarter: '#2b2b3a', gunner: '#7a2a22', cook: '#e8e2d4', powder: '#3f6b3a', navigator: '#1d3d55',
+  tim: '#b3322b', squid: '#c07a9a', scar: '#2b2b3a', bella: '#1d3d55', ig: '#8a3a1f', lo: '#7a8ab8', bjorn: '#5a5a5a', mira: '#6a3a7a' };
+const body = coat => `<svg class="body" viewBox="0 0 40 44" aria-hidden="true"><path class="leg a" d="M15 26v15" stroke="#2a1a10" stroke-width="5" stroke-linecap="round"/><path class="leg b" d="M25 26v15" stroke="#2a1a10" stroke-width="5" stroke-linecap="round"/>` +
+  `<path d="M9 4q11-6 22 0l4 26H5z" fill="${coat}" stroke="#2a1408" stroke-width="1.5"/><path d="M20 3v26" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/><path d="M5 26h30" stroke="#3a2615" stroke-width="3"/></svg>`;
+const figure = (faceSvg, coat) => `<span class="fig"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${faceSvg}</svg>${body(coat)}</span>`;
+const PERCH = '<svg class="body" viewBox="0 0 40 44" aria-hidden="true"><ellipse cx="20" cy="26" rx="15" ry="17" fill="#8a5a34" stroke="#2a1408" stroke-width="1.5"/><path d="M6 18h28M6 34h28" stroke="#3a2615" stroke-width="3"/></svg>';
+const HELM_WHEEL = '<g class="wheel"><circle cx="32" cy="30" r="17" fill="none" stroke="#8a5a34" stroke-width="4"/><circle cx="32" cy="30" r="5" fill="#c9a24f" stroke="#5e3a1f" stroke-width="2"/>' +
+  [0, 45, 90, 135].map(d => `<path d="M32 6v48" stroke="#8a5a34" stroke-width="3" stroke-linecap="round" transform="rotate(${d} 32 30)"/>`).join('') + '</g>';
+const HELM_ART = `<path d="M28 42h8v20h-8z" fill="#5e3a1f"/>${HELM_WHEEL}`;
+const GANGWAY_ART = '<path d="M6 58L50 34l6 6-44 24z" fill="#8a5a34" stroke="#3a2615" stroke-width="1.5"/><path d="M12 54l40-22M18 51l3 5M30 45l3 5M42 38l3 5" stroke="#3a2615" stroke-width="1.5"/><path d="M10 50V36M52 30V16" stroke="#5e3a1f" stroke-width="3"/><path d="M10 38q20-2 42-20" stroke="#e2c58a" stroke-width="2" fill="none"/>';
+const DECK_HELLO = {
+  bosun: 'Палуба в порядке, капитан! Все по местам.', quarter: 'Казна в порядке, до последнего дублона.', gunner: 'Пушки заряжены, капитан!',
+  cook: 'Обед через час. Сегодня уха, и никакого рома... почти.', powder: 'Осторожнее, капитан, тут порох. Только не с факелом!', navigator: 'Звёзды ясные, курс проложен.',
+  tim: 'Капитан! Я драил палубу, пока вас не было. Почти всю!', squid: 'Буль! То есть... здравствуйте, капитан!', scar: 'Чего уставился, салага? Ладно-ладно... капитан.',
+  bella: 'Пушки начищены, порох сухой. Жду приказа.', ig: 'Ш-ш-ш... это я с огнём разговариваю. Что нужно?', lo: 'Ветер сегодня попутный. Это я постаралась.',
+  bjorn: 'Ха! Палуба крепкая, каждую скобу сам ковал.', mira: 'Капитан! Я подсчитала нашу выручку, вам понравится.',
+};
+const DECK_TIPS = {
+  bosun: 'Чем дольше остров, тем ценнее лишний ход. На островах с сетями не спешите: сначала рвите сети у краёв.',
+  quarter: 'Звёзды тоже приносят золото. Переиграть остров на три звезды бывает выгоднее, чем плыть дальше.',
+  gunner: 'Моё ядро взрывайте там, где больше всего сетей или обломков. Ядро бьёт целую линию.',
+  cook: 'Мой суп даёт три хода, когда ходы кончились. Но только один раз за остров, так что не тратьте ходы зря!',
+  powder: 'Бочка пороха взрывает всё вокруг. Подтащите её поближе к сундуку или к завалу.',
+  navigator: 'Компас-бомба убирает все сокровища одного вида. Меняйте её с тем, что нужно по заданию.',
+  tim: 'Следите за счётчиком залпа у врага. Пока до залпа далеко, копите комбо.',
+  squid: 'Обломки мешают только рядом с собой. Собирайте сокровища возле них, и палуба очистится сама.',
+  scar: 'Ядро, что я подкидываю, лучше взрывать вдоль линии с обломками. Двойная польза, хе-хе.',
+  bella: 'Чем больше сокровищ за один ход, тем больнее врагу. Ищите ходы на четыре и пять в ряд.',
+  ig: 'Бочки пороха в начале боя не тратьте сразу. Подождите, пока враг завалит палубу обломками.',
+  lo: 'Каждый четвёртый ход моя молния бьёт сама. Считайте ходы и не торопитесь.',
+  bjorn: 'Каждый разбитый обломок бьёт врага на 3. В бою завал не беда, а запас урона!',
+  mira: 'Боссы платят щедрее всех, а с моими сделками ещё на половину больше. Не пропускайте боссов!',
+};
+const Deck = { at: 0, spots: [], t: 0 };
+function deckSpots() {
+  const s = [{ id: 'port', name: 'Сходни', art: GANGWAY_ART }, { id: 'parrot', name: 'Жако', face: FACES.parrot[1] }];
+  progress.aboard.forEach(id => { const m = CREW.find(x => x.id === id); if (m) s.push({ id, name: m.name, face: m.face, crew: m }); });
+  ALLIES.filter(a => ally(a.id)).forEach(a => s.push({ id: a.id, name: a.name, face: a.face, ally: a }));
+  s.push({ id: 'helm', name: 'Штурвал', art: HELM_ART });
+  return s;
+}
+const MASTS = { 1: [.55], 2: [.36, .68], 3: [.24, .5, .76] };
+const mastSvg = (x, main) => `<svg class="mast" style="left:${x}px" viewBox="0 0 130 180" aria-hidden="true"><path d="M65 180V4" stroke="#4a2c14" stroke-width="7"/>` +
+  `<path d="M20 34h90M26 98h78" stroke="#4a2c14" stroke-width="4" stroke-linecap="round"/>` +
+  `<g class="cloth"><path d="M24 36q41 8 82 0v54q-41 8-82 0z" fill="#f4ead6" stroke="#8a6a3a" stroke-width="2"/><path d="M30 100q35 7 70 0v46q-35 7-70 0z" fill="#efe2c4" stroke="#8a6a3a" stroke-width="2"/></g>` +
+  (main ? '<path d="M65 4l26 7-26 8z" fill="#1d1d22"/><circle cx="74" cy="11" r="2.5" fill="#f4ead6"/>' : '') + '</svg>';
+const spotX = i => { const w = $('deck').offsetWidth; return 40 + (w - 80) * (i + .5) / Deck.spots.length; };
+const standX = i => spotX(i) + (i === 0 ? 60 : -60);
+function showDeck(from) {
+  grantUnlocks();
+  screen('deckScreen');
+  renderDeck(from === 'port' ? 0 : -1);
+}
+function renderDeck(at) {
+  const spots = Deck.spots = deckSpots(), v = vessel();
+  $('deckTitle').textContent = 'Палуба: ' + v.name;
+  $('deckGold').innerHTML = coin(progress.gold);
+  const deck = $('deck'), view = $('deckView');
+  deck.style.width = Math.max(view.clientWidth, spots.length * 96 + 80) + 'px';
+  const w = deck.offsetWidth;
+  // A long deck (big crew on a small view) gets extra masts so the sky never looks empty.
+  const extra = Math.round(w / 380), masts = extra > v.masts ? Array.from({ length: extra }, (_, i) => (i + .5) / extra) : MASTS[v.masts] || MASTS[1];
+  deck.innerHTML = masts.map((f, i, all) => mastSvg(w * f, i === Math.floor(all.length / 2))).join('') +
+    '<div class="rail"></div><div class="floor"></div>' +
+    spots.map((s, i) => `<button type="button" class="spot ${s.id === 'helm' ? 'helm' : ''}" data-spot="${i}" style="left:${spotX(i)}px">` +
+      (s.art ? `<svg class="prop" viewBox="0 0 64 64" aria-hidden="true">${s.art}</svg>`
+        : s.id === 'parrot' ? `<span class="fig"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${s.face}</svg>${PERCH}</span>`
+        : figure(s.face, COATS[s.id] || '#5e3a1f')) +
+      `<small>${s.name}</small></button>`).join('') +
+    `<div class="captain" id="captain">${figure(CAPTAIN, COATS.captain)}</div>`;
+  Deck.at = at < 0 ? spots.length - 1 : Math.min(at, spots.length - 1);
+  const cap = $('captain');
+  cap.style.transitionDuration = '0ms';
+  cap.style.left = standX(Deck.at) + 'px';
+  cap.classList.toggle('left', Deck.at === 0);
+  view.scrollLeft = standX(Deck.at) - view.clientWidth / 2;
+  arrive();
+}
+function walkTo(i) {
+  if (i < 0 || i >= Deck.spots.length || $('deckScreen').hidden) return;
+  const cap = $('captain'), view = $('deckView');
+  const from = parseFloat(getComputedStyle(cap).left), to = standX(i), dist = Math.abs(to - from);
+  Deck.at = i;
+  clearTimeout(Deck.t);
+  document.querySelectorAll('.spot.near').forEach(x => x.classList.remove('near'));
+  const ms = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : Math.min(1500, dist * 3 + 100);
+  cap.classList.toggle('left', to < from);
+  cap.classList.toggle('walking', ms > 0 && dist > 2);
+  cap.style.transitionDuration = ms + 'ms';
+  cap.style.left = to + 'px';
+  view.scrollTo({ left: to - view.clientWidth / 2, behavior: ms ? 'smooth' : 'auto' });
+  if (dist > 2) Sound.swap();
+  Deck.t = setTimeout(arrive, dist > 2 ? ms : 0);
+}
+// The captain has reached a spot: turn to face it and start talking.
+function arrive() {
+  const i = Deck.at, s = Deck.spots[i], cap = $('captain');
+  cap.classList.remove('walking');
+  cap.classList.toggle('left', i === 0);
+  document.querySelector(`.spot[data-spot="${i}"]`).classList.add('near');
+  const el = $('deckTalk');
+  if (s.id === 'helm') {
+    const n = Math.min(progress.unlocked, mapCount());
+    talk(el, 'Штурвал', HELM_ART, `Курс на остров ${n}: ${chapterInfo(chapterOf(n)).name}. Команда ждёт приказа, капитан.`, [
+      { q: 'Встать за штурвал', go: b => {
+        b.disabled = true;
+        document.querySelector('.spot.helm').classList.add('spin');
+        Sound.compass();
+        setTimeout(() => showMap(), matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 750);
+      } },
+    ]);
+  } else if (s.id === 'port') {
+    talk(el, 'Сходни', GANGWAY_ART, 'Внизу шумит порт: верфь, таверна и лавка плодов. Там подскажут, на что лучше тратить золото.', [
+      { q: 'Сойти в порт', go: () => { Sound.swap(); showPort(); } },
+    ]);
+  } else if (s.id === 'parrot') {
+    talk(el, FACES.parrot[0], s.face, 'Кар-р! Капитан на палубе! Спрашивайте, я всё знаю. Ну, почти всё.', [
+      { q: 'Куда плывём?', a: () => { const n = Math.min(progress.unlocked, mapCount()); return `На остров ${n}, это ${chapterInfo(chapterOf(n)).name}. Вставайте за штурвал, он на корме справа!`; } },
+      { q: 'Кто ещё к нам придёт?', a: () => { const a = ALLIES.find(x => !ally(x.id)); return a ? `Говорят, после победы над боссом острова ${a.from} к нам кое-кто попросится. Кар-р, секрет!` : 'Вся команда в сборе! Лучше команды нет на всех морях.'; } },
+      { q: 'На что потратить золото?', a: spendAdvice },
+      { q: 'Расскажи что-нибудь', a: () => PARROT_LINES[Math.floor(Math.random() * PARROT_LINES.length)] },
+    ]);
+  } else if (s.ally) {
+    const a = s.ally;
+    talk(el, a.name, a.face, DECK_HELLO[a.id], [
+      { q: 'Как ты сражаешься?', a: `Мой стиль боя «${a.style}». ${a.perk}.` },
+      { q: 'Как ты к нам попал?', a: a.joins },
+      { q: 'Дай совет', a: DECK_TIPS[a.id] },
+    ]);
+  } else {
+    const m = s.crew;
+    talk(el, m.name, m.face, DECK_HELLO[m.id], [
+      { q: 'Чем ты помогаешь?', a: `${m.perk}. Пока я на борту, так и будет.` },
+      { q: 'Дай совет', a: DECK_TIPS[m.id] },
+    ]);
+  }
+}
+$('deck').addEventListener('click', e => {
+  const b = e.target.closest('[data-spot]');
+  if (b) walkTo(+b.dataset.spot);
+});
+addEventListener('keydown', e => {
+  if ($('deckScreen').hidden || e.target.closest?.('input, textarea')) return;
+  if (e.key === 'ArrowLeft') { e.preventDefault(); walkTo(Deck.at - 1); }
+  if (e.key === 'ArrowRight') { e.preventDefault(); walkTo(Deck.at + 1); }
+});
 
 // Screens
-function showMap(fresh) {
-  if (typeof fresh !== 'number') fresh = 0; // also used directly as a click handler
-  Tut.stop(); Rec.finish('вышел на карту');
-  clearHint(); YSDK.gameplay(false);
-  $('playScreen').hidden = true;
-  $('mapScreen').hidden = false;
-  $('story').hidden = true;
-  const total = Object.values(progress.stars).reduce((a, b) => a + b, 0);
-  $('totalStars').textContent = `★ ${total}`;
-  $('mapGold').innerHTML = coin(progress.gold);
+// Shows one screen and hides the others.
+function screen(id) {
+  ['mapScreen', 'portScreen', 'deckScreen', 'playScreen'].forEach(x => { $(x).hidden = x !== id; });
+}
+// Companions for bosses already passed, and in test mode everything at once.
+function grantUnlocks() {
   // Islands passed before battles existed still count: their companions join right away.
   ALLIES.forEach(x => { if (x.from < progress.unlocked) progress.allies[x.id] = 1; });
   // Test mode: every companion and fruit at once, and enough gold to try every ship and sailor.
@@ -2317,9 +2624,18 @@ function showMap(fresh) {
     FRUITS.forEach(f => { progress.fruits[f.id] = 1; });
     progress.fruit = progress.fruit || 'storm';
     progress.gold = Math.max(progress.gold, 100000);
-    $('mapGold').innerHTML = coin(progress.gold);
   }
-  $('portScreen').hidden = true;
+}
+function showMap(fresh) {
+  if (typeof fresh !== 'number') fresh = 0; // also used directly as a click handler
+  Tut.stop(); Rec.finish('вышел на карту');
+  clearHint(); YSDK.gameplay(false);
+  screen('mapScreen');
+  $('story').hidden = true;
+  const total = Object.values(progress.stars).reduce((a, b) => a + b, 0);
+  $('totalStars').textContent = `★ ${total}`;
+  grantUnlocks();
+  $('mapGold').innerHTML = coin(progress.gold);
   levelNo = 0;
   renderMap(fresh);
   followShip(shipSpot(Voyage.at).y, false);
@@ -2332,9 +2648,7 @@ function startLevel(n) {
   L.base = L.moves;
   L.moves += vessel().moves + (aboard('bosun') ? 1 : 0);
   score = 0; moves = L.moves; collected = {}; busy = false; over = false; sel = null;
-  $('mapScreen').hidden = true;
-  $('portScreen').hidden = true;
-  $('playScreen').hidden = false;
+  screen('playScreen');
   $('levelTitle').textContent = 'Остров ' + n;
   $('overlay').hidden = true;
   buildNets();
@@ -2397,7 +2711,7 @@ function restoreLevel(d) {
 }
 const boot = data => {
   if (data && data.levelNo && data.types) restoreLevel(data);
-  else showMap();
+  else showDeck();
   YSDK.init().then(() => YSDK.ready());
 };
 window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
