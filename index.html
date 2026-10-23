@@ -2187,6 +2187,8 @@ function showMap(fresh) {
   const total = Object.values(progress.stars).reduce((a, b) => a + b, 0);
   $('totalStars').textContent = `★ ${total}`;
   $('mapGold').innerHTML = coin(progress.gold);
+  // Islands passed before battles existed still count: their companions join right away.
+  ALLIES.forEach(x => { if (x.from < progress.unlocked) progress.allies[x.id] = 1; });
   $('portScreen').hidden = true;
   levelNo = 0;
   renderMap(fresh);
