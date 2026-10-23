@@ -155,6 +155,21 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .tile.aim { background: rgba(242,193,78,.3); border-radius: 50%; }
 .tile.aim svg { animation: spin 2.4s linear infinite; }
 .board.aiming { cursor: crosshair; }
+.fx.spot { border-radius: 10px; box-shadow: 0 0 0 200vmax rgba(8,20,28,.62), 0 0 0 3px var(--gold), 0 0 18px var(--gold); animation: spotPulse 1.2s ease-in-out infinite; }
+@keyframes spotPulse { 50% { box-shadow: 0 0 0 200vmax rgba(8,20,28,.62), 0 0 0 5px var(--gold), 0 0 28px var(--gold); } }
+.fx.hand { z-index: 2; }
+.fx.hand svg { width: 70%; transform: translate(30%, 40%); filter: drop-shadow(0 4px 4px rgba(0,0,0,.5)); }
+.fx.hand.swipe { animation: swipe 1.6s ease-in-out infinite; }
+.fx.hand.tap { animation: tap 1.1s ease-in-out infinite; }
+@keyframes swipe { 0% { transform: var(--from); opacity: 0; } 15%, 25% { transform: var(--from); opacity: 1; } 70% { transform: var(--to); opacity: 1; } 90%, 100% { transform: var(--to); opacity: 0; } }
+@keyframes tap { 0%, 100% { transform: var(--from) scale(1); } 50% { transform: var(--from) scale(.85); } }
+.bubble {
+  position: absolute; left: 50%; z-index: 5; transform: translateX(-50%);
+  width: min(92%, 360px); box-sizing: border-box; padding: 12px 16px; border-radius: 12px;
+  background: var(--parchment); color: var(--ink); text-align: center; font-weight: 800; line-height: 1.35;
+  box-shadow: inset 0 0 0 2px rgba(58,38,21,.25), 0 10px 24px rgba(0,0,0,.5); pointer-events: none;
+}
+.bubble.top { top: 10px; } .bubble.bottom { bottom: 10px; }
 .fx.ray { width: auto; height: 6px; margin-top: -3px; transform-origin: 0 50%; border-radius: 3px; background: linear-gradient(90deg, #fff3c4, #f2c14e 60%, rgba(242,193,78,0)); box-shadow: 0 0 10px #ffd96b; animation: ray .4s ease-out forwards; }
 @keyframes ray { from { opacity: 1; } to { opacity: 0; } }
 .tile.shake svg { animation: rattle .08s linear infinite; }
@@ -207,7 +222,7 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .hint-text { margin: 0; color: var(--muted); font-size: .85rem; }
 @media (prefers-reduced-motion: reduce) {
   .tile, .tile svg, .combo, .net { transition-duration: .01s; }
-  .tile.spin svg, .tile.aim svg, .fx.ray,
+  .tile.spin svg, .tile.aim svg, .fx.ray, .fx.spot, .fx.hand.swipe, .fx.hand.tap,
   .tile.hint svg, .tile.rare svg, .tile.born svg, .tile.shake svg, .tile .spark, .board.quake { animation: none; }
 }
 </style>
@@ -222,6 +237,7 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
     <div class="map">
       <p>Карта сокровищ. На каждом острове ждёт новое задание: ходов всё меньше, сокровищ всё больше видов.</p>
       <div class="levels" id="levels"></div>
+      <button class="ghost" id="resetBtn" type="button" hidden>Сбросить прогресс</button>
     </div>
   </section>
 
@@ -243,6 +259,7 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
         <div class="layer" id="fxLayer" style="z-index: 3; pointer-events: none;"></div>
       </div>
       <div class="combo" id="combo"></div>
+      <div class="bubble" id="bubble" hidden></div>
       <div class="overlay" id="overlay" hidden></div>
     </div>
     <p class="hint-text" id="hintText">Меняйте соседние сокровища местами, чтобы собрать три в ряд. Проведите пальцем или нажмите на два по очереди.</p>
@@ -328,10 +345,12 @@ const $ = id => document.getElementById(id);
 const tileLayer = $('tileLayer'), netLayer = $('netLayer'), fxLayer = $('fxLayer'), boardEl = $('board');
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
-let progress = { unlocked: 1, stars: {} };
-try { const p = JSON.parse(localStorage.getItem('gems-progress')); if (p && p.unlocked) progress = p; } catch (e) {}
+const SAVE_KEY = 'pirates-progress-v2'; // a new key starts everyone from island 1
+let progress = { unlocked: 1, stars: {}, tips: {} };
+try { const p = JSON.parse(localStorage.getItem(SAVE_KEY)); if (p && p.unlocked) progress = p; } catch (e) {}
+progress.tips = progress.tips || {};
 function saveProgress() {
-  try { localStorage.setItem('gems-progress', JSON.stringify(progress)); } catch (e) {}
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(progress)); } catch (e) {}
   YSDK.save(progress);
 }
 
@@ -694,7 +713,9 @@ function swapCells(a, b) {
 
 async function trySwap(a, b) {
   if (busy || over || b.r < 0 || b.c < 0 || b.r >= N || b.c >= N) return;
+  if (!Tut.permits(a, b)) { Sound.wrong(); setSel(null); return; }
   busy = true;
+  Tut.hide();
   clearHint(); setSel(null);
   swapCells(a, b);
   Sound.swap();
@@ -717,8 +738,9 @@ async function trySwap(a, b) {
 }
 // Compass bomb aimed by tapping any treasure on the deck.
 async function aimAt(compass, type) {
-  if (busy || over) return;
+  if (busy || over || Tut.allowed) return;
   busy = true;
+  Tut.hide();
   clearHint(); setSel(null);
   compass.aim = type;
   moves--;
@@ -735,7 +757,7 @@ async function afterMove() {
     await wait(500);
     buildBoard(freshTypes());
   }
-  armHint();
+  if (!tutorialNext()) armHint();
 }
 
 // Parchment scroll over the deck
@@ -757,6 +779,7 @@ function overlay(html, buttons) {
 const starsHtml = n => `<div class="stars">${[0, 1, 2].map(i => `<span class="${i < n ? 'on' : ''}">★</span>`).join('')}</div>`;
 
 function win() {
+  Tut.stop();
   over = true; clearHint(); Sound.win(); YSDK.gameplay(false);
   const bonus = moves * 20;
   score += bonus;
@@ -772,6 +795,7 @@ function win() {
   );
 }
 function lose() {
+  Tut.stop();
   over = true; clearHint(); Sound.lose(); YSDK.gameplay(false);
   const left = goalList().filter(g => g.have < g.need).map(chipHtml).join('');
   const buttons = [['Ещё раз', () => afterAd(() => startLevel(levelNo))], ['На карту', showMap, true]];
@@ -815,6 +839,7 @@ function cellAt(e) {
 }
 boardEl.addEventListener('pointerdown', e => {
   if (busy || over) return;
+  if (!Tut.stage) Tut.hide();
   const cell = cellAt(e);
   if (cell.r < 0 || cell.c < 0 || cell.r >= N || cell.c >= N) return;
   start = { ...cell, x: e.clientX, y: e.clientY };
@@ -956,7 +981,8 @@ const YSDK = {
       // Cloud progress wins when it is further along than this device.
       if (d.progress && d.progress.unlocked > progress.unlocked) {
         progress = d.progress;
-        try { localStorage.setItem('gems-progress', JSON.stringify(progress)); } catch (e) {}
+        progress.tips = progress.tips || {};
+        try { localStorage.setItem(SAVE_KEY, JSON.stringify(progress)); } catch (e) {}
         if (!levelNo) showMap();
       }
     } catch (e) {}
@@ -986,8 +1012,98 @@ const YSDK = {
 // Yandex limits how often a fullscreen ad can show, so asking between islands is safe.
 async function afterAd(next) { await YSDK.interstitial(); next(); }
 
+// Tutorial: a spotlight on the cells, a hand showing the gesture, a line of text.
+const HAND = '<svg viewBox="0 0 100 100"><path d="M40 20a8 8 0 0 1 16 0v30l4-1a8 8 0 0 1 9 5l2-1a8 8 0 0 1 10 6a7 7 0 0 1 9 7v12c0 12-10 22-22 22H52c-8 0-14-4-18-10L20 68a8 8 0 0 1 12-10l8 8z" fill="#fff" stroke="#3a2615" stroke-width="4" stroke-linejoin="round"/></svg>';
+const Tut = {
+  stage: null, allowed: null, els: [],
+  show(cells, text, gesture) {
+    this.hide();
+    const rs = cells.map(c => c[0]), cs = cells.map(c => c[1]);
+    const r0 = Math.min(...rs), r1 = Math.max(...rs), c0 = Math.min(...cs), c1 = Math.max(...cs);
+    const spot = fx('spot', 0, 0);
+    Object.assign(spot.style, { transform: 'none', left: c0 * 12.5 + '%', top: r0 * 12.5 + '%', width: (c1 - c0 + 1) * 12.5 + '%', height: (r1 - r0 + 1) * 12.5 + '%' });
+    this.els.push(spot);
+    if (gesture) {
+      const hand = fx('hand ' + gesture, 0, 0);
+      hand.innerHTML = HAND;
+      const [a, b] = [cells[0], cells[1] || cells[0]];
+      hand.style.setProperty('--from', `translate(${a[1] * 100}%, ${a[0] * 100}%)`);
+      hand.style.setProperty('--to', `translate(${b[1] * 100}%, ${b[0] * 100}%)`);
+      this.els.push(hand);
+    }
+    const bub = $('bubble');
+    bub.textContent = text;
+    bub.className = 'bubble ' + (r0 >= 4 ? 'top' : 'bottom');
+    bub.hidden = false;
+  },
+  hide() { this.els.forEach(e => e.remove()); this.els = []; $('bubble').hidden = true; },
+  stop() { this.hide(); this.stage = null; this.allowed = null; },
+  // A move is allowed during a guided step only if it is exactly the one shown.
+  permits(a, b) {
+    if (!this.allowed) return true;
+    const [x, y] = this.allowed, same = (p, q) => p.r === q[0] && p.c === q[1];
+    return (same(a, x) && same(b, y)) || (same(a, y) && same(b, x));
+  },
+};
+const TIPS = {
+  [CANNON_ROW]: ['cannon', 'Пушечное ядро! Сдвиньте его, и оно пролетит через весь ряд.'],
+  [CANNON_COL]: ['cannon', 'Пушечное ядро! Сдвиньте его, и оно пролетит через весь столбец.'],
+  [BARREL]: ['barrel', 'Бочка пороха! Сдвиньте её, и она взорвёт всё вокруг.'],
+  [COMPASS]: ['compass', 'Компас-бомба! Нажмите на неё, а потом на любое сокровище.'],
+  [CHEST]: ['chest', 'Золотой сундук! Соберите ряд рядом с ним, пока он не утонул.'],
+};
+// Island 1 board with a ready four-in-a-row on row 5: swap (4,3) with (5,3).
+function tutorialBoard() {
+  for (let i = 0; i < 200; i++) {
+    const T = freshTypes();
+    const g = T[4][3];
+    T[5][1] = T[5][2] = T[5][4] = g;
+    T[5][3] = (g + 1) % L.types;
+    if (T[5][0] === g || T[5][5] === g) continue;
+    buildBoard(T);
+    if (findGroups().length) continue;
+    return true;
+  }
+  buildBoard(freshTypes());
+  return false;
+}
+function tutorialStart() {
+  Tut.stage = 'move';
+  Tut.allowed = [[4, 3], [5, 3]];
+  Tut.show([[4, 3], [5, 3]], 'Проведите пальцем вниз, чтобы поменять сокровища местами и собрать четыре в ряд.', 'swipe');
+}
+// Called after every move: advances the guided island 1, or shows a first-time tip.
+function tutorialNext() {
+  if (Tut.stage === 'move') {
+    const cannon = grid.flat().find(t => t.t === CANNON_ROW || t.t === CANNON_COL);
+    if (cannon) {
+      const nb = cannon.c + 1 < N ? [cannon.r, cannon.c + 1] : [cannon.r, cannon.c - 1];
+      Tut.stage = 'cannon';
+      Tut.allowed = [[cannon.r, cannon.c], nb];
+      progress.tips.cannon = 1;
+      Tut.show([[cannon.r, cannon.c], nb], 'Четыре в ряд дали пушечное ядро! Сдвиньте его, чтобы выстрелить.', 'swipe');
+      return true;
+    }
+  }
+  if (Tut.stage === 'move' || Tut.stage === 'cannon') {
+    Tut.stop();
+    progress.tips.intro = 1; saveProgress();
+    flash('Теперь сами!');
+    return false;
+  }
+  for (const t of grid.flat()) {
+    const tip = TIPS[t.t];
+    if (!tip || progress.tips[tip[0]]) continue;
+    progress.tips[tip[0]] = 1; saveProgress();
+    Tut.show([[t.r, t.c]], tip[1], t.t === COMPASS ? 'tap' : null);
+    return true;
+  }
+  return false;
+}
+
 // Screens
 function showMap() {
+  Tut.stop();
   clearHint(); YSDK.gameplay(false);
   $('playScreen').hidden = true;
   $('mapScreen').hidden = false;
@@ -1019,7 +1135,9 @@ function startLevel(n) {
   $('overlay').hidden = true;
   buildNets();
   L.netTotal = netsLeft;
-  buildBoard(freshTypes());
+  Tut.stop();
+  const guided = n === 1 && !progress.tips.intro && tutorialBoard();
+  if (!guided && !(n === 1 && !progress.tips.intro)) buildBoard(freshTypes());
   updateHud();
   const goals = goalList();
   const newKind = L.types > (n > 1 ? levelDef(n - 1).types : 5)
@@ -1028,13 +1146,14 @@ function startLevel(n) {
     `<h2>Остров ${n}</h2><div class="goals">${goals.map(chipHtml).join('')}</div>` +
     goals.map(g => `<p>${goalText(g)}</p>`).join('') +
     `<p>Ходов: ${L.moves}</p>${newKind}` +
-    (n <= 3 ? `<p>Четыре в ряд дают пушечное ядро, уголок из пяти даёт бочку пороха. Чтобы взорвать, сдвиньте их.</p><p>Пять в ряд дают компас-бомбу. Нажмите на неё, а потом на любое сокровище, и все такие сокровища взорвутся.</p><div class="goals"><span class="chip">${gemSvg(CANNON_ROW)}</span><span class="chip">${gemSvg(BARREL)}</span><span class="chip">${gemSvg(COMPASS)}</span></div>` : '') +
     (n === CHEST_FROM ? `<p>Здесь может выпасть золотой сундук. Соберите ряд рядом с ним, пока он не опустился на дно, и он взорвёт всю палубу.</p><div class="goals"><span class="chip">${gemSvg(CHEST)}</span></div>` : ''),
-    [['На абордаж!', () => { $('overlay').hidden = true; YSDK.gameplay(true); armHint(); }]]
+    [['На абордаж!', () => { $('overlay').hidden = true; YSDK.gameplay(true); guided ? tutorialStart() : armHint(); }]]
   );
 }
 
 $('toMap').addEventListener('click', showMap);
+$('resetBtn').hidden = !TEST_MODE;
+$('resetBtn').addEventListener('click', () => { progress = { unlocked: 1, stars: {}, tips: {} }; saveProgress(); showMap(); });
 
 window.claude?.hot?.snapshot?.(() => ({ levelNo }));
 const boot = data => {
