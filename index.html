@@ -350,6 +350,34 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .scroll button.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 2px rgba(58,38,21,.5); }
 .stars { font-size: 2.4rem; letter-spacing: .15em; color: rgba(58,38,21,.22); }
 .stars .on { color: #c8901f; }
+/* Living characters */
+.face [fill="#1b1b1b"], .face circle[fill="#1d1d22"], .face ellipse[fill="#1d1d22"] { transform-box: fill-box; transform-origin: center; animation: blink 4.2s infinite; }
+@keyframes blink { 0%, 94%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+.story .face { animation: lean 3s ease-in-out infinite; transform-origin: 50% 90%; }
+.story .face.talking { animation: talk .26s ease-in-out infinite alternate; }
+@keyframes talk { from { transform: rotate(-3deg) translateY(0); } to { transform: rotate(3deg) translateY(-2px); } }
+@keyframes lean { 50% { transform: rotate(-2deg); } }
+.story p { min-height: 4.2em; cursor: pointer; }
+.cameo { position: absolute; left: -6px; bottom: 14%; z-index: 6; display: flex; align-items: center; gap: 8px; pointer-events: none; }
+.cameo .face { width: 64px; height: 64px; flex: none; border-radius: 50%; background: var(--parchment); box-shadow: 0 0 0 3px var(--brass), 0 6px 16px rgba(0,0,0,.5); }
+.cameo .say { background: var(--parchment); color: var(--ink); font-weight: 800; padding: 8px 12px; border-radius: 12px 12px 12px 2px; box-shadow: 0 6px 16px rgba(0,0,0,.45); max-width: 220px; line-height: 1.25; }
+.cameo.in { animation: cameo 1.9s cubic-bezier(.3, 1.4, .5, 1) forwards; }
+.cameo.in .face { animation: talk .22s ease-in-out 5 alternate; }
+@keyframes cameo { 0% { transform: translateX(-120%); opacity: 0; } 14% { transform: none; opacity: 1; } 84% { transform: none; opacity: 1; } 100% { transform: translateX(-40%); opacity: 0; } }
+.chip.foe .foeart svg { animation: sway 2.8s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes sway { 50% { transform: rotate(-3deg) translateY(-1px); } }
+.chip.foe.warn { animation: warn .6s ease-in-out 2; }
+@keyframes warn { 50% { box-shadow: inset 0 0 0 2px #ff7b6e, 0 0 14px rgba(255,90,70,.6); } }
+.chip.foe.windup .foeart svg { animation: windup .45s ease-in forwards; }
+@keyframes windup { 60% { transform: rotate(8deg) scale(1.08); filter: drop-shadow(0 0 8px #ff5a3a); } 100% { transform: rotate(-6deg) scale(1.12); filter: drop-shadow(0 0 12px #ff5a3a); } }
+.parrot { left: 0; top: 0; width: 40px; height: 40px; padding: 0; z-index: 4; background: none; box-shadow: none; transition: transform .25s linear; cursor: pointer; }
+.parrot:active { transform: none; }
+.parrot svg { width: 100%; height: 100%; overflow: visible; animation: hover 1.6s ease-in-out infinite; filter: drop-shadow(0 3px 2px rgba(58,38,21,.3)); }
+.parrot .wing { transform-box: fill-box; transform-origin: 100% 50%; animation: flap .25s ease-in-out infinite alternate; }
+@keyframes flap { to { transform: rotate(-35deg); } }
+@keyframes hover { 50% { translate: 0 -5px; } }
+.parrot .say { position: absolute; left: 50%; bottom: 100%; translate: -50% -4px; width: max-content; max-width: 180px; padding: 6px 10px; border-radius: 10px; background: #fff; color: var(--ink); font-size: .8rem; font-weight: 800; box-shadow: 0 4px 10px rgba(0,0,0,.3); }
+.parrot .say.in { animation: rise .3s cubic-bezier(.3, 1.4, .5, 1); }
 /* Sea battle */
 .chip.foe { flex: 1 1 100%; gap: 10px; padding: 6px 12px 6px 6px; border-radius: 12px; position: relative; }
 .chip.foe .foeart svg { width: 66px; height: 44px; }
@@ -397,7 +425,7 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   .tile, .tile svg, .combo, .net { transition-duration: .01s; }
   .tile.spin svg, .tile.aim svg, .fx.ray, .fx.spot, .fx.hand.swipe, .fx.hand.tap,
-  .ocean *, .ship svg, .wake, .decor.fogpuff, .isle.current .seal, .isle.reveal .land, .story .scroll,
+  .face *, .story .face, .cameo, .cameo *, .chip.foe *, .parrot *, .ocean *, .ship svg, .wake, .decor.fogpuff, .isle.current .seal, .isle.reveal .land, .story .scroll,
   .tile.hint svg, .tile.rare svg, .tile.born svg, .tile.rinse svg, .fx.tide, .tile.shake svg, .tile .spark, .board.quake { animation: none; }
 }
 </style>
@@ -467,6 +495,7 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
       </div>
       <div class="combo" id="combo"></div>
       <div class="bubble" id="bubble" hidden></div>
+      <div class="cameo" id="cameo" hidden></div>
       <div class="overlay" id="overlay" hidden></div>
     </div>
     <p class="hint-text" id="hintText">Меняйте соседние сокровища местами, чтобы собрать три в ряд. Проведите пальцем или нажмите на два по очереди.</p>
@@ -962,7 +991,7 @@ async function resolve(pending, swapped = []) {
     if (boom) { grid.forEach(row => row.forEach(t => t && clear.add(t))); Rec.chestBroke++; L.chestGold = (L.chestGold || 0) + CHEST_GOLD; }
     score += clear.size * 10 * combo;
     if (boom) { flash('Золотой сундук!'); Sound.boom(); }
-    else if (!fired.size && !makes.length) { Sound.match(combo); if (combo > 1) flash(COMBO_WORDS[combo] || `Комбо ×${combo}`); }
+    else if (!fired.size && !makes.length) { Sound.match(combo); if (combo > 1) flash(COMBO_WORDS[combo] || `Комбо ×${combo}`); if (combo === 3) cheer(); }
     else if (!fired.size) Sound.match(combo);
     clear.forEach(t => {
       t.el.classList.add('pop');
@@ -973,7 +1002,9 @@ async function resolve(pending, swapped = []) {
       if (net) { Sound.cut(); net.classList.add('cut'); setTimeout(() => net.remove(), 300); nets[t.r][t.c] = null; netsLeft--; }
     });
     const gems = [...clear].filter(t => t.t < CHEST).length;
-    if (L.boss) hitFoe(gems + fired.size * 4 + (ally('bjorn') ? 3 * [...clear].filter(t => t.t === DEBRIS).length : 0));
+    const broke = [...clear].filter(t => t.t === DEBRIS).length;
+    if (L.boss && broke && ally('bjorn')) allyCameo('bjorn');
+    if (L.boss) hitFoe(gems + fired.size * 4 + (ally('bjorn') ? 3 * broke : 0));
     if (progress.fruit) L.charge = Math.min(FRUIT_CHARGE, (L.charge || 0) + gems);
     updateHud();
     await wait(makes.length ? 450 : 200);
@@ -1084,6 +1115,7 @@ function win() {
   // Beating a boss brings a new companion aboard.
   const joined = L.boss && ALLIES.find(a => a.from === levelNo && !ally(a.id));
   if (joined) { progress.allies[joined.id] = 1; saveProgress(); }
+  if (L.boss && !joined && ally('mira')) allyCameo('mira');
   overlay(
     `<h2>${L.boss ? 'Победа в бою!' : `Остров ${levelNo} взят!`}</h2>${L.boss ? `<p>${L.boss.name} больше не страшен.</p>` : ''}${starsHtml(stars)}<p class="haul">В казну: ${coin('+' + gold)}</p>` +
     (joined ? `<div class="joiner"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${joined.face}</svg><div><b>${joined.name} теперь в команде!</b><p>«${joined.joins}»</p><small>Стиль боя «${joined.style}»: ${joined.perk.toLowerCase()}</small></div></div>`
@@ -1841,6 +1873,13 @@ function foeSvg(f) {
   }
   return `<svg viewBox="0 0 120 80" aria-hidden="true">${g}</svg>`;
 }
+// The enemy leans in before it fires: a short warning a move ahead, a big swing right before the shots.
+function foeWindup(now) {
+  const el = document.querySelector('.chip.foe');
+  if (!el) return;
+  el.classList.remove('warn', 'windup'); void el.offsetWidth;
+  el.classList.add(now ? 'windup' : 'warn');
+}
 function hitFoe(d) {
   if (!d) return;
   d = Math.round(d * (ally('bella') ? 1.25 : 1));
@@ -1848,6 +1887,7 @@ function hitFoe(d) {
   const el = document.querySelector('.chip.foe');
   if (!el) return;
   el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
+  if (d >= 20) allyCameo('bella');
   const n = document.createElement('b');
   n.className = 'dmg'; n.textContent = '−' + d;
   el.appendChild(n);
@@ -1859,7 +1899,10 @@ async function enemyVolley() {
   const room = WRECK_MAX - grid.flat().filter(t => t && t.t === DEBRIS).length;
   const targets = grid.flat().filter(t => t && t.t < CHEST).sort(() => Math.random() - .5).slice(0, Math.max(0, Math.min(f.volley - (ally('squid') ? 1 : 0), room)));
   if (!targets.length) return;
+  foeWindup(true);
+  await wait(450);
   flash(f.attack || 'Залп!');
+  if (ally('squid')) allyCameo('squid');
   Sound.cannon();
   const balls = targets.map((t, i) => {
     const b = fx('ball col', -1, t.c);
@@ -1981,10 +2024,83 @@ async function strike(tiles) {
 // What happens after each of the player's moves in a sea battle.
 async function battleTurn() {
   L.turns = (L.turns || 0) + 1;
-  if (ally('lo') && L.turns % 4 === 0) { flash('Ло: молния!'); await strike(randomRegular(5)); if (goalsMet()) return; }
-  if (ally('scar') && L.turns % 5 === 0) { flash('Шрам: на абордаж!'); placeSpecial(Math.random() < .5 ? CANNON_ROW : CANNON_COL); }
+  if (ally('lo') && L.turns % 4 === 0) { allyCameo('lo'); await wait(350); await strike(randomRegular(5)); if (goalsMet()) return; }
+  if (ally('scar') && L.turns % 5 === 0) { allyCameo('scar'); placeSpecial(Math.random() < .5 ? CANNON_ROW : CANNON_COL); }
+  if (L.timer === 2) foeWindup(false);
   if (--L.timer <= 0) { await enemyVolley(); L.timer = L.boss.every; }
   updateHud();
+}
+
+// Living characters: companions step out beside the deck to call their moves.
+const ALLY_SAYS = {
+  tim: 'Я знаю их канониров: залп будет позже!', squid: 'Чернила! Одно ядро мимо!', scar: 'На абордаж! Держи ядро!',
+  bella: 'Точно в цель!', ig: 'Огонь на палубу!', lo: 'Молния, бей!', bjorn: 'Переплавлю этот хлам!', mira: 'Двойная выручка!',
+};
+const CHEERS = ['Йо-хо-хо!', 'Вот это залп!', 'Капитан, вы гений!', 'Кар-р-расота!', 'Тысяча чертей!'];
+const cameoQueue = [];
+let cameoBusy = false, cameoLast = {};
+function cameo(face, text, key) {
+  if (key && Date.now() - (cameoLast[key] || 0) < 5000) return;
+  if (key) cameoLast[key] = Date.now();
+  if (cameoQueue.length > 1) return;
+  cameoQueue.push([face, text]);
+  if (!cameoBusy) nextCameo();
+}
+function nextCameo() {
+  const item = cameoQueue.shift();
+  if (!item) { cameoBusy = false; return; }
+  cameoBusy = true;
+  const el = $('cameo');
+  el.innerHTML = `<svg class="face" viewBox="0 0 64 64" aria-hidden="true">${item[0]}</svg><span class="say">${item[1]}</span>`;
+  el.hidden = false;
+  el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
+  setTimeout(() => { el.hidden = true; nextCameo(); }, 1900);
+}
+const allyCameo = (id, text) => { const a = ALLIES.find(x => x.id === id); if (a && ally(id)) cameo(a.face, text || ALLY_SAYS[id], id); };
+// Big cascades get a cheer from someone aboard: a companion if there is one, else the parrot.
+function cheer() {
+  const crew = ALLIES.filter(a => ally(a.id));
+  const who = crew.length && Math.random() < .7 ? crew[Math.floor(Math.random() * crew.length)].face : FACES.parrot[1];
+  cameo(who, CHEERS[Math.floor(Math.random() * CHEERS.length)], 'cheer');
+}
+function battleStart() {
+  if (!L.boss) return;
+  if (ally('ig')) allyCameo('ig');
+  if (ally('tim')) setTimeout(() => allyCameo('tim'), 300);
+}
+// Types a line out letter by letter while the speaker's portrait talks; a tap shows it all at once.
+function typeLine(p, face, text) {
+  let i = 0;
+  face.classList.add('talking');
+  const tick = () => {
+    i = Math.min(text.length, i + 2);
+    p.textContent = text.slice(0, i);
+    if (i < text.length && !p.dataset.done) p.t = setTimeout(tick, 28);
+    else { p.textContent = text; face.classList.remove('talking'); }
+  };
+  p.addEventListener('click', () => { p.dataset.done = 1; }, { once: true });
+  matchMedia('(prefers-reduced-motion: reduce)').matches ? (p.textContent = text) : tick();
+}
+
+// The parrot flies along with the ship on the map and chats when tapped.
+const PARROT_LINES = [
+  'Кар-р! Куда плывём, капитан?', 'Я чую сокровища! Или это рыба.', 'Не забудь заглянуть в порт!', 'Шрам? Где? Я не боюсь!',
+  'Мартин говорил: терпение и три в ряд!', 'Хочу печенье. Пиратское.', 'Ветер попутный, кар-р!', 'Ещё один остров, и я посплю.',
+];
+const PARROT_SVG = '<svg viewBox="0 0 40 40" aria-hidden="true"><path class="wing" d="M14 20q-12-10-12 4q6 0 12-1z" fill="#2c7a37"/><ellipse cx="20" cy="22" rx="9" ry="11" fill="#3fa34d"/><path d="M14 12q2-8 8-6q-4 2-2 6z" fill="#d6402b"/><circle cx="22" cy="17" r="3" fill="#fff"/><circle cx="23" cy="17" r="1.5" fill="#1b1b1b"/><path d="M26 19q7 1 5 8q-2-4-6-4z" fill="#f2c14e"/><path d="M17 32l-3 6M23 32l2 6" stroke="#2c7a37" stroke-width="3" stroke-linecap="round"/></svg>';
+function placeParrot(x, y) {
+  const p = $('parrot');
+  if (p) p.style.transform = `translate(${x - 26}px, ${y - 58}px)`;
+}
+function parrotSay(text) {
+  const b = $('parrotSay');
+  if (!b) return;
+  b.textContent = text || PARROT_LINES[Math.floor(Math.random() * PARROT_LINES.length)];
+  b.hidden = false;
+  b.classList.remove('in'); void b.offsetWidth; b.classList.add('in');
+  clearTimeout(parrotSay.t);
+  parrotSay.t = setTimeout(() => { b.hidden = true; }, 2600);
+  Sound.tone(1200, .08, { type: 'square', vol: .05, to: 1500 }); Sound.tone(1400, .1, { type: 'square', vol: .05, at: .1, to: 1100 });
 }
 
 // Map art
@@ -2057,6 +2173,7 @@ function putShip(x, y, left) {
   const s = $('ship');
   s.style.transform = `translate(${x}px, ${y}px)`;
   s.classList.toggle('left', left);
+  placeParrot(x, y);
 }
 function renderMap(fresh = 0) {
   const count = mapCount();
@@ -2084,11 +2201,12 @@ function renderMap(fresh = 0) {
       `${!TEST_MODE && locked ? ' disabled' : ''} aria-label="Остров ${n}${locked ? ', ещё не открыт' : `, звёзд: ${s}`}">` +
       `${isleSvg(n, current)}<b class="seal">${n}</b><small>${[0, 1, 2].map(i => `<span class="${i < s ? 'on' : ''}">★</span>`).join('')}</small></button>`;
   }
-  html += `<div class="ship" id="ship">${shipSvg(progress.vessel)}</div>`;
+  html += `<div class="ship" id="ship">${shipSvg(progress.vessel)}</div><button type="button" class="parrot" id="parrot" aria-label="Попугай Жако">${PARROT_SVG}<span class="say" id="parrotSay" hidden></span></button>`;
   const sea = $('sea');
   sea.style.height = H + 'px';
   sea.innerHTML = html;
   sea.querySelectorAll('.isle').forEach(b => b.addEventListener('click', () => visit(+b.dataset.n)));
+  $('parrot').addEventListener('click', () => parrotSay());
   const at = shipSpot(Voyage.at);
   putShip(at.x, at.y, at.side < 0);
 }
@@ -2161,9 +2279,11 @@ function tellStory(n, [who, text]) {
   const el = $('story');
   el.innerHTML = `<div class="scroll">` +
     ((n - 1) % CHAPTER === 0 ? `<div class="chapter">Глава ${chapterOf(n) + 1}. ${ch.name}<small>${ch.sub}</small></div>` : '') +
-    `<div class="line"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${face}</svg><div><div class="who">${name}</div><p>${text}</p></div></div>` +
+    `<div class="line"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${face}</svg><div><div class="who">${name}</div><p aria-label="${text}"></p></div></div>` +
     `<div class="row"><button type="button">К острову ${n}</button></div></div>`;
   el.hidden = false;
+  typeLine(el.querySelector('.line p'), el.querySelector('.line .face'), text);
+  if (who === 'parrot') parrotSay('Кар-р!');
   const go = el.querySelector('button');
   go.addEventListener('click', () => { el.hidden = true; startLevel(n); });
   go.focus({ preventScroll: true });
@@ -2230,7 +2350,7 @@ function startLevel(n) {
     goals.map(g => `<p>${goalText(g)}</p>`).join('') +
     `<p>Ходов: ${L.moves}${L.moves > L.base ? ` (${L.moves - L.base} от корабля и команды)` : ''}</p>${newKind}` +
     (n === CHEST_FROM ? `<p>Здесь может выпасть золотой сундук. Соберите ряд рядом с ним, пока он не опустился на дно, и он взорвёт всю палубу.</p><div class="goals"><span class="chip">${gemSvg(CHEST)}</span></div>` : ''),
-    [['На абордаж!', () => { $('overlay').hidden = true; YSDK.gameplay(true); guided ? tutorialStart() : armHint(); }]]
+    [['На абордаж!', () => { $('overlay').hidden = true; YSDK.gameplay(true); guided ? tutorialStart() : armHint(); battleStart(); }]]
   );
 }
 
