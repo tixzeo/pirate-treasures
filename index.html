@@ -84,7 +84,7 @@ button.ghost:active { box-shadow: 0 1px 0 #2a1408, inset 0 0 0 1.5px #2a1408; }
   background: linear-gradient(180deg, #3d2816, #24160b); color: var(--brass-hi); font-weight: 800; font-variant-numeric: tabular-nums;
   box-shadow: inset 0 0 0 2px var(--brass), 0 2px 0 rgba(0,0,0,.4);
 }
-.coin { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.coin { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .coin svg { width: 1.15em; height: 1.15em; }
 .purse { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .purse #toDeck { margin-left: auto; padding: 7px 14px; }
@@ -421,6 +421,9 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .card button.ghost.on { background: linear-gradient(180deg, #3f8a5a, #22603a); }
 .scroll .haul { font-weight: 800; font-size: 1.1rem; }
 .scroll .coin { color: #8a5c0e; }
+/* Prices inside buttons: coin, number and words on one centred line, in the button's own colour */
+button:has(.coin) { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+button .coin, .scroll button .coin { color: inherit; font-weight: 800; }
 /* Port tabs and merchants: one shop at a time, its keeper answers questions above the goods */
 .tabs { display: flex; gap: 6px; }
 .tabs button { flex: 1; padding: 9px 6px; font-size: .95rem; }
@@ -439,10 +442,10 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .merchant .extra { grid-column: 1 / -1; }
 .tasks, .fame { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; grid-column: 1 / -1; }
 .tasks li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: rgba(58,38,21,.08); }
-.tasks li span { flex: 1; display: flex; flex-direction: column; gap: 3px; font-size: .9rem; line-height: 1.25; }
+.tasks li > span { flex: 1; display: flex; flex-direction: column; gap: 3px; font-size: .9rem; line-height: 1.25; }
 .tasks li i { display: block; height: 7px; border-radius: 4px; background: linear-gradient(90deg, var(--good) var(--p), rgba(58,38,21,.18) var(--p)); }
 .tasks li small { color: rgba(58,38,21,.6); font-size: .75rem; }
-.tasks li button { padding: 6px 10px; font-size: .85rem; }
+.tasks li button { flex: none; padding: 6px 10px; font-size: .85rem; white-space: nowrap; }
 .tasks li.done { box-shadow: inset 0 0 0 2px var(--good); }
 .tasks li.claimed { opacity: .55; }
 .tasks li > b { color: var(--good); font-size: 1.2rem; padding: 0 8px; }
@@ -492,19 +495,19 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .deck .mast { bottom: 120px; width: 130px; height: 180px; translate: -50% 0; pointer-events: none; overflow: visible; }
 .deck .mast .cloth { transform-origin: 50% 0; animation: billow 4s ease-in-out infinite alternate; }
 @keyframes billow { to { transform: scaleX(1.04) skewX(-2deg); } }
-.spot { bottom: 10px; width: 84px; translate: -50% 0; padding: 0 0 4px; background: none; box-shadow: none; border-radius: 12px;
+.station { bottom: 10px; width: 84px; translate: -50% 0; padding: 0 0 4px; background: none; box-shadow: none; border-radius: 12px;
   display: flex; flex-direction: column; align-items: center; color: var(--parchment); z-index: 1; }
-.spot:active { transform: none; box-shadow: none; }
-.spot small { margin-top: 2px; padding: 2px 8px; border-radius: 99px; background: rgba(36,22,11,.85); font-size: .72rem; line-height: 1.3; white-space: nowrap; max-width: 92px; overflow: hidden; text-overflow: ellipsis; }
-.spot.near small { background: var(--brass); color: var(--ink); }
+.station:active { transform: none; box-shadow: none; }
+.station small { margin-top: 2px; padding: 2px 8px; border-radius: 99px; background: rgba(36,22,11,.85); font-size: .72rem; line-height: 1.3; white-space: nowrap; max-width: 92px; overflow: hidden; text-overflow: ellipsis; }
+.station.near small { background: var(--brass); color: var(--ink); }
 .fig { display: flex; flex-direction: column; align-items: center; animation: breathe 3.2s ease-in-out infinite; transform-origin: 50% 100%; }
-.spot:nth-child(odd) .fig { animation-delay: -1.4s; }
+.station:nth-child(odd) .fig { animation-delay: -1.4s; }
 @keyframes breathe { 50% { transform: scaleY(1.025) translateY(-1px); } }
 .fig .face { width: 50px; height: 50px; margin-bottom: -12px; z-index: 1; overflow: visible; }
 .fig .body { width: 38px; height: 42px; overflow: visible; }
-.spot .prop { width: 76px; height: 86px; overflow: visible; }
-.spot.helm .wheel { transform-box: fill-box; transform-origin: center; transition: transform .7s cubic-bezier(.3, .1, .3, 1); }
-.spot.helm.spin .wheel { transform: rotate(-300deg); }
+.station .prop { width: 76px; height: 86px; overflow: visible; }
+.station.helm .wheel { transform-box: fill-box; transform-origin: center; transition: transform .7s cubic-bezier(.3, .1, .3, 1); }
+.station.helm.spin .wheel { transform: rotate(-300deg); }
 .captain { bottom: 6px; width: 60px; translate: -50% 0; z-index: 2; pointer-events: none; display: flex; flex-direction: column; align-items: center;
   transition-property: left; transition-timing-function: linear; }
 .captain .fig { animation: none; }
@@ -519,7 +522,7 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   .tile, .tile svg, .combo, .net { transition-duration: .01s; }
   .tile.spin svg, .tile.aim svg, .fx.ray, .fx.spot, .fx.hand.swipe, .fx.hand.tap,
-  .face *, .story .face, .ping::after, .boost.on, .intro .iship svg, .intro .face, .merchant, .merchant .face, .fig, .fig *, .captain, .deck .mast .cloth, .spot.helm .wheel, .cameo, .cameo *, .chip.foe *, .parrot *, .ocean *, .ship svg, .wake, .decor.fogpuff, .isle.current .seal, .isle.reveal .land, .story .scroll,
+  .face *, .story .face, .ping::after, .boost.on, .intro .iship svg, .intro .face, .merchant, .merchant .face, .fig, .fig *, .captain, .deck .mast .cloth, .station.helm .wheel, .cameo, .cameo *, .chip.foe *, .parrot *, .ocean *, .ship svg, .wake, .decor.fogpuff, .isle.current .seal, .isle.reveal .land, .story .scroll,
   .tile.hint svg, .tile.rare svg, .tile.born svg, .tile.rinse svg, .fx.tide, .tile.shake svg, .tile .spark, .board.quake { animation: none; }
 }
 </style>
@@ -2859,7 +2862,7 @@ function renderDeck(at) {
   const extra = Math.round(w / 380), masts = extra > v.masts ? Array.from({ length: extra }, (_, i) => (i + .5) / extra) : MASTS[v.masts] || MASTS[1];
   deck.innerHTML = masts.map((f, i, all) => mastSvg(w * f, i === Math.floor(all.length / 2))).join('') +
     '<div class="rail"></div><div class="floor"></div>' +
-    spots.map((s, i) => `<button type="button" class="spot ${s.id === 'helm' ? 'helm' : ''}" data-spot="${i}" style="left:${spotX(i)}px">` +
+    spots.map((s, i) => `<button type="button" class="station ${s.id === 'helm' ? 'helm' : ''}" data-spot="${i}" style="left:${spotX(i)}px">` +
       (s.art ? `<svg class="prop" viewBox="0 0 64 64" aria-hidden="true">${s.art}</svg>`
         : s.id === 'parrot' ? `<span class="fig"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${s.face}</svg>${PERCH}</span>`
         : figure(s.face, COATS[s.id] || '#5e3a1f')) +
@@ -2879,7 +2882,7 @@ function walkTo(i) {
   const from = parseFloat(getComputedStyle(cap).left), to = standX(i), dist = Math.abs(to - from);
   Deck.at = i;
   clearTimeout(Deck.t);
-  document.querySelectorAll('.spot.near').forEach(x => x.classList.remove('near'));
+  document.querySelectorAll('.station.near').forEach(x => x.classList.remove('near'));
   const ms = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : Math.min(1500, dist * 3 + 100);
   cap.classList.toggle('left', to < from);
   cap.classList.toggle('walking', ms > 0 && dist > 2);
@@ -2894,14 +2897,14 @@ function arrive() {
   const i = Deck.at, s = Deck.spots[i], cap = $('captain');
   cap.classList.remove('walking');
   cap.classList.toggle('left', i === 0);
-  document.querySelector(`.spot[data-spot="${i}"]`).classList.add('near');
+  document.querySelector(`.station[data-spot="${i}"]`).classList.add('near');
   const el = $('deckTalk');
   if (s.id === 'helm') {
     const n = Math.min(progress.unlocked, mapCount());
     talk(el, 'Штурвал', HELM_ART, tx(`Курс на остров ${n}: ${chapterInfo(chapterOf(n)).name}. Команда ждёт приказа, капитан.`, `Course set for island ${n}: ${tr(chapterInfo(chapterOf(n)).name)}. The crew awaits your orders, captain.`), [
       { q: 'Встать за штурвал', go: b => {
         b.disabled = true;
-        document.querySelector('.spot.helm').classList.add('spin');
+        document.querySelector('.station.helm').classList.add('spin');
         Sound.compass();
         setTimeout(() => showMap(), matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 750);
       } },
@@ -3106,7 +3109,7 @@ $('cabinBack').addEventListener('click', () => showDeck('cabin'));
 function markPing() {
   const on = Daily.ready();
   $('toDeck').classList.toggle('ping', on || achReady());
-  document.querySelector('.spot[data-spot="2"] small')?.classList.toggle('ping', on);
+  document.querySelector('.station[data-spot="2"] small')?.classList.toggle('ping', on);
 }
 $('deck').addEventListener('click', e => {
   const b = e.target.closest('[data-spot]');
