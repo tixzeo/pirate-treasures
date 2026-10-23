@@ -58,30 +58,87 @@ button:active { transform: translateY(2px); box-shadow: 0 1px 0 #9a6a12; }
 button.ghost { background: var(--panel); color: var(--fg); box-shadow: none; }
 button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 
-/* Treasure map */
+/* Treasure map: a scrolling parchment sea with islands on a dotted route */
+.mapwrap { position: relative; }
 .map {
+  position: relative; height: max(360px, calc(100vh - 150px)); height: max(360px, calc(100dvh - 150px));
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
   background: var(--parchment);
   background-image:
-    radial-gradient(circle at 15% 20%, rgba(150,100,40,.18), transparent 40%),
-    radial-gradient(circle at 85% 75%, rgba(150,100,40,.22), transparent 45%);
-  color: var(--ink); border-radius: 12px; padding: 18px;
-  box-shadow: inset 0 0 0 2px rgba(58,38,21,.25), 0 10px 30px rgba(0,0,0,.4);
-  display: flex; flex-direction: column; gap: 14px;
+    radial-gradient(circle at 12% 8%, rgba(150,100,40,.2), transparent 30%),
+    radial-gradient(circle at 90% 40%, rgba(150,100,40,.16), transparent 35%),
+    radial-gradient(circle at 20% 80%, rgba(150,100,40,.18), transparent 35%);
+  color: var(--ink); border-radius: 12px;
+  box-shadow: inset 0 0 0 2px rgba(58,38,21,.25), inset 0 0 60px rgba(120,80,30,.35), 0 10px 30px rgba(0,0,0,.4);
 }
-.map p { margin: 0; }
-.levels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-.lvl {
-  aspect-ratio: 1; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
-  background: rgba(58,38,21,.08); color: var(--ink); border-radius: 50%;
-  box-shadow: inset 0 0 0 2px rgba(58,38,21,.45);
+.sea { position: relative; overflow: hidden; }
+.sea > * { position: absolute; }
+.route { left: 0; top: 0; pointer-events: none; overflow: visible; }
+.route path { fill: none; stroke-linecap: round; }
+.route .all { stroke: rgba(58,38,21,.35); stroke-width: 3; stroke-dasharray: 2 11; }
+.route .done { stroke: var(--blood); stroke-width: 3.5; stroke-dasharray: 10 9; }
+.route .trip { stroke: none; }
+.band { left: 0; right: 0; pointer-events: none; }
+.band.fog { background: linear-gradient(180deg, transparent, rgba(255,255,255,.35) 20%, rgba(255,255,255,.35) 80%, transparent); }
+.band.kraken { background: linear-gradient(180deg, transparent, rgba(40,70,90,.16) 20%, rgba(40,70,90,.16) 80%, transparent); }
+.band.skull { background: linear-gradient(180deg, transparent, rgba(90,30,20,.14) 20%, rgba(90,30,20,.14) 85%, transparent); }
+.banner {
+  left: 50%; transform: translateX(-50%); width: min(86%, 340px); text-align: center; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
-.lvl:active { transform: none; box-shadow: inset 0 0 0 2px rgba(58,38,21,.45); }
-.lvl b { font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; line-height: 1; }
-.lvl small { font-size: .75rem; letter-spacing: .08em; color: rgba(58,38,21,.3); }
-.lvl small .on { color: #b07a10; }
-.lvl.current { background: var(--blood); color: var(--parchment); box-shadow: 0 0 0 3px rgba(179,50,43,.3); }
-.lvl.current small { color: rgba(239,220,179,.5); }
-.lvl:disabled { opacity: .35; cursor: default; }
+.banner b {
+  font-family: var(--font-display); font-weight: 400; font-size: 1.3rem; line-height: 1.1;
+  background: var(--blood); color: var(--parchment); padding: 7px 34px 8px; text-wrap: balance;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 50%, 100% 100%, 0 100%, 14px 50%);
+  filter: drop-shadow(0 2px 0 rgba(58,38,21,.4));
+}
+.banner small { font-size: .8rem; color: rgba(58,38,21,.7); }
+.decor { width: 64px; height: 44px; translate: -50% -50%; pointer-events: none; opacity: .7; }
+.decor.fogpuff { width: 130px; height: 50px; filter: blur(6px); opacity: .85; animation: drift 9s ease-in-out infinite alternate; }
+@keyframes drift { to { translate: -30% -50%; } }
+.rose { width: 84px; height: 84px; right: 10px; top: 14px; opacity: .55; pointer-events: none; }
+.isle {
+  width: 104px; height: 104px; padding: 0; translate: -50% -58%;
+  background: none; box-shadow: none; border-radius: 50%; color: var(--ink);
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+}
+.isle:active { transform: scale(.95); box-shadow: none; }
+.isle .land { width: 100%; height: 72px; overflow: visible; filter: drop-shadow(0 3px 0 rgba(58,38,21,.25)); }
+.isle .seal {
+  margin-top: -16px; min-width: 30px; height: 30px; padding: 0 4px; box-sizing: border-box; border-radius: 99px;
+  display: grid; place-items: center; font-family: var(--font-display); font-weight: 400; font-size: 1.1rem;
+  background: var(--parchment); box-shadow: inset 0 0 0 2px rgba(58,38,21,.55);
+}
+.isle small { font-size: .78rem; letter-spacing: .06em; color: rgba(58,38,21,.28); line-height: 1.2; }
+.isle small .on { color: #b07a10; }
+.isle.current .seal { background: var(--blood); color: var(--parchment); box-shadow: 0 0 0 4px rgba(179,50,43,.25); animation: beacon 1.6s ease-in-out infinite; }
+@keyframes beacon { 50% { box-shadow: 0 0 0 9px rgba(179,50,43,.08); } }
+.isle.locked .land { filter: grayscale(.8) opacity(.45); }
+.isle.locked .seal { opacity: .55; }
+.isle:disabled { cursor: default; }
+.isle.reveal .land { animation: reveal 1s ease-out; }
+@keyframes reveal { from { filter: grayscale(.8) opacity(.45); transform: scale(.85); } 60% { transform: scale(1.08); } }
+.ship { left: 0; top: 0; width: 70px; height: 62px; margin: -44px 0 0 -35px; z-index: 3; pointer-events: none; will-change: transform; }
+.ship svg { width: 100%; height: 100%; overflow: visible; animation: bob 2.4s ease-in-out infinite; filter: drop-shadow(0 3px 2px rgba(58,38,21,.35)); }
+.ship.left svg { scale: -1 1; }
+.ship.sailing svg { animation-duration: .9s; }
+@keyframes bob { 50% { transform: translateY(-3px) rotate(-3deg); } }
+.wake { width: 14px; height: 6px; margin: -3px 0 0 -7px; border-radius: 50%; border: 2px solid rgba(58,38,21,.4); pointer-events: none; animation: wake 1.4s ease-out forwards; }
+@keyframes wake { to { transform: scale(2.6); opacity: 0; } }
+.story {
+  position: absolute; inset: 0; z-index: 5; border-radius: 12px; padding: 14px; box-sizing: border-box;
+  background: rgba(8,20,28,.55); display: flex; align-items: flex-end; justify-content: center;
+}
+.story .scroll { max-width: 420px; align-items: stretch; text-align: left; animation: rise .35s cubic-bezier(.3, 1.3, .5, 1); }
+@keyframes rise { from { transform: translateY(40px); opacity: 0; } }
+.story .chapter { text-align: center; font-family: var(--font-display); font-size: 1.25rem; color: var(--blood); }
+.story .chapter small { display: block; font-family: var(--font-body); font-size: .8rem; color: rgba(58,38,21,.6); }
+.story .line { display: flex; gap: 12px; align-items: flex-start; }
+.story .face { width: 58px; height: 58px; flex: none; border-radius: 50%; background: rgba(58,38,21,.1); box-shadow: inset 0 0 0 2px rgba(58,38,21,.35); }
+.story .who { font-family: var(--font-display); font-size: 1.05rem; color: var(--blood); }
+.story p { line-height: 1.4; }
+.story .row { justify-content: flex-end; }
+#resetBtn { margin-left: auto; padding: 6px 12px; font-size: .8rem; }
 
 /* Deck */
 .hud { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -107,8 +164,21 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .stage { position: relative; width: min(100%, calc(100vh - 300px)); width: min(100%, calc(100dvh - 300px)); min-width: 240px; max-width: 100%; margin-inline: auto; }
 .toggles { display: flex; gap: 8px; justify-content: center; }
 .toggles button { padding: 6px 14px; font-size: .85rem; }
-.toggles button[aria-pressed="false"] { opacity: .5; text-decoration: line-through; }
+.toggles button[aria-pressed="false"] { opacity: .5; }
+#sfxBtn[aria-pressed="false"] { text-decoration: line-through; }
 @media (max-height: 700px) { .hint-text { display: none; } .game { gap: 10px; } }
+/* Landscape screens (desktop, 16:9): sidebar with HUD on the left, board sized by height on the right */
+@media (min-aspect-ratio: 5/4) and (min-height: 420px) {
+  body > .game { max-width: 1040px; margin-block: auto; }
+  #playScreen { max-width: none; display: grid; grid-template-columns: minmax(240px, 300px) auto; grid-template-rows: auto auto auto 1fr; column-gap: 32px; row-gap: 14px; justify-content: center; align-items: start; }
+  #playScreen > header { flex-direction: column; align-items: flex-start; }
+  #playScreen > header, .hud, #goals, .hint-text { grid-column: 1; }
+  #playScreen .stage { grid-column: 2; grid-row: 1 / span 4; width: min(calc(100vh - 48px), calc(100vw - 400px)); width: min(calc(100dvh - 48px), calc(100vw - 400px)); }
+  .hint-text { display: block; }
+  #mapScreen { max-width: 760px; width: 100%; margin-inline: auto; }
+  .map { height: max(360px, calc(100vh - 110px)); height: max(360px, calc(100dvh - 110px)); }
+  .toggles { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: 16px; }
+}
 .board {
   position: relative; width: 100%; aspect-ratio: 1; max-width: 100%;
   border-radius: 8px; overflow: hidden; touch-action: none; cursor: pointer;
@@ -134,6 +204,61 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .tile.pop svg { transform: scale(.2) rotate(40deg); }
 .tile.hint svg { animation: nudge 1s ease-in-out infinite; }
 .tile.rare svg { animation: glow 1.4s ease-in-out infinite; }
+.tile .spark { animation: spark .35s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+@keyframes spark { from { transform: scale(.6); fill: #ff7a2a; } to { transform: scale(1.25); fill: #fff0a0; } }
+.tile.born svg { animation: born .55s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes born { 0% { transform: scale(0) rotate(-180deg); filter: drop-shadow(0 0 0 #ffd96b); } 60% { transform: scale(1.35) rotate(10deg); filter: drop-shadow(0 0 16px #ffd96b); } 100% { transform: scale(1) rotate(0); } }
+.tile.spin svg { animation: spin .5s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg) scale(1.15); } }
+.tile.aim { background: rgba(242,193,78,.3); border-radius: 50%; }
+.tile.aim svg { animation: spin 2.4s linear infinite; }
+.board.aiming { cursor: crosshair; }
+.fx.spot { border-radius: 10px; box-shadow: 0 0 0 200vmax rgba(8,20,28,.62), 0 0 0 3px var(--gold), 0 0 18px var(--gold); animation: spotPulse 1.2s ease-in-out infinite; }
+@keyframes spotPulse { 50% { box-shadow: 0 0 0 200vmax rgba(8,20,28,.62), 0 0 0 5px var(--gold), 0 0 28px var(--gold); } }
+.fx.hand { z-index: 2; }
+.fx.hand svg { width: 70%; transform: translate(30%, 40%); filter: drop-shadow(0 4px 4px rgba(0,0,0,.5)); }
+.fx.hand.swipe { animation: swipe 1.6s ease-in-out infinite; }
+.fx.hand.tap { animation: tap 1.1s ease-in-out infinite; }
+@keyframes swipe { 0% { transform: var(--from); opacity: 0; } 15%, 25% { transform: var(--from); opacity: 1; } 70% { transform: var(--to); opacity: 1; } 90%, 100% { transform: var(--to); opacity: 0; } }
+@keyframes tap { 0%, 100% { transform: var(--from) scale(1); } 50% { transform: var(--from) scale(.85); } }
+.bubble {
+  position: absolute; left: 50%; z-index: 5; transform: translateX(-50%);
+  width: min(92%, 360px); box-sizing: border-box; padding: 12px 16px; border-radius: 12px;
+  background: var(--parchment); color: var(--ink); text-align: center; font-weight: 800; line-height: 1.35;
+  box-shadow: inset 0 0 0 2px rgba(58,38,21,.25), 0 10px 24px rgba(0,0,0,.5); pointer-events: none;
+}
+.bubble.top { top: 10px; } .bubble.bottom { bottom: 10px; }
+.fx.ray { width: auto; height: 6px; margin-top: -3px; transform-origin: 0 50%; border-radius: 3px; background: linear-gradient(90deg, #fff3c4, #f2c14e 60%, rgba(242,193,78,0)); box-shadow: 0 0 10px #ffd96b; animation: ray .4s ease-out forwards; }
+@keyframes ray { from { opacity: 1; } to { opacity: 0; } }
+.tile.shake svg { animation: rattle .08s linear infinite; }
+@keyframes rattle { 0% { transform: translate(-4%, 0) rotate(-6deg); } 50% { transform: translate(4%, -2%) rotate(6deg); } 100% { transform: translate(-4%, 0) rotate(-6deg); } }
+.fx { position: absolute; left: 0; top: 0; width: 12.5%; height: 12.5%; pointer-events: none; }
+.fx.ball { display: grid; place-items: center; transition-property: transform; transition-timing-function: linear; }
+.fx.ball i { width: 62%; height: 62%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #8a93a3, #2b2d33 45%, #0c0d10); box-shadow: 0 0 0 3px rgba(0,0,0,.35); }
+.fx.ball.row i { box-shadow: -30px 0 18px -6px rgba(255,190,90,.8), 0 0 0 3px rgba(0,0,0,.35); }
+.fx.ball.col i { box-shadow: 0 -30px 18px -6px rgba(255,190,90,.8), 0 0 0 3px rgba(0,0,0,.35); }
+.fx.puff::before {
+  content: ""; position: absolute; inset: -20%; border-radius: 50%;
+  background: radial-gradient(circle, #fff6c8 0 15%, #ffb84d 35%, #e2552b 55%, rgba(80,40,20,0) 72%);
+  animation: puff .45s ease-out forwards;
+}
+@keyframes puff { from { transform: scale(.2); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
+.fx.wave { width: 37.5%; height: 37.5%; border-radius: 50%; box-shadow: 0 0 0 6px rgba(255,214,120,.9), inset 0 0 30px rgba(255,140,60,.8); animation: wave .5s ease-out forwards; }
+@keyframes wave { from { transform: var(--at) scale(.2); opacity: 1; } to { transform: var(--at) scale(1.6); opacity: 0; } }
+.board.quake { animation: quake .35s linear; }
+.fx.tide {
+  width: 140%; height: 100%; z-index: 4; transform: translateX(-100%);
+  background:
+    radial-gradient(circle at 94% 20%, #fff 0 2%, transparent 2.6%),
+    radial-gradient(circle at 92% 60%, #fff 0 1.6%, transparent 2.2%),
+    radial-gradient(circle at 95% 85%, #fff 0 2%, transparent 2.6%),
+    linear-gradient(90deg, rgba(20,90,120,0) 0%, rgba(20,90,120,.5) 50%, rgba(70,170,200,.85) 86%, #e9fbff 93%, rgba(255,255,255,0) 99%);
+  animation: tide 1s linear forwards;
+}
+@keyframes tide { to { transform: translateX(72%); } }
+.tile.rinse svg { animation: rinse .5s ease-in-out; }
+@keyframes rinse { 45% { transform: translateX(70%) rotate(25deg); opacity: 0; } 55% { transform: translateX(-70%) rotate(-25deg); opacity: 0; } }
+@keyframes quake { 20% { translate: -6px 3px; } 40% { translate: 5px -4px; } 60% { translate: -4px -2px; } 80% { translate: 3px 3px; } }
 @keyframes glow { 50% { filter: drop-shadow(0 0 8px #ffd96b) drop-shadow(0 0 3px #fff3c4); } }
 @keyframes nudge { 50% { transform: scale(1.16); } }
 .combo {
@@ -167,7 +292,9 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
 .hint-text { margin: 0; color: var(--muted); font-size: .85rem; }
 @media (prefers-reduced-motion: reduce) {
   .tile, .tile svg, .combo, .net { transition-duration: .01s; }
-  .tile.hint svg, .tile.rare svg { animation: none; }
+  .tile.spin svg, .tile.aim svg, .fx.ray, .fx.spot, .fx.hand.swipe, .fx.hand.tap,
+  .ship svg, .wake, .decor.fogpuff, .isle.current .seal, .isle.reveal .land, .story .scroll,
+  .tile.hint svg, .tile.rare svg, .tile.born svg, .tile.rinse svg, .fx.tide, .tile.shake svg, .tile .spark, .board.quake { animation: none; }
 }
 </style>
 </head>
@@ -176,11 +303,12 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
   <section id="mapScreen" class="game">
     <header>
       <h1>Пиратские сокровища</h1>
+      <button class="ghost" id="resetBtn" type="button" hidden>Сброс</button>
       <span class="sub" id="totalStars"></span>
     </header>
-    <div class="map">
-      <p>Карта сокровищ. На каждом острове ждёт новое задание: ходов всё меньше, сокровищ всё больше видов.</p>
-      <div class="levels" id="levels"></div>
+    <div class="mapwrap">
+      <div class="map" id="map" aria-label="Карта сокровищ"><div class="sea" id="sea"></div></div>
+      <div class="story" id="story" hidden></div>
     </div>
   </section>
 
@@ -199,8 +327,10 @@ button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
       <div class="board" id="board" aria-label="Палуба 8 на 8">
         <div class="layer" id="tileLayer"></div>
         <div class="layer" id="netLayer"></div>
+        <div class="layer" id="fxLayer" style="z-index: 3; pointer-events: none;"></div>
       </div>
       <div class="combo" id="combo"></div>
+      <div class="bubble" id="bubble" hidden></div>
       <div class="overlay" id="overlay" hidden></div>
     </div>
     <p class="hint-text" id="hintText">Меняйте соседние сокровища местами, чтобы собрать три в ряд. Проведите пальцем или нажмите на два по очереди.</p>
@@ -224,12 +354,20 @@ const PIECES = [
   { name: 'черепа', svg: '<path d="M50 10C26 10 14 28 16 48C17 60 24 66 30 68V82Q30 88 36 88H64Q70 88 70 82V68C76 66 83 60 84 48C86 28 74 10 50 10Z" fill="#f1ead8" stroke="#5a4a38" stroke-width="4" stroke-linejoin="round"/><ellipse cx="36" cy="47" rx="9" ry="10" fill="#3a2615"/><ellipse cx="64" cy="47" rx="9" ry="10" fill="#3a2615"/><path d="M50 57L44 68H56Z" fill="#3a2615"/><path d="M41 77V88M50 77V88M59 77V88" stroke="#5a4a38" stroke-width="3"/>' },
   // Super rare: never matches by colour, breaks when a match happens next to it.
   { name: 'золотой сундук', svg: '<path d="M12 46Q12 16 50 16Q88 16 88 46Z" fill="#a8582a" stroke="#2a1408" stroke-width="4" stroke-linejoin="round"/><rect x="12" y="42" width="76" height="44" rx="4" fill="#7a3f1c" stroke="#2a1408" stroke-width="4"/><rect x="14" y="40" width="72" height="8" fill="#f2c14e"/><rect x="24" y="18" width="8" height="66" fill="#f2c14e"/><rect x="68" y="18" width="8" height="66" fill="#f2c14e"/><rect x="42" y="42" width="16" height="18" rx="3" fill="#ffd96b" stroke="#8a5c0e" stroke-width="3"/><circle cx="50" cy="50" r="2.5" fill="#2a1408"/>' },
+  // Special pieces made by big matches. They have no colour and fire when swapped or caught in a blast.
+  { name: 'ядро', svg: '<g fill="#f2c14e" stroke="#8a5c0e" stroke-width="3" stroke-linejoin="round"><polygon points="2,50 14,40 14,60"/><polygon points="98,50 86,40 86,60"/></g><circle cx="50" cy="52" r="32" fill="#2b2d33" stroke="#0c0d10" stroke-width="4"/><ellipse cx="40" cy="40" rx="10" ry="6" fill="#8a93a3" opacity=".7"/><path d="M62 24Q70 12 78 14" fill="none" stroke="#c9a46a" stroke-width="4" stroke-linecap="round"/><circle class="spark" cx="79" cy="13" r="6" fill="#ffcf4a"/>' },
+  { name: 'ядро', svg: '<g fill="#f2c14e" stroke="#8a5c0e" stroke-width="3" stroke-linejoin="round"><polygon points="50,2 40,14 60,14"/><polygon points="50,98 40,86 60,86"/></g><circle cx="50" cy="50" r="32" fill="#2b2d33" stroke="#0c0d10" stroke-width="4"/><ellipse cx="40" cy="38" rx="10" ry="6" fill="#8a93a3" opacity=".7"/><path d="M74 30Q86 26 88 34" fill="none" stroke="#c9a46a" stroke-width="4" stroke-linecap="round"/><circle class="spark" cx="88" cy="36" r="6" fill="#ffcf4a"/>' },
+  { name: 'бочка пороха', svg: '<path d="M24 14H76Q88 50 76 88H24Q12 50 24 14Z" fill="#9a5a2c" stroke="#2a1408" stroke-width="4" stroke-linejoin="round"/><path d="M19 32H81M17 70H83" stroke="#3a3f47" stroke-width="7"/><path d="M38 14Q34 50 38 88M62 14Q66 50 62 88" stroke="#6e3c1a" stroke-width="3" fill="none"/><rect x="34" y="42" width="32" height="18" rx="3" fill="#efdcb3" stroke="#2a1408" stroke-width="2"/><text x="50" y="56" font-size="13" font-weight="900" text-anchor="middle" fill="#b3322b" font-family="Arial,sans-serif">XXX</text><path d="M50 14Q52 4 60 4" fill="none" stroke="#c9a46a" stroke-width="4" stroke-linecap="round"/><circle class="spark" cx="61" cy="4" r="6" fill="#ffcf4a"/>' },
+  { name: 'компас-бомба', svg: '<circle cx="50" cy="50" r="44" fill="#173a4d" stroke="#f2c14e" stroke-width="5"/><polygon points="50,6 57,43 94,50 57,57 50,94 43,57 6,50 43,43" fill="#f2c14e" stroke="#8a5c0e" stroke-width="2" stroke-linejoin="round"/><polygon points="50,24 54,46 76,50 54,54 50,76 46,54 24,50 46,46" fill="#fff3c4" transform="rotate(45 50 50)"/><circle cx="50" cy="50" r="7" fill="#e3394f" stroke="#6d0f1d" stroke-width="2"/>' },
 ];
+const CANNON_ROW = 8, CANNON_COL = 9, BARREL = 10, COMPASS = 11;
+const isSpecial = tile => tile && tile.t >= CANNON_ROW;
 const CHEST = 7;          // index of the golden chest in PIECES
 const CHEST_FROM = 8;     // chests start dropping from this island
 const TEST_MODE = true;   // всё открыто и сундук выпадает часто; выключить перед публикацией
 const CHEST_CHANCE = TEST_MODE ? 1 / 20 : 1 / 150; // per new piece, so roughly once every 30 moves
 const NETS = {
+  midrow: (r, c) => r === 4,
   rows:   (r, c) => r === 3 || r === 4,
   center: (r, c) => r >= 2 && r <= 5 && c >= 2 && c <= 5,
   bottom: (r, c) => r >= 5,
@@ -244,14 +382,14 @@ const LEVELS = [
   { moves: 20, types: 5, collect: { 0: 12 } },
   { moves: 22, types: 5, score: 1500 },
   { moves: 22, types: 6, collect: { 2: 12, 4: 12 } },
-  { moves: 22, types: 6, net: 'rows' },
-  { moves: 22, types: 6, score: 1600 },
-  { moves: 25, types: 6, net: 'center', collect: { 1: 15 } },
-  { moves: 25, types: 6, collect: { 0: 12, 3: 12, 5: 12 } },
+  { moves: 24, types: 6, net: 'midrow' },
+  { moves: 24, types: 6, score: 1400 },
+  { moves: 25, types: 6, net: 'center', collect: { 1: 12 } },
+  { moves: 24, types: 6, collect: { 0: 14, 3: 14, 5: 14 } },
   { moves: 25, types: 7, score: 1200 },
-  { moves: 26, types: 7, net: 'bottom' },
+  { moves: 30, types: 7, net: 'rows' },
   { moves: 24, types: 7, collect: { 6: 12, 2: 12 } },
-  { moves: 26, types: 7, net: 'cross', score: 1400 },
+  { moves: 28, types: 7, net: 'center', score: 1400 },
 ];
 // After the hand-made ones, islands are generated: fewer moves, bigger goals.
 function levelDef(n) {
@@ -259,29 +397,36 @@ function levelDef(n) {
   const k = n - LEVELS.length;
   let seed = n * 9301 + 49297;
   const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
-  const def = { moves: Math.max(18, 25 - Math.floor(k / 3)), types: 7 };
+  // Checked with the balance bot: past island 20 a casual player still wins about half the time.
+  const def = { moves: Math.max(22, 25 - Math.floor(k / 4)), types: 7 };
   const kind = k % 3;
-  if (kind === 0) def.score = Math.min(2000, 1200 + k * 40);
+  if (kind === 0) def.score = Math.min(1700, 1150 + k * 25);
   if (kind === 1) {
     const a = Math.floor(rnd() * 7), b = (a + 1 + Math.floor(rnd() * 6)) % 7;
-    const cnt = Math.min(16, 12 + Math.floor(k / 3));
+    const cnt = Math.min(14, 12 + Math.floor(k / 5));
     def.collect = { [a]: cnt, [b]: cnt };
   }
   if (kind === 2) {
-    const names = Object.keys(NETS);
+    const names = ['rows', 'center'];
+    def.moves += 4; // nets need room to reach the edges
     def.net = names[Math.floor(k / 3) % names.length];
-    if (k >= 6) def.score = Math.min(1600, 800 + k * 30);
+    if (k >= 6) def.score = Math.min(1300, 700 + k * 25);
   }
   return def;
 }
 
 const $ = id => document.getElementById(id);
-const tileLayer = $('tileLayer'), netLayer = $('netLayer'), boardEl = $('board');
+const tileLayer = $('tileLayer'), netLayer = $('netLayer'), fxLayer = $('fxLayer'), boardEl = $('board');
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
-let progress = { unlocked: 1, stars: {} };
-try { const p = JSON.parse(localStorage.getItem('gems-progress')); if (p && p.unlocked) progress = p; } catch (e) {}
-function saveProgress() { try { localStorage.setItem('gems-progress', JSON.stringify(progress)); } catch (e) {} }
+const SAVE_KEY = 'pirates-progress-v2'; // a new key starts everyone from island 1
+let progress = { unlocked: 1, stars: {}, tips: {} };
+try { const p = JSON.parse(localStorage.getItem(SAVE_KEY)); if (p && p.unlocked) progress = p; } catch (e) {}
+progress.tips = progress.tips || {};
+function saveProgress() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(progress)); } catch (e) {}
+  YSDK.save(progress);
+}
 
 let levelNo = 1, L, grid, nets, netsLeft, score, moves, collected, busy = false, sel = null, hintTimer = null, over = false;
 const rand = () => Math.floor(Math.random() * L.types);
@@ -291,7 +436,7 @@ const pos = (el, r, c) => { el.style.transform = `translate(${c * 100}%, ${r * 1
 const place = tile => pos(tile.el, tile.r, tile.c);
 function makeTile(t, r, c) {
   const el = document.createElement('div');
-  el.className = t === CHEST ? 'tile rare' : 'tile';
+  el.className = t === CHEST || t >= CANNON_ROW ? 'tile rare' : 'tile';
   el.innerHTML = gemSvg(t);
   tileLayer.appendChild(el);
   const tile = { t, r, c, el };
@@ -303,7 +448,7 @@ const types = () => grid.map(row => row.map(x => x ? x.t : -1));
 // Is (r,c) part of a line of 3+ in this type grid?
 function lineAt(T, r, c) {
   const t = T[r][c];
-  if (t < 0 || t === CHEST) return false;
+  if (t < 0 || t >= CHEST) return false;
   let h = 1, v = 1;
   for (let i = c - 1; i >= 0 && T[r][i] === t; i--) h++;
   for (let i = c + 1; i < N && T[r][i] === t; i++) h++;
@@ -311,14 +456,11 @@ function lineAt(T, r, c) {
   for (let i = r + 1; i < N && T[i][c] === t; i++) v++;
   return h >= 3 || v >= 3;
 }
-function findMatches() {
-  const T = types(), out = new Set();
-  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++)
-    if (lineAt(T, r, c)) out.add(grid[r][c]);
-  return out;
-}
 // Returns a pair of cells that makes a match when swapped, or null.
 function findMove(T) {
+  // A special piece can always be fired by swapping it with a neighbour.
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++)
+    if (T[r][c] >= CANNON_ROW) return [[r, c], c + 1 < N ? [r, c + 1] : [r, c - 1]];
   const sw = (a, b, x, y) => { const k = T[a][b]; T[a][b] = T[x][y]; T[x][y] = k; };
   for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
     for (const [dr, dc] of [[0, 1], [1, 0]]) {
@@ -348,6 +490,42 @@ function freshTypes() {
     }
   } while (!findMove(T));
   return T;
+}
+// No moves left: the same treasures slide to new places (specials and the chest stay put).
+// No moves left: a sea wave washes the regular treasures away and brings new ones. Specials and chests stay.
+function tideTypes() {
+  for (let i = 0; i < 200; i++) {
+    const T = types();
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      if (T[r][c] >= CHEST) continue;
+      let t, k = 0;
+      do t = rand();
+      while (k++ < 20 && ((c >= 2 && T[r][c - 1] === t && T[r][c - 2] === t) || (r >= 2 && T[r - 1][c] === t && T[r - 2][c] === t)));
+      T[r][c] = t;
+    }
+    if (!T.some((row, r) => row.some((t, c) => t < CHEST && lineAt(T, r, c))) && findMove(T)) return T;
+  }
+  return null;
+}
+async function washBoard() {
+  const T = tideTypes();
+  if (!T) return;
+  Sound.tide();
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const swap = tile => { tile.t = T[tile.r][tile.c]; tile.el.className = 'tile'; tile.el.innerHTML = gemSvg(tile.t); };
+  const free = grid.flat().filter(t => t.t < CHEST);
+  if (reduced) { free.forEach(swap); return; }
+  const wave = document.createElement('div');
+  wave.className = 'fx tide';
+  fxLayer.appendChild(wave);
+  free.forEach(tile => {
+    // Each tile rinses as the wave front reaches its column.
+    const at = 1000 * ((tile.c + .5) / N + .084) / 2.4;
+    setTimeout(() => { tile.el.classList.add('rinse'); setTimeout(() => swap(tile), 240); }, at);
+  });
+  await wait(1000);
+  wave.remove();
+  free.forEach(tile => tile.el.classList.remove('rinse'));
 }
 function buildBoard(T) {
   tileLayer.innerHTML = '';
@@ -421,7 +599,7 @@ async function sinkChests() {
   const lost = grid[N - 1].filter(t => t && t.t === CHEST);
   if (!lost.length) return;
   lost.forEach(t => { t.el.classList.add('pop'); grid[t.r][t.c] = null; });
-  flash('Сундук утонул!'); Sound.sink();
+  flash('Сундук утонул!'); Sound.sink(); Rec.chestSank++;
   await wait(400);
   lost.forEach(t => t.el.remove());
   gravity();
@@ -450,29 +628,190 @@ function gravity() {
   fresh.forEach(place);
 }
 
+// Lines of 3+ merged into groups, so a corner of two lines counts as one match.
+function findGroups() {
+  const T = types(), runs = [];
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; ) {
+    let e = c; while (e + 1 < N && T[r][e + 1] === T[r][c]) e++;
+    if (T[r][c] >= 0 && T[r][c] < CHEST && e - c >= 2) runs.push({ dir: 'h', cells: Array.from({ length: e - c + 1 }, (_, k) => [r, c + k]) });
+    c = e + 1;
+  }
+  for (let c = 0; c < N; c++) for (let r = 0; r < N; ) {
+    let e = r; while (e + 1 < N && T[e + 1][c] === T[r][c]) e++;
+    if (T[r][c] >= 0 && T[r][c] < CHEST && e - r >= 2) runs.push({ dir: 'v', cells: Array.from({ length: e - r + 1 }, (_, k) => [r + k, c]) });
+    r = e + 1;
+  }
+  const groups = [];
+  for (const run of runs) {
+    const keys = run.cells.map(([r, c]) => r * N + c);
+    const hit = groups.filter(g => keys.some(k => g.keys.has(k)));
+    const g = { runs: [run], keys: new Set(keys) };
+    hit.forEach(h => { h.runs.forEach(x => g.runs.push(x)); h.keys.forEach(k => g.keys.add(k)); groups.splice(groups.indexOf(h), 1); });
+    groups.push(g);
+  }
+  return groups;
+}
+// Five in a line makes a compass bomb, a corner of five a powder barrel, four in a line a cannonball.
+function specialFor(g, swapped) {
+  const longest = Math.max(...g.runs.map(r => r.cells.length));
+  const run = g.runs.find(r => r.cells.length === longest);
+  let type = null, at = run.cells[Math.floor(run.cells.length / 2)];
+  if (longest >= 5) type = COMPASS;
+  else if (g.runs.some(r => r.dir === 'h') && g.runs.some(r => r.dir === 'v') && g.keys.size >= 5) {
+    type = BARREL;
+    const h = g.runs.find(r => r.dir === 'h'), v = g.runs.find(r => r.dir === 'v');
+    at = h.cells.find(([r, c]) => v.cells.some(([r2, c2]) => r === r2 && c === c2)) || h.cells[1];
+  } else if (longest === 4) type = run.dir === 'h' ? CANNON_ROW : CANNON_COL;
+  if (type === null) return null;
+  const mine = swapped.find(([r, c]) => g.keys.has(r * N + c));
+  if (mine) at = mine;
+  return { type, r: at[0], c: at[1] };
+}
+function fx(cls, r, c) {
+  const el = document.createElement('div');
+  el.className = 'fx ' + cls;
+  pos(el, r, c);
+  fxLayer.appendChild(el);
+  return el;
+}
+function blastCell(r, c) {
+  const tile = grid[r] && grid[r][c];
+  const p = fx('puff', r, c);
+  setTimeout(() => p.remove(), 500);
+  if (tile && !isSpecial(tile)) tile.el.classList.add('pop');
+}
+function mostCommon() {
+  const count = {};
+  grid.flat().forEach(t => { if (t && t.t < CHEST) count[t.t] = (count[t.t] || 0) + 1; });
+  return +Object.keys(count).sort((a, b) => count[b] - count[a])[0];
+}
+function quake() { boardEl.classList.remove('quake'); void boardEl.offsetWidth; boardEl.classList.add('quake'); }
+
+// Fires one special piece and returns the tiles it destroys.
+async function fire(tile) {
+  const out = [];
+  if (tile.t === COMPASS) {
+    // The needle spins, then golden rays strike every treasure of the chosen kind.
+    const type = tile.aim ?? mostCommon();
+    tile.el.classList.remove('aim');
+    tile.el.classList.add('spin');
+    Sound.compass();
+    await wait(420);
+    const targets = grid.flat().filter(t => t && t.t === type);
+    const cell = boardEl.clientWidth / N, step = 45;
+    targets.forEach((t, i) => setTimeout(() => {
+      const ray = fx('ray', tile.r, tile.c);
+      const dx = (t.c - tile.c) * cell, dy = (t.r - tile.r) * cell;
+      Object.assign(ray.style, { left: (tile.c + .5) * cell + 'px', top: (tile.r + .5) * cell + 'px', width: Math.hypot(dx, dy) + 'px', transform: `rotate(${Math.atan2(dy, dx)}rad)` });
+      setTimeout(() => ray.remove(), 420);
+      blastCell(t.r, t.c);
+      if (i % 2 === 0) Sound.pop();
+    }, i * step));
+    await wait(targets.length * step + 250);
+    tile.el.classList.remove('spin');
+    tile.el.classList.add('pop');
+    quake();
+    return targets;
+  }
+  if (tile.t === BARREL) {
+    tile.el.classList.add('shake');
+    Sound.fuse();
+    await wait(380);
+    tile.el.classList.remove('shake');
+    tile.el.classList.add('pop');
+    const w = fx('wave', tile.r - 1, tile.c - 1);
+    w.style.setProperty('--at', `translate(${(tile.c - 1) * 100 / 3}%, ${(tile.r - 1) * 100 / 3}%)`);
+    w.style.transform = '';
+    setTimeout(() => w.remove(), 550);
+    quake(); Sound.barrel();
+    for (let r = tile.r - 1; r <= tile.r + 1; r++) for (let c = tile.c - 1; c <= tile.c + 1; c++) {
+      if (r < 0 || c < 0 || r >= N || c >= N) continue;
+      blastCell(r, c);
+      if (grid[r][c]) out.push(grid[r][c]);
+    }
+    await wait(300);
+    return out;
+  }
+  // Cannonball flies in from the edge along the row (or column) and blows up every cell it passes.
+  const row = tile.t === CANNON_ROW, dur = 520;
+  tile.el.classList.add('pop');
+  Sound.cannon();
+  const ball = fx('ball ' + (row ? 'row' : 'col'), row ? tile.r : -1, row ? -1 : tile.c);
+  ball.innerHTML = '<i></i>';
+  ball.style.transitionDuration = dur + 'ms';
+  void ball.offsetWidth;
+  pos(ball, row ? tile.r : N, row ? N : tile.c);
+  for (let k = 0; k < N; k++) {
+    const r = row ? tile.r : k, c = row ? k : tile.c;
+    if (grid[r][c]) out.push(grid[r][c]);
+    setTimeout(() => { blastCell(r, c); if (k % 3 === 0) Sound.pop(); }, dur * (k + 1) / (N + 1));
+  }
+  await wait(dur);
+  ball.remove();
+  quake();
+  await wait(120);
+  return out;
+}
+
 const COMBO_WORDS = ['', '', 'Йо-хо-хо!', 'Тысяча чертей!', 'На абордаж!'];
-async function resolve(matched) {
+// One step of the cascade: match groups, fire specials, make new specials, clear, drop.
+async function resolve(pending, swapped = []) {
   let combo = 1;
-  while (matched.size) {
-    const boom = chestHit(matched);
-    if (boom) grid.forEach(row => row.forEach(t => t && matched.add(t)));
-    score += matched.size * 10 * combo;
+  while (true) {
+    const groups = findGroups();
+    if (!groups.length && !pending.length) break;
+    const clear = new Set();
+    groups.forEach(g => g.keys.forEach(k => clear.add(grid[Math.floor(k / N)][k % N])));
+    const makes = groups.map(g => specialFor(g, swapped)).filter(Boolean);
+    swapped = [];
+    const chestNear = chestHit(clear);
+    // Fire specials one after another; a blast that reaches another special sets it off too.
+    const fired = new Set(), queue = [...pending];
+    pending = [];
+    if (queue.length) flash({ [BARREL]: 'Бабах!', [COMPASS]: 'Курс на сокровища!' }[queue[0].t] || 'Пли!');
+    while (queue.length) {
+      const sp = queue.shift();
+      if (fired.has(sp)) continue;
+      fired.add(sp); clear.add(sp);
+      Rec.fired[PIECES[sp.t].name] = (Rec.fired[PIECES[sp.t].name] || 0) + 1;
+      for (const t of await fire(sp)) {
+        clear.add(t);
+        if (isSpecial(t) && !fired.has(t)) queue.push(t);
+      }
+    }
+    // New specials replace a matched piece instead of being cleared.
+    for (const m of makes) {
+      const t = grid[m.r][m.c];
+      clear.delete(t);
+      collected[t.t] = (collected[t.t] || 0) + 1;
+      t.t = m.type;
+      Rec.made[PIECES[m.type].name] = (Rec.made[PIECES[m.type].name] || 0) + 1;
+      t.el.className = 'tile rare born';
+      t.el.innerHTML = gemSvg(m.type);
+      Sound.forge();
+      flash({ [BARREL]: 'Бочка пороха!', [COMPASS]: 'Компас-бомба!' }[m.type] || 'Пушечное ядро!');
+    }
+    const boom = chestNear || [...clear].some(t => t.t === CHEST);
+    const beforeBoom = new Set(clear); // the chest's own blast clears pieces but leaves nets in place
+    if (boom) { grid.forEach(row => row.forEach(t => t && clear.add(t))); Rec.chestBroke++; }
+    score += clear.size * 10 * combo;
     if (boom) { flash('Золотой сундук!'); Sound.boom(); }
-    else { Sound.match(combo); if (combo > 1) flash(COMBO_WORDS[combo] || `Комбо ×${combo}`); }
-    matched.forEach(t => {
+    else if (!fired.size && !makes.length) { Sound.match(combo); if (combo > 1) flash(COMBO_WORDS[combo] || `Комбо ×${combo}`); }
+    else if (!fired.size) Sound.match(combo);
+    clear.forEach(t => {
       t.el.classList.add('pop');
       grid[t.r][t.c] = null;
-      collected[t.t] = (collected[t.t] || 0) + 1;
-      const net = nets[t.r][t.c];
+      if (t.t < CHEST) collected[t.t] = (collected[t.t] || 0) + 1;
+      const net = boom && !beforeBoom.has(t) ? null : nets[t.r][t.c];
       if (net) { Sound.cut(); net.classList.add('cut'); setTimeout(() => net.remove(), 300); nets[t.r][t.c] = null; netsLeft--; }
     });
     updateHud();
-    await wait(200);
-    matched.forEach(t => t.el.remove());
+    await wait(makes.length ? 450 : 200);
+    clear.forEach(t => t.el.remove());
+    makes.forEach(m => grid[m.r][m.c] && grid[m.r][m.c].el.classList.remove('born'));
     gravity();
     await wait(260);
     await sinkChests();
-    matched = findMatches();
     combo++;
   }
 }
@@ -487,13 +826,18 @@ function swapCells(a, b) {
 
 async function trySwap(a, b) {
   if (busy || over || b.r < 0 || b.c < 0 || b.r >= N || b.c >= N) return;
+  if (!Tut.permits(a, b)) { Sound.wrong(); setSel(null); return; }
   busy = true;
+  Tut.hide();
   clearHint(); setSel(null);
   swapCells(a, b);
   Sound.swap();
   await wait(220);
-  const m = findMatches();
-  if (!m.size) {
+  const specials = [grid[a.r][a.c], grid[b.r][b.c]].filter(isSpecial);
+  const ta = grid[a.r][a.c], tb = grid[b.r][b.c];
+  if (ta.t === COMPASS && tb.t < CHEST) ta.aim = tb.t;
+  if (tb.t === COMPASS && ta.t < CHEST) tb.aim = ta.t;
+  if (!findGroups().length && !specials.length) {
     Sound.wrong();
     swapCells(a, b);
     await wait(220);
@@ -502,16 +846,34 @@ async function trySwap(a, b) {
   }
   moves--;
   updateHud();
-  await resolve(m);
+  Rec.move(`${a.r},${a.c}>${b.r},${b.c}`);
+  await resolve(specials, [[a.r, a.c], [b.r, b.c]]);
+  await afterMove();
+}
+// Compass bomb aimed by tapping any treasure on the deck.
+async function aimAt(compass, type) {
+  if (busy || over || Tut.allowed) return;
+  busy = true;
+  Tut.hide();
+  clearHint(); setSel(null);
+  compass.aim = type;
+  moves--;
+  updateHud();
+  Rec.move(`компас ${compass.r},${compass.c}>${PIECES[type].name}`);
+  await resolve([compass]);
+  await afterMove();
+}
+async function afterMove() {
   busy = false;
   if (goalsMet()) return win();
   if (moves <= 0) return lose();
   if (!findMove(types())) {
-    flash('Свистать всех!');
-    await wait(500);
-    buildBoard(freshTypes());
+    flash('Волна!'); Rec.shuffles++;
+    await wait(350);
+    await washBoard();
+    await wait(150);
   }
-  armHint();
+  if (!tutorialNext()) armHint();
 }
 
 // Parchment scroll over the deck
@@ -533,7 +895,8 @@ function overlay(html, buttons) {
 const starsHtml = n => `<div class="stars">${[0, 1, 2].map(i => `<span class="${i < n ? 'on' : ''}">★</span>`).join('')}</div>`;
 
 function win() {
-  over = true; clearHint(); Sound.win();
+  Tut.stop(); Rec.finish('победа');
+  over = true; clearHint(); Sound.win(); YSDK.gameplay(false);
   const bonus = moves * 20;
   score += bonus;
   updateHud();
@@ -544,22 +907,33 @@ function win() {
   saveProgress();
   overlay(
     `<h2>Остров ${levelNo} взят!</h2>${starsHtml(stars)}<p>Добыча: ${score}, из них ${bonus} за оставшиеся ходы.</p>`,
-    [['Плыть дальше', () => startLevel(levelNo + 1)], ['Повторить', () => startLevel(levelNo), true]]
+    [['Плыть дальше', () => afterAd(() => voyage(levelNo + 1))], ['Повторить', () => afterAd(() => startLevel(levelNo)), true]]
   );
 }
 function lose() {
-  over = true; clearHint(); Sound.lose();
+  Tut.stop(); Rec.finish('поражение');
+  over = true; clearHint(); Sound.lose(); YSDK.gameplay(false);
   const left = goalList().filter(g => g.have < g.need).map(chipHtml).join('');
-  overlay(
-    `<h2>Ходы закончились</h2><p>До сокровищ было рукой подать:</p><div class="goals">${left}</div>`,
-    [['Ещё раз', () => startLevel(levelNo)], ['На карту', showMap, true]]
-  );
+  const buttons = [['Ещё раз', () => afterAd(() => startLevel(levelNo))], ['На карту', showMap, true]];
+  // One rewarded video per attempt buys extra moves.
+  if (!L.bonusUsed && YSDK.canReward()) buttons.unshift([`+${EXTRA_MOVES} ходов за рекламу`, async () => {
+    L.bonusUsed = true;
+    if (!(await YSDK.rewarded())) return lose();
+    moves += EXTRA_MOVES; over = false; Rec.extraMoves += EXTRA_MOVES;
+    updateHud();
+    $('overlay').hidden = true;
+    YSDK.gameplay(true); armHint();
+  }]);
+  overlay(`<h2>Ходы закончились</h2><p>До сокровищ было рукой подать:</p><div class="goals">${left}</div>`, buttons);
 }
 
 function setSel(tile) {
-  if (sel) sel.el.classList.remove('sel');
+  if (sel) sel.el.classList.remove('sel', 'aim');
   sel = tile;
-  if (sel) sel.el.classList.add('sel');
+  const aiming = !!sel && sel.t === COMPASS;
+  boardEl.classList.toggle('aiming', aiming);
+  if (sel) sel.el.classList.add(aiming ? 'aim' : 'sel');
+  if (aiming) flash('Выберите сокровище');
 }
 function clearHint() {
   clearTimeout(hintTimer);
@@ -581,6 +955,7 @@ function cellAt(e) {
 }
 boardEl.addEventListener('pointerdown', e => {
   if (busy || over) return;
+  if (!Tut.stage) Tut.hide();
   const cell = cellAt(e);
   if (cell.r < 0 || cell.c < 0 || cell.r >= N || cell.c >= N) return;
   start = { ...cell, x: e.clientX, y: e.clientY };
@@ -602,30 +977,89 @@ boardEl.addEventListener('pointerup', () => {
   start = null;
   if (!sel) return setSel(grid[cell.r][cell.c]);
   const near = Math.abs(sel.r - cell.r) + Math.abs(sel.c - cell.c);
+  const target = grid[cell.r][cell.c];
+  if (sel.t === COMPASS && near > 1 && target.t < CHEST) return aimAt(sel, target.t);
   if (near === 1) trySwap({ r: sel.r, c: sel.c }, cell);
   else setSel(near === 0 ? null : grid[cell.r][cell.c]);
 });
 boardEl.addEventListener('pointercancel', () => { start = null; });
 
+// Music tracks, written as MIDI note numbers (60 = middle C, 0 = rest).
+const TRACKS = [
+  { name: 'Тихая гавань', step: .3, // slow arpeggios over Am F C G
+    chords: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]],
+    melody: [76, 0, 0, 0, 74, 0, 72, 0, 72, 0, 0, 0, 69, 0, 0, 0, 67, 0, 0, 0, 72, 0, 74, 0, 74, 0, 0, 0, 0, 0, 0, 0,
+             76, 0, 0, 0, 79, 0, 76, 0, 77, 0, 0, 0, 76, 0, 74, 0, 72, 0, 0, 0, 71, 0, 72, 0, 74, 0, 0, 0, 0, 0, 0, 0],
+    play(i, at, S) {
+      const ch = this.chords[Math.floor(i / 8) % 4], arp = [0, 1, 2, 1, 2, 1, 0, 1][i % 8];
+      S.note(ch[arp] + (i % 8 === 3 ? 12 : 0), this.step * 1.6, at, 'triangle', .16);
+      if (i % 8 === 0) S.note(ch[0] - 12, this.step * 7, at, 'sine', .3);
+      S.note(this.melody[i % this.melody.length], this.step * 2.5, at, 'sine', .14);
+    } },
+  { name: 'Морская джига', step: .14, // 6/8 jig in D major
+    melody: [74, 78, 81, 78, 81, 86, 85, 81, 76, 85, 81, 76, 83, 79, 74, 83, 79, 74, 81, 78, 74, 76, 78, 76,
+             74, 78, 81, 86, 81, 78, 79, 83, 86, 83, 79, 74, 76, 79, 83, 81, 78, 76, 74, 0, 74, 74, 0, 0],
+    bass: [50, 45, 43, 50, 50, 43, 45, 50],
+    play(i, at, S) {
+      S.note(this.melody[i % 48], this.step * .9, at, 'triangle', .14);
+      if (i % 3 === 0) S.note(this.bass[Math.floor(i / 6) % 8] - (i % 6 ? 0 : 12), this.step * 2.5, at, 'sine', .3);
+    } },
+  { name: 'Таверна', step: .38, // waltz in G
+    melody: [71, 74, 79, 78, 76, 74, 72, 76, 72, 71, 0, 0, 69, 72, 78, 76, 74, 72, 71, 74, 71, 69, 0, 0,
+             71, 74, 79, 81, 79, 78, 76, 79, 76, 74, 0, 71, 72, 76, 74, 71, 69, 67, 69, 71, 69, 67, 0, 0],
+    roots: [43, 50, 48, 43, 50, 50, 43, 50, 43, 50, 48, 43, 48, 43, 50, 43],
+    play(i, at, S) {
+      S.note(this.melody[i % 48], this.step * .95, at, 'sawtooth', .07);
+      const r = this.roots[Math.floor(i / 3) % 16];
+      if (i % 3 === 0) S.note(r - 12, this.step * 1.2, at, 'triangle', .35);
+      else [0, 4, 7].forEach(d => S.note(r + d + (r === 50 ? 0 : 12), this.step * .4, at, 'triangle', .05));
+    } },
+  { name: 'Шторм', step: .2, // driving D minor
+    melody: [62, 0, 65, 0, 69, 0, 67, 65, 64, 0, 0, 0, 61, 0, 0, 0, 62, 0, 65, 0, 69, 0, 72, 70, 69, 0, 0, 0, 0, 0, 0, 0,
+             70, 0, 69, 0, 67, 0, 65, 64, 65, 0, 64, 0, 62, 0, 61, 0, 62, 65, 69, 74, 72, 70, 69, 67, 69, 0, 0, 0, 62, 0, 0, 0],
+    roots: [38, 33, 38, 33, 34, 33, 38, 33],
+    play(i, at, S) {
+      S.note(this.melody[i % 64] + 12, this.step * .9, at, 'square', .06);
+      const r = this.roots[Math.floor(i / 8) % 8], pat = [0, null, 0, 12, 0, null, 0, 12][i % 8];
+      if (pat !== null) S.note(r + pat, this.step * .8, at, 'triangle', .3);
+    } },
+  { name: 'Пиратская песня', step: .2, // the first tune of the game
+    melody: [62, 0, 62, 62, 62, 0, 62, 62, 62, 0, 57, 0, 60, 0, 62, 0, 60, 0, 60, 60, 60, 0, 60, 60, 60, 0, 55, 0, 58, 0, 60, 0],
+    bass: [38, 38, 38, 38, 36, 36, 36, 36],
+    play(i, at, S) {
+      S.note(this.melody[i % 32], this.step * .9, at, 'square', .08);
+      if (i % 4 === 0) S.note(this.bass[(i / 4) % 8], this.step * 3, at, 'triangle', .3);
+    } },
+];
+
 // Sound: everything is synthesized with Web Audio, so the game needs no audio files.
 const Sound = {
-  ctx: null, sfxGain: null, musicGain: null, sfx: true, music: true, timer: null, step: 0, next: 0,
+  ctx: null, sfxGain: null, musicGain: null, sfx: true, track: 0, timer: null, step: 0, next: 0, holds: new Set(),
   init() {
     if (!this.ctx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
       this.ctx = new AC();
       this.sfxGain = this.ctx.createGain(); this.sfxGain.connect(this.ctx.destination);
-      this.musicGain = this.ctx.createGain(); this.musicGain.connect(this.ctx.destination);
+      this.musicGain = this.ctx.createGain();
+      const soft = this.ctx.createBiquadFilter(); // takes the edge off square waves so music does not tire the ear
+      soft.type = 'lowpass'; soft.frequency.value = 2400;
+      this.musicGain.connect(soft); soft.connect(this.ctx.destination);
       this.apply();
       this.startMusic();
     }
-    if (this.ctx.state === 'suspended' && !document.hidden) this.ctx.resume();
+    this.update();
+  },
+  // Sound stays off while anything holds it: a hidden tab, an ad, a pause from Yandex.
+  hold(reason, on) { on ? this.holds.add(reason) : this.holds.delete(reason); this.update(); },
+  update() {
+    if (!this.ctx) return;
+    if (this.holds.size || document.hidden) this.ctx.suspend(); else this.ctx.resume();
   },
   apply() {
     if (!this.ctx) return;
     this.sfxGain.gain.value = this.sfx ? .5 : 0;
-    this.musicGain.gain.value = this.music ? .18 : 0;
+    this.musicGain.gain.value = this.track >= 0 ? .22 : 0;
   },
   tone(freq, dur, { type = 'triangle', vol = .3, at = 0, to = null, out = this.sfxGain } = {}) {
     if (!this.ctx) return;
@@ -649,70 +1083,482 @@ const Sound = {
   match(combo) { const f = 440 * Math.pow(2, Math.min(combo - 1, 8) * 2 / 12); this.tone(f, .2); this.tone(f * 1.5, .2, { at: .06, vol: .2 }); },
   cut()   { this.noise(.08, .25); },
   boom()  { this.noise(.7, .6); this.tone(120, .8, { type: 'sine', vol: .6, to: 40 }); [523, 659, 784, 1047].forEach((f, i) => this.tone(f, .3, { at: .25 + i * .08, vol: .25 })); },
+  cannon() { this.tone(90, .5, { type: 'sine', vol: .7, to: 40 }); this.noise(.35, .5); this.tone(900, .5, { type: 'sawtooth', vol: .05, to: 300 }); },
+  compass() { [523, 659, 784, 1047, 1319].forEach((f, i) => this.tone(f, .3, { at: i * .07, vol: .16, type: 'sine' })); },
+  pop()   { this.noise(.12, .3); },
+  fuse()  { this.noise(.35, .12); this.tone(1400, .35, { type: 'square', vol: .03, to: 2200 }); },
+  barrel() { this.noise(.8, .7); this.tone(70, .9, { type: 'sine', vol: .8, to: 30 }); },
+  forge() { [784, 988, 1319].forEach((f, i) => this.tone(f, .25, { at: i * .06, vol: .18 })); },
   sink()  { this.tone(600, .7, { type: 'sine', vol: .3, to: 90 }); },
   win()   { [392, 494, 587, 784].forEach((f, i) => this.tone(f, .35, { at: i * .12, vol: .3 })); },
+  sail()  { this.noise(1.6, .07); [294, 370, 440].forEach((f, i) => this.tone(f, .5, { at: .1 + i * .18, vol: .08, type: 'sine' })); },
+  bell()  { this.tone(1175, 1, { type: 'sine', vol: .14 }); this.tone(1568, .8, { type: 'sine', vol: .07, at: .02 }); },
+  tide()  { this.noise(1.3, .3); this.tone(70, 1.2, { type: 'sine', vol: .3, to: 45 }); this.noise(.6, .15, .7); },
   lose()  { [392, 349, 311, 262].forEach((f, i) => this.tone(f, .4, { at: i * .16, vol: .25, type: 'square' })); },
-  // A short shanty-style loop in D minor, scheduled a little ahead of time.
-  MELODY: [62, 0, 62, 62, 62, 0, 62, 62, 62, 0, 57, 0, 60, 0, 62, 0, 60, 0, 60, 60, 60, 0, 60, 60, 60, 0, 55, 0, 58, 0, 60, 0],
-  BASS: [38, 38, 38, 38, 36, 36, 36, 36],
+  // Music: each track is a loop of steps; play(step, at) schedules that step's notes.
   startMusic() {
-    const beat = 60 / 150 / 2;
     this.next = this.ctx.currentTime + .1;
     this.timer = setInterval(() => {
+      const tr = TRACKS[this.track];
+      if (!tr) return;
       while (this.next < this.ctx.currentTime + .3) {
-        const at = this.next - this.ctx.currentTime, m = this.MELODY[this.step % this.MELODY.length];
-        const hz = n => 440 * Math.pow(2, (n - 69) / 12);
-        if (m) this.tone(hz(m), beat * .9, { type: 'square', vol: .12, at, out: this.musicGain });
-        if (this.step % 4 === 0) this.tone(hz(this.BASS[(this.step / 4) % this.BASS.length]), beat * 3, { type: 'triangle', vol: .35, at, out: this.musicGain });
-        this.step++; this.next += beat;
+        tr.play(this.step, this.next - this.ctx.currentTime, this);
+        this.step++; this.next += tr.step;
       }
     }, 100);
   },
+  note(n, dur, at, type, vol) { if (n) this.tone(440 * Math.pow(2, (n - 69) / 12), dur, { type, vol, at, out: this.musicGain }); },
 };
-try { const a = JSON.parse(localStorage.getItem('pirates-audio')); if (a) { Sound.sfx = a.sfx; Sound.music = a.music; } } catch (e) {}
+try { const a = JSON.parse(localStorage.getItem('pirates-audio')); if (a) { Sound.sfx = a.sfx; if (Number.isInteger(a.track)) Sound.track = a.track; } } catch (e) {}
 function syncToggles() {
   $('sfxBtn').setAttribute('aria-pressed', Sound.sfx);
-  $('musicBtn').setAttribute('aria-pressed', Sound.music);
+  $('musicBtn').setAttribute('aria-pressed', Sound.track >= 0);
+  $('musicBtn').textContent = 'Музыка: ' + (TRACKS[Sound.track] ? TRACKS[Sound.track].name : 'выкл');
   Sound.apply();
-  try { localStorage.setItem('pirates-audio', JSON.stringify({ sfx: Sound.sfx, music: Sound.music })); } catch (e) {}
+  try { localStorage.setItem('pirates-audio', JSON.stringify({ sfx: Sound.sfx, track: Sound.track })); } catch (e) {}
 }
 $('sfxBtn').addEventListener('click', () => { Sound.sfx = !Sound.sfx; syncToggles(); });
-$('musicBtn').addEventListener('click', () => { Sound.music = !Sound.music; syncToggles(); });
+// Each tap switches to the next tune; after the last one the music turns off.
+$('musicBtn').addEventListener('click', () => {
+  Sound.track = Sound.track + 1 >= TRACKS.length ? -1 : Sound.track + 1;
+  Sound.step = 0;
+  syncToggles();
+});
 syncToggles();
 // Browsers allow sound only after the first tap.
 document.addEventListener('pointerdown', () => Sound.init(), true);
 // Yandex Games requires silence while the tab is hidden.
-document.addEventListener('visibilitychange', () => {
-  if (!Sound.ctx) return;
-  if (document.hidden) Sound.ctx.suspend(); else Sound.ctx.resume();
-});
+document.addEventListener('visibilitychange', () => Sound.update());
 document.addEventListener('contextmenu', e => e.preventDefault());
 
+// Yandex Games SDK. On Yandex the platform serves /sdk.js next to the game; anywhere else
+// (a local file, the preview) it is missing and the game simply runs without ads and cloud saves.
+const EXTRA_MOVES = 5;
+const YSDK = {
+  sdk: null, player: null,
+  async init() {
+    try {
+      await new Promise((ok, fail) => {
+        const sc = document.createElement('script');
+        sc.src = '/sdk.js'; sc.onload = ok; sc.onerror = fail;
+        setTimeout(fail, 4000);
+        document.head.appendChild(sc);
+      });
+      this.sdk = await YaGames.init();
+    } catch (e) { return; }
+    this.sdk.on?.('game_api_pause', () => Sound.hold('platform', true));
+    this.sdk.on?.('game_api_resume', () => Sound.hold('platform', false));
+    try {
+      this.player = await this.sdk.getPlayer({ scopes: false });
+      const d = await this.player.getData(['progress']);
+      // Cloud progress wins when it is further along than this device.
+      if (d.progress && d.progress.unlocked > progress.unlocked) {
+        progress = d.progress;
+        progress.tips = progress.tips || {};
+        try { localStorage.setItem(SAVE_KEY, JSON.stringify(progress)); } catch (e) {}
+        if (!levelNo) showMap();
+      }
+    } catch (e) {}
+  },
+  ready() { this.sdk?.features?.LoadingAPI?.ready(); },
+  gameplay(on) { const g = this.sdk?.features?.GameplayAPI; on ? g?.start() : g?.stop(); },
+  save(p) { this.player?.setData({ progress: p }).catch(() => {}); },
+  interstitial() {
+    return new Promise(done => {
+      if (!this.sdk) return done();
+      const end = () => { Sound.hold('ad', false); done(); };
+      Sound.hold('ad', true);
+      this.sdk.adv.showFullscreenAdv({ callbacks: { onClose: end, onError: end } });
+    });
+  },
+  canReward() { return !!this.sdk || TEST_MODE; },
+  rewarded() {
+    return new Promise(done => {
+      if (!this.sdk) return done(TEST_MODE); // без Яндекса в тестовом режиме награда выдаётся сразу
+      let got = false;
+      const end = () => { Sound.hold('ad', false); done(got); };
+      Sound.hold('ad', true);
+      this.sdk.adv.showRewardedVideo({ callbacks: { onRewarded: () => { got = true; }, onClose: end, onError: end } });
+    });
+  },
+};
+// Yandex limits how often a fullscreen ad can show, so asking between islands is safe.
+async function afterAd(next) { await YSDK.interstitial(); next(); }
+
+// Play log for Claude: each finished attempt goes to the artifact's database, so it can be read back
+// and used to tune the islands. Off the Claude preview (Yandex, a local file) there is no db and nothing is sent.
+const Rec = {
+  cur: null, dbp: window.claude?.use ? window.claude.use('db').catch(() => null) : Promise.resolve(null),
+  start() {
+    this.cur = { level: levelNo, started: Date.now(), log: [], made: {}, fired: {}, chestBroke: 0, chestSank: 0, shuffles: 0, extraMoves: 0 };
+  },
+  move(m) { if (this.cur && this.cur.log.length < 80) this.cur.log.push(m); },
+  async finish(result) {
+    const c = this.cur;
+    this.cur = null;
+    if (!c || !c.log.length) return;
+    const doc = {
+      island: c.level, result, testMode: TEST_MODE,
+      movesUsed: c.log.length, movesGiven: L.moves + c.extraMoves, movesLeft: moves,
+      score, goals: goalList().map(g => ({ kind: g.kind, what: g.kind === 'collect' ? PIECES[g.t].name : g.kind, need: g.need, have: g.have })),
+      specialsMade: c.made, specialsFired: c.fired, chestBroke: c.chestBroke, chestSank: c.chestSank,
+      shuffles: c.shuffles, extraMoves: c.extraMoves, seconds: Math.round((Date.now() - c.started) / 1000),
+      at: new Date().toISOString(), moves: c.log,
+    };
+    try { const db = await this.dbp; if (db) await db.collection('games').add(doc); } catch (e) {}
+  },
+};
+for (const k of ['made', 'fired']) Object.defineProperty(Rec, k, { get() { return this.cur ? this.cur[k] : {}; } });
+for (const k of ['chestBroke', 'chestSank', 'shuffles', 'extraMoves'])
+  Object.defineProperty(Rec, k, { get() { return this.cur ? this.cur[k] : 0; }, set(v) { if (this.cur) this.cur[k] = v; } });
+
+// Tutorial: a spotlight on the cells, a hand showing the gesture, a line of text.
+const HAND = '<svg viewBox="0 0 100 100"><path d="M40 20a8 8 0 0 1 16 0v30l4-1a8 8 0 0 1 9 5l2-1a8 8 0 0 1 10 6a7 7 0 0 1 9 7v12c0 12-10 22-22 22H52c-8 0-14-4-18-10L20 68a8 8 0 0 1 12-10l8 8z" fill="#fff" stroke="#3a2615" stroke-width="4" stroke-linejoin="round"/></svg>';
+const Tut = {
+  stage: null, allowed: null, els: [],
+  show(cells, text, gesture) {
+    this.hide();
+    const rs = cells.map(c => c[0]), cs = cells.map(c => c[1]);
+    const r0 = Math.min(...rs), r1 = Math.max(...rs), c0 = Math.min(...cs), c1 = Math.max(...cs);
+    const spot = fx('spot', 0, 0);
+    Object.assign(spot.style, { transform: 'none', left: c0 * 12.5 + '%', top: r0 * 12.5 + '%', width: (c1 - c0 + 1) * 12.5 + '%', height: (r1 - r0 + 1) * 12.5 + '%' });
+    this.els.push(spot);
+    if (gesture) {
+      const hand = fx('hand ' + gesture, 0, 0);
+      hand.innerHTML = HAND;
+      const [a, b] = [cells[0], cells[1] || cells[0]];
+      hand.style.setProperty('--from', `translate(${a[1] * 100}%, ${a[0] * 100}%)`);
+      hand.style.setProperty('--to', `translate(${b[1] * 100}%, ${b[0] * 100}%)`);
+      this.els.push(hand);
+    }
+    const bub = $('bubble');
+    bub.textContent = text;
+    bub.className = 'bubble ' + (r0 >= 4 ? 'top' : 'bottom');
+    bub.hidden = false;
+  },
+  hide() { this.els.forEach(e => e.remove()); this.els = []; $('bubble').hidden = true; },
+  stop() { this.hide(); this.stage = null; this.allowed = null; },
+  // A move is allowed during a guided step only if it is exactly the one shown.
+  permits(a, b) {
+    if (!this.allowed) return true;
+    const [x, y] = this.allowed, same = (p, q) => p.r === q[0] && p.c === q[1];
+    return (same(a, x) && same(b, y)) || (same(a, y) && same(b, x));
+  },
+};
+const TIPS = {
+  [CANNON_ROW]: ['cannon', 'Пушечное ядро! Сдвиньте его, и оно пролетит через весь ряд.'],
+  [CANNON_COL]: ['cannon', 'Пушечное ядро! Сдвиньте его, и оно пролетит через весь столбец.'],
+  [BARREL]: ['barrel', 'Бочка пороха! Сдвиньте её, и она взорвёт всё вокруг.'],
+  [COMPASS]: ['compass', 'Компас-бомба! Нажмите на неё, а потом на любое сокровище.'],
+  [CHEST]: ['chest', 'Золотой сундук! Соберите ряд рядом с ним, пока он не утонул.'],
+};
+// Island 1 board with a ready four-in-a-row on row 5: swap (4,3) with (5,3).
+function tutorialBoard() {
+  for (let i = 0; i < 200; i++) {
+    const T = freshTypes();
+    const g = T[4][3];
+    T[5][1] = T[5][2] = T[5][4] = g;
+    T[5][3] = (g + 1) % L.types;
+    if (T[5][0] === g || T[5][5] === g) continue;
+    buildBoard(T);
+    if (findGroups().length) continue;
+    return true;
+  }
+  buildBoard(freshTypes());
+  return false;
+}
+function tutorialStart() {
+  Tut.stage = 'move';
+  Tut.allowed = [[4, 3], [5, 3]];
+  Tut.show([[4, 3], [5, 3]], 'Проведите пальцем вниз, чтобы поменять сокровища местами и собрать четыре в ряд.', 'swipe');
+}
+// Called after every move: advances the guided island 1, or shows a first-time tip.
+function tutorialNext() {
+  if (Tut.stage === 'move') {
+    const cannon = grid.flat().find(t => t.t === CANNON_ROW || t.t === CANNON_COL);
+    if (cannon) {
+      const nb = cannon.c + 1 < N ? [cannon.r, cannon.c + 1] : [cannon.r, cannon.c - 1];
+      Tut.stage = 'cannon';
+      Tut.allowed = [[cannon.r, cannon.c], nb];
+      progress.tips.cannon = 1;
+      Tut.show([[cannon.r, cannon.c], nb], 'Четыре в ряд дали пушечное ядро! Сдвиньте его, чтобы выстрелить.', 'swipe');
+      return true;
+    }
+  }
+  if (Tut.stage === 'move' || Tut.stage === 'cannon') {
+    Tut.stop();
+    progress.tips.intro = 1; saveProgress();
+    flash('Теперь сами!');
+    return false;
+  }
+  for (const t of grid.flat()) {
+    const tip = TIPS[t.t];
+    if (!tip || progress.tips[tip[0]]) continue;
+    progress.tips[tip[0]] = 1; saveProgress();
+    Tut.show([[t.r, t.c]], tip[1], t.t === COMPASS ? 'tap' : null);
+    return true;
+  }
+  return false;
+}
+
+// Story: chapters of six islands; a speaker's line greets the ship at each island, shown once.
+const CHAPTER = 6;
+const CHAPTERS = [
+  { name: 'Бухта Попугая', sub: 'Тихие воды, где начинается путь', theme: 'bay' },
+  { name: 'Туманный архипелаг', sub: 'Острова прячутся в тумане', theme: 'fog' },
+  { name: 'Море Кракена', sub: 'Глубоко внизу кто-то не спит', theme: 'kraken' },
+  { name: 'Острова Черепа', sub: 'Последний рубеж перед сундуком', theme: 'skull' },
+];
+const chapterOf = n => Math.floor((n - 1) / CHAPTER);
+const chapterInfo = k => CHAPTERS[k] || {
+  name: `Неизведанные воды, часть ${k - CHAPTERS.length + 1}`, sub: 'По новой карте Морского Короля',
+  theme: CHAPTERS[k % CHAPTERS.length].theme,
+};
+const FACES = {
+  parrot: ['Попугай Жако', '<circle cx="32" cy="36" r="21" fill="#3fa34d"/><path d="M20 20q2-14 12-8q4-10 14-2q-10 0-12 8z" fill="#d6402b"/><circle cx="37" cy="30" r="7" fill="#fff"/><circle cx="39" cy="30" r="3.5" fill="#1b1b1b"/><path d="M44 34q15 1 11 17q-4-8-13-8z" fill="#f2c14e" stroke="#9a6a12" stroke-width="1.5"/><path d="M15 46q9 9 22 8" fill="none" stroke="#2c7a37" stroke-width="3" stroke-linecap="round"/>'],
+  scar: ['Капитан Шрам', '<circle cx="32" cy="38" r="18" fill="#d9a77c"/><path d="M8 26q24-22 48 0q-6 4-24 4t-24-4z" fill="#1d1d22"/><circle cx="32" cy="18" r="4" fill="#f4ead6"/><path d="M18 34h28" stroke="#1d1d22" stroke-width="2"/><ellipse cx="25" cy="37" rx="5" ry="4.5" fill="#1d1d22"/><circle cx="39" cy="37" r="2.5" fill="#1d1d22"/><path d="M42 30l-6 16" stroke="#b3322b" stroke-width="2.5" stroke-linecap="round"/><path d="M18 46q14 14 28 0q-2 10-14 12q-12-2-14-12z" fill="#2b2b2b"/>'],
+  keeper: ['Смотритель маяка', '<circle cx="32" cy="34" r="18" fill="#e3b48c"/><path d="M14 26q18-16 36 0z" fill="#2c5a7a"/><rect x="12" y="24" width="40" height="5" rx="2" fill="#1d3d55"/><circle cx="26" cy="34" r="2.5" fill="#1b1b1b"/><circle cx="38" cy="34" r="2.5" fill="#1b1b1b"/><path d="M16 40q16 26 32 0q-4 6-16 6t-16-6z" fill="#f2efe8"/>'],
+};
+const STORY = {
+  1: ['parrot', 'Кар-р! Капитан, старый Мартин ушёл на покой и отдал нам свою карту. В конце пути лежит Сундук Морского Короля! Начнём с ближайшего острова.'],
+  2: ['parrot', 'На первом острове нашлась записка Мартина: «Дублоны любят тех, кто собирает их дюжинами». Странный был старик.'],
+  3: ['parrot', 'Чёрный парус на горизонте! Это «Каракатица» капитана Шрама. Он тоже ищет сундук. Поспешим!'],
+  4: ['parrot', 'Местные торгуют изумрудами и компасами. Набьём трюм, пока Шрам всё не скупил.'],
+  5: ['scar', 'Ха! Я раскидал по острову рыбацкие сети. Посмотрим, как ты выпутаешься, салага!'],
+  6: ['parrot', 'Последний остров бухты. Говорят, тут зарыта первая часть ключа от сундука. Копаем, кар-р!'],
+  7: ['parrot', 'Туман такой, что клюва не видно. Мартин писал: «В тумане держись рубинов, они светятся».'],
+  8: ['parrot', 'Здесь попадаются золотые сундуки! Взломаете такой рядом с рядом, пока он не утонул, и он разнесёт всю палубу.'],
+  9: ['parrot', 'На берегу кто-то выложил черепа в ряд. Это знак людей Шрама. Он опередил нас всего на день.'],
+  10: ['scar', 'Теперь мои сети в два ряда! Твой попугай запутается первым.'],
+  11: ['parrot', 'В бутылке записка: «Вторая часть ключа у смотрителя маяка». Значит, держим курс на маяк.'],
+  12: ['keeper', 'Шрам был здесь и спутал мне все сети. Распутаете их, и вторая часть ключа ваша.'],
+  13: ['parrot', 'Вода тёмная и глубокая. Матросы шепчутся про кракена. Я не боюсь! Почти.'],
+  14: ['parrot', 'Огромное щупальце утащило бочку пороха прямо с палубы. Похоже, кракен любит фейерверки.'],
+  15: ['scar', 'Кракен утащил половину моей команды, но сундук всё равно будет моим!'],
+  16: ['parrot', 'Мы выловили юнгу с «Каракатицы». Он говорит, третья часть ключа спрятана на Островах Черепа.'],
+  17: ['parrot', 'Кракен плывёт за нами! Хватаем добычу и полный вперёд!'],
+  18: ['parrot', 'Кракен уснул на мели, обвив скалу. Тихонько проскользнём мимо. Только не роняйте якорь.'],
+  19: ['parrot', 'Острова Черепа. Здесь даже чайки молчат. Мартин писал: «Сокровище любит смелых и терпеливых».'],
+  20: ['scar', 'Последний шанс, салага: отдай мне ключ, и я оставлю тебе шлюпку!'],
+  21: ['parrot', 'Третья часть ключа лежала в черепе на вершине горы. Ключ собран, кар-р!'],
+  22: ['parrot', 'Шрам сел на рифы, его команда машет нам с мачты. Может, возьмём их юнгами?'],
+  23: ['parrot', 'Вот пещера Морского Короля. Вход завален сокровищами. Расчищаем!'],
+  24: ['parrot', 'Сундук Морского Короля открыт! Внутри золото и... ещё одна карта. Похоже, приключения только начинаются!'],
+};
+const FAR_STORY = [
+  'Новая карта ведёт в воды, где не бывал даже Мартин. Кар-р, страшно интересно!',
+  'Шрам починил «Каракатицу» и снова идёт по нашему следу. Не отставать!',
+  'Ветер попутный, трюм полон. Но на карте ещё много крестиков.',
+  'Говорят, где-то здесь живёт морской змей. Надеюсь, он вегетарианец.',
+];
+const storyFor = n => STORY[n] || ((n - 1) % CHAPTER === 0 ? ['parrot', FAR_STORY[chapterOf(n) % FAR_STORY.length]] : null);
+
+// Map art
+const ISLE_BASE = '<ellipse cx="50" cy="52" rx="48" ry="15" fill="#6aa7ad" opacity=".28"/><path d="M8 49q4-15 26-17q16-9 34-1q24 3 24 18q-18 10-42 9q-28 1-42-9z" fill="#e3c27e" stroke="#a7803f" stroke-width="2"/>';
+const ISLE_ART = {
+  palm: '<path d="M24 45q6-11 22-11q16-4 30 6q-12 8-28 7q-16 2-24-2z" fill="#7aa152"/><path d="M54 42q-3-16 4-30" stroke="#6b4423" stroke-width="3.5" fill="none" stroke-linecap="round"/><g fill="#3f8a3a"><ellipse cx="48" cy="12" rx="11" ry="4" transform="rotate(20 48 12)"/><ellipse cx="67" cy="12" rx="11" ry="4" transform="rotate(-20 67 12)"/><ellipse cx="52" cy="6" rx="9" ry="3.5" transform="rotate(-35 52 6)"/><ellipse cx="64" cy="5" rx="9" ry="3.5" transform="rotate(35 64 5)"/></g>',
+  hut: '<path d="M22 45q6-10 22-10q16-4 32 6q-12 7-28 6q-16 2-26-2z" fill="#7aa152"/><rect x="42" y="27" width="18" height="14" fill="#a0703e" stroke="#5e3a1f" stroke-width="1.5"/><path d="M38 29l13-12 13 12z" fill="#c9a24f" stroke="#8a6a2a" stroke-width="1.5"/><rect x="48" y="33" width="6" height="8" fill="#5e3a1f"/>',
+  hill: '<path d="M26 44l20-28 10 12 6-6 14 22q-24 5-50 0z" fill="#8f8466" stroke="#5e4a2a" stroke-width="2" stroke-linejoin="round"/><path d="M40 24l6-8 5 6q-5 3-11 2z" fill="#f4ead6"/>',
+  skull: '<path d="M34 44q-4-26 18-28q22 2 18 28z" fill="#bdb6a6" stroke="#6d665a" stroke-width="2"/><ellipse cx="45" cy="30" rx="4.5" ry="5" fill="#2b2620"/><ellipse cx="59" cy="30" rx="4.5" ry="5" fill="#2b2620"/><path d="M50 38l2-4 2 4z" fill="#2b2620"/>',
+  light: '<path d="M30 45q6-9 20-9q14-2 24 6q-10 6-24 5q-12 1-20-2z" fill="#7aa152"/><rect x="46" y="8" width="11" height="34" fill="#f4ead6" stroke="#5e3a1f" stroke-width="1.5"/><rect x="46" y="16" width="11" height="5" fill="#b3322b"/><rect x="46" y="28" width="11" height="5" fill="#b3322b"/><path d="M44 8l7.5-7 7.5 7z" fill="#5e3a1f"/><circle cx="51.5" cy="5" r="9" fill="#ffd96b" opacity=".35"/>',
+  tentacle: '<path d="M30 44q-6-20 8-26q10-4 6-14q12 8 2 18q-8 6-2 22z" fill="#8a4a6a" stroke="#5a2a42" stroke-width="1.5"/><path d="M56 44q2-14 14-16q8-2 6-10q8 8-2 16q-6 4-6 10z" fill="#8a4a6a" stroke="#5a2a42" stroke-width="1.5"/>',
+};
+const CHEST_ART = '<g transform="translate(60 30)"><rect x="0" y="5" width="20" height="12" rx="2" fill="#8a5a34" stroke="#3a2615" stroke-width="1.5"/><path d="M0 8q10-12 20 0z" fill="#a86e3e" stroke="#3a2615" stroke-width="1.5"/><rect x="8" y="7" width="4" height="5" fill="#f2c14e"/></g>';
+const X_ART = '<path d="M20 34l12 9M32 34l-12 9" stroke="#b3322b" stroke-width="4" stroke-linecap="round"/>';
+const THEME_ART = { bay: ['palm', 'hut'], fog: ['palm', 'hill'], kraken: ['hill', 'tentacle'], skull: ['skull', 'hill'] };
+function isleSvg(n, current) {
+  const theme = chapterInfo(chapterOf(n)).theme;
+  const art = n === 12 ? 'light' : THEME_ART[theme][n % 2];
+  return `<svg class="land" viewBox="0 0 100 64" aria-hidden="true">${ISLE_BASE}${ISLE_ART[art]}${n % CHAPTER === 0 ? CHEST_ART : ''}${current ? X_ART : ''}</svg>`;
+}
+const DECOR = {
+  waves: '<path d="M6 18q6-6 12 0t12 0 12 0M14 30q6-6 12 0t12 0" fill="none" stroke="#3a2615" stroke-width="2" stroke-linecap="round" opacity=".5"/>',
+  gull: '<path d="M8 20q8-9 16 0q8-9 16 0M30 32q5-6 10 0q5-6 10 0" fill="none" stroke="#3a2615" stroke-width="2" stroke-linecap="round"/>',
+  whale: '<path d="M10 30q16-10 34-2q4-8 12-10q-4 8 0 14q-8-2-12-4q-16 8-34 2z" fill="#4f6f80"/><path d="M28 18q-2-6 2-10M28 18q3-5 8-6" stroke="#4f6f80" stroke-width="2" fill="none"/>',
+  fog: '<ellipse cx="32" cy="22" rx="30" ry="12" fill="#fff"/><ellipse cx="18" cy="18" rx="14" ry="9" fill="#fff"/>',
+  fin: '<path d="M22 32q8-22 22-26q-6 12-2 26z" fill="#4a5a66"/><path d="M6 33q22-5 50 0" stroke="#3a2615" stroke-width="2" fill="none" opacity=".45"/>',
+  tentacle: '<path d="M14 40q-4-18 10-24q12-6 6-14q12 8 0 18q-8 8 2 20z" fill="#8a4a6a" opacity=".85"/><g fill="#d8a6bc"><circle cx="20" cy="30" r="1.8"/><circle cx="24" cy="22" r="1.8"/><circle cx="30" cy="16" r="1.6"/></g>',
+  rocks: '<path d="M8 36q4-14 12-14q6 0 8 8q4-12 12-12q10 2 12 18z" fill="#8a8274" stroke="#5a5348" stroke-width="1.5"/>',
+  wreck: '<path d="M8 32l36-6-4 10H14z" fill="#6b3f1f"/><path d="M28 28l4-22M32 6l10 8-10 2" stroke="#5e3a1f" stroke-width="2" fill="#e6d3a8"/>',
+};
+const THEME_DECOR = { bay: ['waves', 'gull', 'whale'], fog: ['fog', 'waves', 'gull'], kraken: ['tentacle', 'fin', 'waves'], skull: ['rocks', 'wreck', 'fin'] };
+const ROSE = '<svg class="rose" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="34" fill="none" stroke="#3a2615" stroke-width="1.5"/><path d="M50 4l7 39 39 7-39 7-7 39-7-39-39-7 39-7z" fill="#3a2615" opacity=".75"/><path d="M50 4l7 39-7 7zM96 50l-39 7-7-7zM50 96l-7-39 7-7zM4 50l39-7 7 7z" fill="#b3322b"/><text x="50" y="0" text-anchor="middle" font-family="Kelly Slab, serif" font-size="14" fill="#3a2615">N</text></svg>';
+const SHIP = '<svg viewBox="0 0 80 70" aria-hidden="true"><path d="M2 58q10-5 20 0t20 0 20 0 16 0" fill="none" stroke="#3d7f99" stroke-width="2.5" stroke-linecap="round" opacity=".7"/><path d="M6 42h66l-9 14H17z" fill="#6b3f1f" stroke="#3a2615" stroke-width="2" stroke-linejoin="round"/><path d="M10 46h58" stroke="#f2c14e" stroke-width="2"/><path d="M38 6v37M58 16v27" stroke="#3a2615" stroke-width="2.5"/><path d="M24 10q14 4 28 0v26q-14 4-28 0z" fill="#f4ead6" stroke="#8a6a3a" stroke-width="1.5"/><path d="M50 19q9 3 16 0v18q-8 3-16 0z" fill="#f4ead6" stroke="#8a6a3a" stroke-width="1.5"/><circle cx="38" cy="22" r="5" fill="#3a2615"/><path d="M34 30l8-3M34 27l8 3" stroke="#3a2615" stroke-width="1.5"/><path d="M38 2l12 3-12 4z" fill="#b3322b"/><path d="M72 42l6-8" stroke="#3a2615" stroke-width="2"/></svg>';
+
+// Living treasure map: islands sit on a winding route; the ship sails between them.
+const Voyage = { at: progress.ship || progress.unlocked, lay: null, busy: false };
+const ROW = 122, BANNER = 92, TOP = 18;
+progress.story = progress.story || {};
+const mapCount = () => {
+  const chEnd = Math.ceil(progress.unlocked / CHAPTER) * CHAPTER;
+  return TEST_MODE ? Math.max(4 * CHAPTER, chEnd) : Math.max(LEVELS.length, chEnd + 1);
+};
+function layoutMap(count) {
+  const W = $('sea').clientWidth || 360;
+  const amp = Math.max(30, W / 2 - 66);
+  const pts = [], banners = [];
+  let y = TOP;
+  for (let n = 1; n <= count; n++) {
+    if ((n - 1) % CHAPTER === 0) { banners.push({ k: chapterOf(n), y }); y += BANNER; }
+    pts[n] = { x: W / 2 + amp * .92 * Math.sin((n - 1) * 1.1 + .4), y: y + 52 };
+    y += ROW;
+  }
+  return { W, H: y + 20, pts, banners };
+}
+function routeD(pts, a, b) {
+  let d = `M${pts[a].x.toFixed(1)},${pts[a].y}`;
+  for (let n = a + 1; n <= b; n++) {
+    const p = pts[n - 1], q = pts[n], h = (q.y - p.y) / 2;
+    d += ` C${p.x.toFixed(1)},${p.y + h} ${q.x.toFixed(1)},${q.y - h} ${q.x.toFixed(1)},${q.y}`;
+  }
+  return d;
+}
+// Ship anchors beside an island, on the side facing open water.
+const shipSpot = n => {
+  const { pts, W } = Voyage.lay, p = pts[n], side = p.x > W / 2 ? -1 : 1;
+  return { x: p.x + side * 66, y: p.y + 14, side };
+};
+function putShip(x, y, left) {
+  const s = $('ship');
+  s.style.transform = `translate(${x}px, ${y}px)`;
+  s.classList.toggle('left', left);
+}
+function renderMap(fresh = 0) {
+  const count = mapCount();
+  const lay = Voyage.lay = layoutMap(count), { W, H, pts, banners } = lay;
+  Voyage.at = Math.min(Math.max(1, Voyage.at), count);
+  const reach = Math.min(fresh ? fresh - 1 : progress.unlocked, count);
+  let html = `<svg class="route" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><path class="all" d="${routeD(pts, 1, count)}"/><path class="done" id="routeDone" d="${reach > 1 ? routeD(pts, 1, reach) : ''}"/></svg>`;
+  banners.forEach((b, i) => {
+    const ch = chapterInfo(b.k), end = banners[i + 1] ? banners[i + 1].y : H;
+    html += `<div class="band ${ch.theme}" style="top:${b.y}px;height:${end - b.y}px"></div>` +
+      `<div class="banner" style="top:${b.y + 14}px"><b>${ch.name}</b><small>${ch.sub}</small></div>`;
+  });
+  html += ROSE;
+  for (let n = 1; n <= count; n++) {
+    const p = pts[n], ox = W - p.x;
+    if (Math.abs(ox - p.x) < 150 || n % 3 === 1) continue;
+    const kinds = THEME_DECOR[chapterInfo(chapterOf(n)).theme], kind = kinds[n % kinds.length];
+    html += `<svg class="decor${kind === 'fog' ? ' fogpuff' : ''}" style="left:${ox}px;top:${p.y + 6}px" viewBox="0 0 64 44" aria-hidden="true">${DECOR[kind]}</svg>`;
+  }
+  for (let n = 1; n <= count; n++) {
+    const s = progress.stars[n] || 0;
+    const locked = n > progress.unlocked || n === fresh, current = n === progress.unlocked && n !== fresh;
+    const p = pts[n];
+    html += `<button type="button" class="isle${current ? ' current' : ''}${locked ? ' locked' : ''}" data-n="${n}" style="left:${p.x}px;top:${p.y}px"` +
+      `${!TEST_MODE && locked ? ' disabled' : ''} aria-label="Остров ${n}${locked ? ', ещё не открыт' : `, звёзд: ${s}`}">` +
+      `${isleSvg(n, current)}<b class="seal">${n}</b><small>${[0, 1, 2].map(i => `<span class="${i < s ? 'on' : ''}">★</span>`).join('')}</small></button>`;
+  }
+  html += `<div class="ship" id="ship">${SHIP}</div>`;
+  const sea = $('sea');
+  sea.style.height = H + 'px';
+  sea.innerHTML = html;
+  sea.querySelectorAll('.isle').forEach(b => b.addEventListener('click', () => visit(+b.dataset.n)));
+  const at = shipSpot(Voyage.at);
+  putShip(at.x, at.y, at.side < 0);
+}
+const followShip = (y, smooth) => { const m = $('map'); m.scrollTo({ top: y - m.clientHeight * .45, behavior: smooth ? 'smooth' : 'auto' }); };
+async function sail(to) {
+  const from = Voyage.at;
+  if (from === to) return;
+  const { pts } = Voyage.lay, lo = Math.min(from, to), hi = Math.max(from, to);
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('class', 'trip');
+  path.setAttribute('d', routeD(pts, lo, hi));
+  document.querySelector('#sea .route').appendChild(path);
+  const len = path.getTotalLength(), a = shipSpot(from), b = shipSpot(to);
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dur = reduced ? 250 : Math.min(2800, 1000 + 450 * (hi - lo));
+  const ship = $('ship');
+  ship.classList.add('sailing');
+  Sound.sail();
+  await new Promise(done => {
+    const t0 = performance.now();
+    let lastX = a.x, lastWake = 0;
+    const step = now => {
+      const k = Math.min(1, (now - t0) / dur), e = k < .5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+      const pt = path.getPointAtLength((from < to ? e : 1 - e) * len);
+      const x = pt.x + a.x - pts[from].x + (b.x - pts[to].x - a.x + pts[from].x) * e;
+      const y = pt.y + a.y - pts[from].y + (b.y - pts[to].y - a.y + pts[from].y) * e;
+      putShip(x, y, Math.abs(x - lastX) > .4 ? x < lastX : ship.classList.contains('left'));
+      lastX = x;
+      followShip(y, false);
+      if (now - lastWake > 110 && k < .95) {
+        lastWake = now;
+        const w = document.createElement('div');
+        w.className = 'wake'; w.style.left = x + 'px'; w.style.top = (y + 4) + 'px';
+        $('sea').appendChild(w);
+        setTimeout(() => w.remove(), 1400);
+      }
+      if (k < 1) requestAnimationFrame(step); else done();
+    };
+    requestAnimationFrame(step);
+  });
+  path.remove();
+  ship.classList.remove('sailing');
+  putShip(b.x, b.y, b.side < 0);
+  Voyage.at = to;
+  Sound.bell();
+}
+// Sail to island n, tell its story the first time, then land.
+async function visit(n, fresh) {
+  if (Voyage.busy) return;
+  Voyage.busy = true;
+  await sail(n);
+  if (fresh) {
+    $('routeDone').setAttribute('d', routeD(Voyage.lay.pts, 1, n));
+    const isle = document.querySelector(`.isle[data-n="${n}"]`);
+    isle.classList.remove('locked'); isle.classList.add('current', 'reveal'); isle.disabled = false;
+    isle.querySelector('.land').outerHTML = isleSvg(n, true);
+    await wait(500);
+  }
+  Voyage.busy = false;
+  const beat = storyFor(n);
+  progress.story = progress.story || {};
+  if (beat && !progress.story[n]) {
+    progress.story[n] = 1; saveProgress();
+    tellStory(n, beat);
+  } else startLevel(n);
+}
+function tellStory(n, [who, text]) {
+  const [name, face] = FACES[who];
+  const ch = chapterInfo(chapterOf(n));
+  const el = $('story');
+  el.innerHTML = `<div class="scroll">` +
+    ((n - 1) % CHAPTER === 0 ? `<div class="chapter">Глава ${chapterOf(n) + 1}. ${ch.name}<small>${ch.sub}</small></div>` : '') +
+    `<div class="line"><svg class="face" viewBox="0 0 64 64" aria-hidden="true">${face}</svg><div><div class="who">${name}</div><p>${text}</p></div></div>` +
+    `<div class="row"><button type="button">К острову ${n}</button></div></div>`;
+  el.hidden = false;
+  const go = el.querySelector('button');
+  go.addEventListener('click', () => { el.hidden = true; startLevel(n); });
+  go.focus({ preventScroll: true });
+}
+// After a win: back to the map, where the ship sails on to the newly opened island.
+function voyage(n) {
+  const fresh = progress.stars[n] ? 0 : n;
+  showMap(fresh);
+  setTimeout(() => visit(n, fresh), 450);
+}
+addEventListener('resize', () => { if (!$('mapScreen').hidden && !Voyage.busy) renderMap(); });
+
 // Screens
-function showMap() {
-  clearHint();
+function showMap(fresh) {
+  if (typeof fresh !== 'number') fresh = 0; // also used directly as a click handler
+  Tut.stop(); Rec.finish('вышел на карту');
+  clearHint(); YSDK.gameplay(false);
   $('playScreen').hidden = true;
   $('mapScreen').hidden = false;
-  const count = Math.max(LEVELS.length, Math.ceil((progress.unlocked + 1) / 4) * 4);
+  $('story').hidden = true;
   const total = Object.values(progress.stars).reduce((a, b) => a + b, 0);
   $('totalStars').textContent = `★ ${total}`;
-  $('levels').innerHTML = '';
-  for (let n = 1; n <= count; n++) {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'lvl' + (n === progress.unlocked ? ' current' : '');
-    b.disabled = !TEST_MODE && n > progress.unlocked;
-    const s = progress.stars[n] || 0;
-    b.innerHTML = `<b>${n === progress.unlocked ? '✕' : n}</b><small>${[0, 1, 2].map(i => `<span class="${i < s ? 'on' : ''}">★</span>`).join('')}</small>`;
-    b.setAttribute('aria-label', `Остров ${n}` + (b.disabled ? ', ещё не открыт' : `, звёзд: ${s}`));
-    b.addEventListener('click', () => startLevel(n));
-    $('levels').appendChild(b);
-  }
   levelNo = 0;
+  renderMap(fresh);
+  followShip(shipSpot(Voyage.at).y, false);
 }
 
 function startLevel(n) {
   levelNo = n;
+  Voyage.at = progress.ship = n;
   L = { ...levelDef(n) };
   score = 0; moves = L.moves; collected = {}; busy = false; over = false; sel = null;
   $('mapScreen').hidden = true;
@@ -721,7 +1567,11 @@ function startLevel(n) {
   $('overlay').hidden = true;
   buildNets();
   L.netTotal = netsLeft;
-  buildBoard(freshTypes());
+  Tut.stop();
+  Rec.finish('начал заново');
+  Rec.start();
+  const guided = n === 1 && !progress.tips.intro && tutorialBoard();
+  if (!guided && !(n === 1 && !progress.tips.intro)) buildBoard(freshTypes());
   updateHud();
   const goals = goalList();
   const newKind = L.types > (n > 1 ? levelDef(n - 1).types : 5)
@@ -731,14 +1581,43 @@ function startLevel(n) {
     goals.map(g => `<p>${goalText(g)}</p>`).join('') +
     `<p>Ходов: ${L.moves}</p>${newKind}` +
     (n === CHEST_FROM ? `<p>Здесь может выпасть золотой сундук. Соберите ряд рядом с ним, пока он не опустился на дно, и он взорвёт всю палубу.</p><div class="goals"><span class="chip">${gemSvg(CHEST)}</span></div>` : ''),
-    [['На абордаж!', () => { $('overlay').hidden = true; armHint(); }]]
+    [['На абордаж!', () => { $('overlay').hidden = true; YSDK.gameplay(true); guided ? tutorialStart() : armHint(); }]]
   );
 }
 
 $('toMap').addEventListener('click', showMap);
+$('resetBtn').hidden = !TEST_MODE;
+$('resetBtn').addEventListener('click', () => { progress = { unlocked: 1, stars: {}, tips: {}, story: {} }; Voyage.at = 1; saveProgress(); showMap(); });
 
-window.claude?.hot?.snapshot?.(() => ({ levelNo }));
-const boot = data => data && data.levelNo ? startLevel(data.levelNo) : showMap();
+// When the page is updated while open, the current attempt carries on exactly where it was.
+window.claude?.hot?.snapshot?.(() => levelNo && grid && !over && !busy ? {
+  levelNo, types: types(), score, moves, collected, netsLeft, netTotal: L.netTotal, bonusUsed: !!L.bonusUsed,
+  nets: nets.map(row => row.map(Boolean)),
+} : { levelNo: 0 });
+function restoreLevel(d) {
+  startLevel(d.levelNo);
+  $('overlay').hidden = true;
+  Tut.stop();
+  score = d.score; moves = d.moves; collected = d.collected;
+  L.bonusUsed = d.bonusUsed;
+  buildBoard(d.types);
+  netLayer.innerHTML = '';
+  netsLeft = 0;
+  nets = d.nets.map((row, r) => row.map((on, c) => {
+    if (!on) return null;
+    const el = document.createElement('div');
+    el.className = 'net'; pos(el, r, c); netLayer.appendChild(el); netsLeft++;
+    return el;
+  }));
+  L.netTotal = d.netTotal;
+  updateHud();
+  YSDK.gameplay(true); armHint();
+}
+const boot = data => {
+  if (data && data.levelNo && data.types) restoreLevel(data);
+  else showMap();
+  YSDK.init().then(() => YSDK.ready());
+};
 window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
 </script>
 
