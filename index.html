@@ -281,7 +281,10 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 
 let progress = { unlocked: 1, stars: {} };
 try { const p = JSON.parse(localStorage.getItem('gems-progress')); if (p && p.unlocked) progress = p; } catch (e) {}
-function saveProgress() { try { localStorage.setItem('gems-progress', JSON.stringify(progress)); } catch (e) {} }
+function saveProgress() {
+  try { localStorage.setItem('gems-progress', JSON.stringify(progress)); } catch (e) {}
+  YSDK.save(progress);
+}
 
 let levelNo = 1, L, grid, nets, netsLeft, score, moves, collected, busy = false, sel = null, hintTimer = null, over = false;
 const rand = () => Math.floor(Math.random() * L.types);
@@ -533,7 +536,7 @@ function overlay(html, buttons) {
 const starsHtml = n => `<div class="stars">${[0, 1, 2].map(i => `<span class="${i < n ? 'on' : ''}">★</span>`).join('')}</div>`;
 
 function win() {
-  over = true; clearHint(); Sound.win();
+  over = true; clearHint(); Sound.win(); YSDK.gameplay(false);
   const bonus = moves * 20;
   score += bonus;
   updateHud();
@@ -544,16 +547,23 @@ function win() {
   saveProgress();
   overlay(
     `<h2>Остров ${levelNo} взят!</h2>${starsHtml(stars)}<p>Добыча: ${score}, из них ${bonus} за оставшиеся ходы.</p>`,
-    [['Плыть дальше', () => startLevel(levelNo + 1)], ['Повторить', () => startLevel(levelNo), true]]
+    [['Плыть дальше', () => afterAd(() => startLevel(levelNo + 1))], ['Повторить', () => afterAd(() => startLevel(levelNo)), true]]
   );
 }
 function lose() {
-  over = true; clearHint(); Sound.lose();
+  over = true; clearHint(); Sound.lose(); YSDK.gameplay(false);
   const left = goalList().filter(g => g.have < g.need).map(chipHtml).join('');
-  overlay(
-    `<h2>Ходы закончились</h2><p>До сокровищ было рукой подать:</p><div class="goals">${left}</div>`,
-    [['Ещё раз', () => startLevel(levelNo)], ['На карту', showMap, true]]
-  );
+  const buttons = [['Ещё раз', () => afterAd(() => startLevel(levelNo))], ['На карту', showMap, true]];
+  // One rewarded video per attempt buys extra moves.
+  if (!L.bonusUsed && YSDK.canReward()) buttons.unshift([`+${EXTRA_MOVES} ходов за рекламу`, async () => {
+    L.bonusUsed = true;
+    if (!(await YSDK.rewarded())) return lose();
+    moves += EXTRA_MOVES; over = false;
+    updateHud();
+    $('overlay').hidden = true;
+    YSDK.gameplay(true); armHint();
+  }]);
+  overlay(`<h2>Ходы закончились</h2><p>До сокровищ было рукой подать:</p><div class="goals">${left}</div>`, buttons);
 }
 
 function setSel(tile) {
@@ -609,7 +619,7 @@ boardEl.addEventListener('pointercancel', () => { start = null; });
 
 // Sound: everything is synthesized with Web Audio, so the game needs no audio files.
 const Sound = {
-  ctx: null, sfxGain: null, musicGain: null, sfx: true, music: true, timer: null, step: 0, next: 0,
+  ctx: null, sfxGain: null, musicGain: null, sfx: true, music: true, timer: null, step: 0, next: 0, holds: new Set(),
   init() {
     if (!this.ctx) {
       const AC = window.AudioContext || window.webkitAudioContext;
@@ -620,7 +630,13 @@ const Sound = {
       this.apply();
       this.startMusic();
     }
-    if (this.ctx.state === 'suspended' && !document.hidden) this.ctx.resume();
+    this.update();
+  },
+  // Sound stays off while anything holds it: a hidden tab, an ad, a pause from Yandex.
+  hold(reason, on) { on ? this.holds.add(reason) : this.holds.delete(reason); this.update(); },
+  update() {
+    if (!this.ctx) return;
+    if (this.holds.size || document.hidden) this.ctx.suspend(); else this.ctx.resume();
   },
   apply() {
     if (!this.ctx) return;
@@ -682,15 +698,65 @@ syncToggles();
 // Browsers allow sound only after the first tap.
 document.addEventListener('pointerdown', () => Sound.init(), true);
 // Yandex Games requires silence while the tab is hidden.
-document.addEventListener('visibilitychange', () => {
-  if (!Sound.ctx) return;
-  if (document.hidden) Sound.ctx.suspend(); else Sound.ctx.resume();
-});
+document.addEventListener('visibilitychange', () => Sound.update());
 document.addEventListener('contextmenu', e => e.preventDefault());
+
+// Yandex Games SDK. On Yandex the platform serves /sdk.js next to the game; anywhere else
+// (a local file, the preview) it is missing and the game simply runs without ads and cloud saves.
+const EXTRA_MOVES = 5;
+const YSDK = {
+  sdk: null, player: null,
+  async init() {
+    try {
+      await new Promise((ok, fail) => {
+        const sc = document.createElement('script');
+        sc.src = '/sdk.js'; sc.onload = ok; sc.onerror = fail;
+        setTimeout(fail, 4000);
+        document.head.appendChild(sc);
+      });
+      this.sdk = await YaGames.init();
+    } catch (e) { return; }
+    this.sdk.on?.('game_api_pause', () => Sound.hold('platform', true));
+    this.sdk.on?.('game_api_resume', () => Sound.hold('platform', false));
+    try {
+      this.player = await this.sdk.getPlayer({ scopes: false });
+      const d = await this.player.getData(['progress']);
+      // Cloud progress wins when it is further along than this device.
+      if (d.progress && d.progress.unlocked > progress.unlocked) {
+        progress = d.progress;
+        try { localStorage.setItem('gems-progress', JSON.stringify(progress)); } catch (e) {}
+        if (!levelNo) showMap();
+      }
+    } catch (e) {}
+  },
+  ready() { this.sdk?.features?.LoadingAPI?.ready(); },
+  gameplay(on) { const g = this.sdk?.features?.GameplayAPI; on ? g?.start() : g?.stop(); },
+  save(p) { this.player?.setData({ progress: p }).catch(() => {}); },
+  interstitial() {
+    return new Promise(done => {
+      if (!this.sdk) return done();
+      const end = () => { Sound.hold('ad', false); done(); };
+      Sound.hold('ad', true);
+      this.sdk.adv.showFullscreenAdv({ callbacks: { onClose: end, onError: end } });
+    });
+  },
+  canReward() { return !!this.sdk || TEST_MODE; },
+  rewarded() {
+    return new Promise(done => {
+      if (!this.sdk) return done(TEST_MODE); // без Яндекса в тестовом режиме награда выдаётся сразу
+      let got = false;
+      const end = () => { Sound.hold('ad', false); done(got); };
+      Sound.hold('ad', true);
+      this.sdk.adv.showRewardedVideo({ callbacks: { onRewarded: () => { got = true; }, onClose: end, onError: end } });
+    });
+  },
+};
+// Yandex limits how often a fullscreen ad can show, so asking between islands is safe.
+async function afterAd(next) { await YSDK.interstitial(); next(); }
 
 // Screens
 function showMap() {
-  clearHint();
+  clearHint(); YSDK.gameplay(false);
   $('playScreen').hidden = true;
   $('mapScreen').hidden = false;
   const count = Math.max(LEVELS.length, Math.ceil((progress.unlocked + 1) / 4) * 4);
@@ -731,14 +797,17 @@ function startLevel(n) {
     goals.map(g => `<p>${goalText(g)}</p>`).join('') +
     `<p>Ходов: ${L.moves}</p>${newKind}` +
     (n === CHEST_FROM ? `<p>Здесь может выпасть золотой сундук. Соберите ряд рядом с ним, пока он не опустился на дно, и он взорвёт всю палубу.</p><div class="goals"><span class="chip">${gemSvg(CHEST)}</span></div>` : ''),
-    [['На абордаж!', () => { $('overlay').hidden = true; armHint(); }]]
+    [['На абордаж!', () => { $('overlay').hidden = true; YSDK.gameplay(true); armHint(); }]]
   );
 }
 
 $('toMap').addEventListener('click', showMap);
 
 window.claude?.hot?.snapshot?.(() => ({ levelNo }));
-const boot = data => data && data.levelNo ? startLevel(data.levelNo) : showMap();
+const boot = data => {
+  data && data.levelNo ? startLevel(data.levelNo) : showMap();
+  YSDK.init().then(() => YSDK.ready());
+};
 window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
 </script>
 
